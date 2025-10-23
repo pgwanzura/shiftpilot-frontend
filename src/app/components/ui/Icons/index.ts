@@ -1,0 +1,5 @@
+export { default as Icon } from './Icon';
+export { default as GoogleIcon } from './GoogleIcon';
+export { default as LinkedInIcon } from './LinkedInIcon';
+export { default as MicrosoftIcon } from './MicrosoftIcon';
+export { default as ValidationCheckIcon } from './ValidationCheckIcon';
