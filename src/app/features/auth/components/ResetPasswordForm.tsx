@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   resetPasswordSchema,
   type ResetPasswordFormData,
-} from '@/lib/validations/schemas/auth';
+} from '@/lib/auth/schemas';
 import { Form, FormInput } from '@/app/components/forms';
 import { Button } from '@/app/components/ui/buttons';
 

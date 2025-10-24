@@ -1,33 +1,35 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { AuthUser, UserRole } from '@/lib/auth';
 
 class ServerAuthService {
-  async getUser() {
+  async getUser(): Promise<AuthUser | null> {
     const cookieStore = await cookies();
     const authUserCookie = cookieStore.get('auth_user');
 
     if (!authUserCookie) return null;
 
     try {
-      return JSON.parse(authUserCookie.value);
+      const user = JSON.parse(authUserCookie.value);
+      return this.validateAuthUser(user) ? user : null;
     } catch {
       return null;
     }
   }
 
-  async getToken() {
+  async getToken(): Promise<string | null> {
     const cookieStore = await cookies();
     const authTokenCookie = cookieStore.get('auth_token');
     return authTokenCookie?.value || null;
   }
 
-  async isAuthenticated() {
+  async isAuthenticated(): Promise<boolean> {
     const user = await this.getUser();
     const token = await this.getToken();
     return !!(user && token);
   }
 
-  async protectRoute(redirectTo: string = '/login') {
+  async protectRoute(redirectTo: string = '/login'): Promise<AuthUser> {
     const user = await this.getUser();
     const token = await this.getToken();
 
@@ -39,11 +41,10 @@ class ServerAuthService {
   }
 
   async protectRouteWithRole(
-    allowedRoles: string | string[],
+    allowedRoles: UserRole | UserRole[],
     redirectTo: string = '/login'
-  ) {
+  ): Promise<AuthUser> {
     const user = await this.protectRoute(redirectTo);
-
     const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
 
     if (!roles.includes(user.role)) {
@@ -54,16 +55,18 @@ class ServerAuthService {
     return user;
   }
 
-  private getRoleBasedRedirect(role: string): string {
+  getRoleBasedRedirect(role: UserRole): string {
     switch (role) {
-      case 'candidate':
-        return '/candidate';
-      case 'recruiter_admin':
-      case 'recruiter':
-        return '/recruiter';
+      case 'agency_admin':
+      case 'agent':
+        return '/agency/dashboard';
+      case 'employer_admin':
+      case 'contact':
+        return '/employer/dashboard';
       case 'super_admin':
-      case 'admin':
-        return '/admin';
+        return '/admin/dashboard';
+      case 'employee':
+        return '/employee/dashboard';
       default:
         return '/login';
     }
@@ -79,33 +82,22 @@ class ServerAuthService {
     };
   }
 
-  async apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const token = await this.getToken();
-    const API_URL = this.getApiUrl();
-
-    const response = await fetch(`${API_URL}${endpoint}`, {
-      ...options,
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-        ...options.headers,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`API request failed: ${response.statusText}`);
-    }
-
-    return response.json();
-  }
-
-  private getApiUrl(): string {
-    if (process.env.DOCKER_ENV === 'true') {
-      return process.env.INTERNAL_API_URL || 'http://api:80/api';
-    }
-    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+  private validateAuthUser(user: any): user is AuthUser {
+    return (
+      user &&
+      typeof user.id === 'string' &&
+      typeof user.name === 'string' &&
+      typeof user.email === 'string' &&
+      typeof user.role === 'string' &&
+      [
+        'super_admin',
+        'agency_admin',
+        'agent',
+        'employer_admin',
+        'contact',
+        'employee',
+      ].includes(user.role)
+    );
   }
 }
 

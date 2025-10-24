@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormInput } from '@/app/components/forms';
 import { Button } from '@/app/components/ui';
-import { forgotPasswordSchema } from '@/lib/validations/schemas/auth';
+import { forgotPasswordSchema } from '@/lib/auth/schemas';
 
 interface ForgotPasswordResponse {
   success?: boolean;
@@ -74,7 +74,6 @@ export default function ForgotPasswordForm({
         label="Email address"
         placeholder="your@email.com"
         autoComplete="email"
-        className="mb-4"
       />
 
       <Button type="submit" className="w-full mt-0">

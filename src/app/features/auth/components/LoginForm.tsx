@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Alert, Button } from '@/app/components/ui';
@@ -10,29 +10,31 @@ import {
   FormPasswordInput,
   FormCheckbox,
 } from '@/app/components/forms';
-import {
-  loginFormSchema,
-  type LoginFormData,
-} from '@/lib/validations/schemas/auth';
+import { loginSchema, type LoginFormData } from '@/lib/auth';
 import Link from 'next/link';
-import { getUserFromCookie } from '@/lib/utils/client-auth';
-import { getRoleBasedRedirect } from '@/lib/utils/roles';
 
 interface LoginFormProps {
   onSubmit: (
     data: LoginFormData
   ) => Promise<{ error?: string; success?: boolean } | void>;
   isLoading?: boolean;
+  error?: string | null;
 }
 
 export default function LoginForm({
   onSubmit,
   isLoading = false,
+  error = null,
 }: LoginFormProps) {
-  const [loginError, setLoginError] = useState<string | null>(null);
+  const [loginError, setLoginError] = useState<string | null>(error);
 
+  useEffect(() => {
+    setLoginError(error);
+  }, [error]);
+
+  // Type assertion to fix the TypeScript compatibility issue
   const form = useForm<LoginFormData>({
-    resolver: zodResolver(loginFormSchema),
+    resolver: zodResolver(loginSchema) as any,
     defaultValues: {
       email: '',
       password: '',
@@ -40,7 +42,7 @@ export default function LoginForm({
     },
   });
 
-  const handleSubmit = async (data: LoginFormData): Promise<void> => {
+  const handleFormSubmit = async (data: LoginFormData): Promise<void> => {
     setLoginError(null);
 
     try {
@@ -53,15 +55,7 @@ export default function LoginForm({
       }
 
       if (result?.success) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-
-        const user = getUserFromCookie();
-        console.log(user);
-
-        if (user) {
-          const redirectPath = getRoleBasedRedirect(user.role);
-          window.location.href = redirectPath;
-        }
+        console.log('[LOGIN] Login successful');
       }
     } catch (error: unknown) {
       console.error('[LOGIN] Unexpected error during login:', error);
@@ -72,7 +66,7 @@ export default function LoginForm({
   };
 
   return (
-    <Form form={form} onSubmit={handleSubmit} className="space-y-6">
+    <Form form={form} onSubmit={handleFormSubmit} className="space-y-6">
       {loginError && (
         <Alert
           variant="error"

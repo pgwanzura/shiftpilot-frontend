@@ -2,7 +2,6 @@ import { AuthClient } from './authClient';
 import { BaseClient } from './baseClient';
 import {
   ApiResponse,
-  Candidate,
   Contact,
   CreateJobRequest,
   DashboardStats,
@@ -10,7 +9,6 @@ import {
   EmployeeAvailability,
   EmployerAgencyLink,
   Invoice,
-  Job,
   Location,
   PaginatedResponse,
   Payment,
@@ -123,10 +121,6 @@ export class ApiClient extends BaseClient {
     );
   }
 
-  async getAgencyCandidates(): Promise<ApiResponse<Candidate[]>> {
-    return this.get<ApiResponse<Candidate[]>>('/agency/candidates');
-  }
-
   async getAgencyContacts(): Promise<PaginatedResponse<Contact>> {
     return this.get<PaginatedResponse<Contact>>('/agency/contacts');
   }
@@ -201,7 +195,7 @@ export class ApiClient extends BaseClient {
   async submitCandidate(
     jobId: number,
     candidateData: SubmitCandidateRequest
-  ): Promise<ApiResponse<Candidate>> {
+  ): Promise<ApiResponse<any>> {
     if (candidateData.resume) {
       const formData = new FormData();
       formData.append('name', candidateData.name);
@@ -212,7 +206,7 @@ export class ApiClient extends BaseClient {
       if (candidateData.phone) formData.append('phone', candidateData.phone);
       if (candidateData.resume) formData.append('resume', candidateData.resume);
 
-      return this.request<ApiResponse<Candidate>>(
+      return this.request<ApiResponse<any>>(
         `/agency/jobs/${jobId}/candidates`,
         {
           method: 'POST',
@@ -222,7 +216,7 @@ export class ApiClient extends BaseClient {
       );
     }
 
-    return this.post<ApiResponse<Candidate>>(
+    return this.post<ApiResponse<any>>(
       `/agency/jobs/${jobId}/candidates`,
       candidateData
     );
@@ -275,10 +269,6 @@ export class ApiClient extends BaseClient {
     can_sign_timesheets: boolean;
   }): Promise<ApiResponse<Contact>> {
     return this.post<ApiResponse<Contact>>('/employer/contacts', contactData);
-  }
-
-  async createJob(jobData: CreateJobRequest): Promise<ApiResponse<Job>> {
-    return this.post<ApiResponse<Job>>('/employer/jobs', jobData);
   }
 
   async createLocation(locationData: {
@@ -337,14 +327,6 @@ export class ApiClient extends BaseClient {
 
   async getEmployerInvoices(): Promise<PaginatedResponse<Invoice>> {
     return this.get<PaginatedResponse<Invoice>>('/employer/invoices');
-  }
-
-  async getEmployerJob(jobId: number): Promise<ApiResponse<Job>> {
-    return this.get<ApiResponse<Job>>(`/employer/jobs/${jobId}`);
-  }
-
-  async getEmployerJobs(): Promise<ApiResponse<Job[]>> {
-    return this.get<ApiResponse<Job[]>>('/employer/jobs');
   }
 
   async getEmployerLocations(): Promise<ApiResponse<Location[]>> {
@@ -407,13 +389,6 @@ export class ApiClient extends BaseClient {
       '/employer/agency-links/request',
       { agency_id: agencyId }
     );
-  }
-
-  async updateJob(
-    jobId: number,
-    jobData: Partial<CreateJobRequest>
-  ): Promise<ApiResponse<Job>> {
-    return this.put<ApiResponse<Job>>(`/employer/jobs/${jobId}`, jobData);
   }
 
   async updateLocation(

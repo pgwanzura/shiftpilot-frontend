@@ -3,10 +3,7 @@
 
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  registerSchema,
-  type RegisterFormData,
-} from '@/lib/validations/schemas/auth';
+import { registerSchema, type RegisterFormData } from '@/lib/auth/schemas';
 import { useState } from 'react';
 import Link from 'next/link';
 import {

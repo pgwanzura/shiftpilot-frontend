@@ -1,21 +1,38 @@
-export {
-  type AuthErrorResponse,
-  type AuthResponse,
-  type AuthUser,
-  type ForgotPasswordData,
-  type ForgotPasswordRequest,
-  type LoginCredentials,
-  type RefreshTokenResponse,
-  type RegisterCredentials,
-  type RegisterData,
-  type ResetPasswordData,
-  type ResetPasswordRequest,
-  type Session,
-  type User,
+export type { UserRole, AuthUser } from '../../auth';
+export type { User, ApiResponse, ApiError, QueryParams } from './api';
+export type {
+  AuthResponse,
+  LoginCredentials,
+  RegisterData,
+  AuthUserResponse,
+  LoginResponse,
 } from './auth';
+export type { PaginatedResponse, PaginationParams } from './pagination';
 
-export { type PaginatedResponse, type PaginationParams } from './pagination';
-export interface ApiResponse<T> {
-  data: T;
-  message?: string;
-}
+export type {
+  Agency,
+  Agent,
+  Contact,
+  DashboardStats,
+  Employee,
+  EmployeeAvailability,
+  Employer,
+  EmployerAgencyLink,
+  Invoice,
+  Location,
+  Payment,
+  Payroll,
+  Payout,
+  Placement,
+  Shift,
+  ShiftApproval,
+  ShiftOffer,
+  ShiftTemplate,
+  Subscription,
+  TimeOffRequest,
+  Timesheet,
+  CreateJobRequest,
+  SubmitCandidateRequest,
+  UserStatusUpdate,
+  UsersQueryParams,
+} from './api';

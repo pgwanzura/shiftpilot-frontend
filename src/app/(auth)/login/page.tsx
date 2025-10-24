@@ -1,24 +1,43 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { LoginForm } from '@/app/features/auth';
 import { AuthPageLayout } from '@/app/components/layout/auth/AuthPageLayout';
 import { MarketingSidebar } from '@/app/components/layout/auth/MarketingSidebar';
 import { marketingContent } from '@/app/components/layout/auth/marketing-content';
 import Link from 'next/link';
-import { type LoginFormData } from '@/app/components/forms/schemas/auth';
+import { type LoginFormData } from '@/lib/auth';
+import { loginAction } from '@/lib/auth';
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const handleLogin = async (data: LoginFormData) => {
     setIsLoading(true);
+    setError(null);
+
     try {
-      console.log('Login data:', data);
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const result = await loginAction(data);
+
+      if (result.success && result.redirectTo) {
+        // Use router.push for client-side navigation
+        router.push(result.redirectTo);
+        return { success: true };
+      }
+
+      if (result.error) {
+        setError(result.error);
+        return { error: result.error };
+      }
+
       return { success: true };
-    } catch {
-      return { error: 'Login failed. Please try again.' };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Login failed';
+      setError(errorMessage);
+      return { error: errorMessage };
     } finally {
       setIsLoading(false);
     }
@@ -33,7 +52,7 @@ export default function LoginPage() {
         <p className="text-gray-600">Sign in to your ShiftPilot account</p>
       </div>
 
-      <LoginForm onSubmit={handleLogin} isLoading={isLoading} />
+      <LoginForm onSubmit={handleLogin} isLoading={isLoading} error={error} />
 
       <div className="text-center mt-6 pt-4 border-t border-gray-100">
         <p className="text-gray-600 text-sm">

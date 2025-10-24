@@ -16,7 +16,7 @@ import {
   type RegistrationStep1Data,
   type EmployerStep2Data,
   type EmployerRegistrationData,
-} from '@/app/components/forms/schemas/auth';
+} from '@/lib/auth/schemas';
 import Link from 'next/link';
 
 interface RegistrationResponse {

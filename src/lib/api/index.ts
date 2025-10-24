@@ -1,7 +1,14 @@
-export { ApiClient } from './apiClient';
-export { AuthClient } from './authClient';
-export { BaseClient } from './baseClient';
-export * from './types';
+// Re-export everything from auth
+export * from '../auth';
 
-import { ApiClient } from './apiClient';
-export const apiClient = new ApiClient();
+// API Client
+export { apiClient } from './apiClient';
+export { authClient } from './authClient';
+
+// Types
+export type { PaginatedResponse, PaginationParams } from './types/pagination';
+export type { ApiResponse } from './types';
+
+// Utilities
+export { ApiError } from './utils/error';
+export { logger } from './utils/logger';

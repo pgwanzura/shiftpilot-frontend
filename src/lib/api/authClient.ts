@@ -33,4 +33,22 @@ export class AuthClient extends BaseClient {
   async register(data: RegisterData): Promise<ApiResponse<AuthUserResponse>> {
     return this.post<ApiResponse<AuthUserResponse>>('/auth/register', data);
   }
+
+  async registerAgency(
+    data: RegisterData
+  ): Promise<ApiResponse<AuthUserResponse>> {
+    return this.post<ApiResponse<AuthUserResponse>>(
+      '/auth/register/agency',
+      data
+    );
+  }
+
+  async registerEmployer(
+    data: RegisterData
+  ): Promise<ApiResponse<AuthUserResponse>> {
+    return this.post<ApiResponse<AuthUserResponse>>(
+      '/auth/register/employer',
+      data
+    );
+  }
 }

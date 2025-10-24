@@ -1,4 +1,3 @@
-// lib/utils.ts
 type ClassValue =
   | string
   | number
