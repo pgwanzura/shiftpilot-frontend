@@ -2,7 +2,7 @@
 
 import React, { ReactNode, useState } from 'react';
 import { Icon } from '@/app/components/ui';
-import { AppIconType } from '@/app/config/icons';
+import { AppIconType } from '@/config/icons';
 
 interface PillProps {
   children: ReactNode;

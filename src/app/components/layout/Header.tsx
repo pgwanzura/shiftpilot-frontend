@@ -1,206 +1,358 @@
-// @/app/components/layouts/Header.tsx
 'use client';
-import { usePathname, useRouter } from 'next/navigation';
-import Link from 'next/link';
+
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Icon } from '@/app/components/ui';
-import Image from 'next/image';
-import { User, Briefcase } from 'lucide-react';
-import GradientLine from '@/app/components/ui/GradientLine';
-import { UserRole } from '@/lib/utils/roles';
-import { User as UserType } from '@/lib/api/types/auth';
-import { logoutAction } from '@/lib/actions/auth-actions';
+import { User as UserType } from '@/types';
 
 interface HeaderProps {
-  role: UserRole;
-  user?: UserType;
-  onMenuToggle?: () => void;
+  onMenuToggle: () => void;
+  sidebarCollapsed: boolean;
+  user: UserType | null;
 }
 
-export default function Header({ role, user, onMenuToggle }: HeaderProps) {
-  const pathname = usePathname();
+interface PanelState {
+  messages: boolean;
+  notifications: boolean;
+  userMenu: boolean;
+}
 
-  const displayName = user?.name;
-  const displayEmail = user?.email;
-  const avatarUrl =
-    user?.avatar || 'https://randomuser.me/api/portraits/women/44.jpg';
+export default function Header({
+  onMenuToggle,
+  sidebarCollapsed,
+  user,
+}: HeaderProps) {
+  const [panelState, setPanelState] = useState<PanelState>({
+    messages: false,
+    notifications: false,
+    userMenu: false,
+  });
+
+  const notificationsRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  const messageCount = 5;
+  const notificationCount = 125;
+
+  const getUserInitials = useCallback((name: string): string => {
+    return name
+      .split(' ')
+      .map((part) => part.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  }, []);
+
+  const formatBadgeCount = useCallback((count: number): string => {
+    return count > 99 ? '99+' : count.toString();
+  }, []);
+
+  const closeAllPanels = useCallback(() => {
+    setPanelState({ messages: false, notifications: false, userMenu: false });
+  }, []);
+
+  const togglePanel = useCallback((panel: keyof PanelState) => {
+    setPanelState((prev) => ({
+      messages: panel === 'messages' ? !prev.messages : false,
+      notifications: panel === 'notifications' ? !prev.notifications : false,
+      userMenu: panel === 'userMenu' ? !prev.userMenu : false,
+    }));
+  }, []);
+
+  const handleCreateShift = () => console.log('Create shift clicked');
+  const handleCalendarView = () => console.log('Calendar view clicked');
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const targets = [notificationsRef, messagesRef, userMenuRef];
+      const shouldClose = targets.every(
+        (ref) => ref.current && !ref.current.contains(event.target as Node)
+      );
+
+      if (shouldClose) closeAllPanels();
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [closeAllPanels]);
+
+  const messageItems = useMemo(
+    () => [
+      {
+        initials: 'SJ',
+        name: 'Sarah Johnson',
+        time: '2 min ago',
+        message: 'Can you approve my timesheet for this week?',
+        color: 'blue',
+      },
+      {
+        initials: 'MW',
+        name: 'Mike Wilson',
+        time: '1 hour ago',
+        message: 'I need to request time off next week',
+        color: 'purple',
+      },
+    ],
+    []
+  );
+
+  const notificationItems = useMemo(
+    () => [
+      {
+        icon: 'checkCircle' as const,
+        title: 'Timesheet approved',
+        description: 'Sarah Johnson • 2 hours ago',
+        color: 'green',
+      },
+      {
+        icon: 'calendar' as const,
+        title: 'New shift assigned',
+        description: 'Manchester Hospital • 5 hours ago',
+        color: 'blue',
+      },
+    ],
+    []
+  );
+
+  const userMenuItems = useMemo(
+    () => [
+      { icon: 'user' as const, label: 'Profile', href: '#' },
+      { icon: 'settings' as const, label: 'Settings', href: '#' },
+      {
+        icon: 'logout' as const,
+        label: 'Logout',
+        href: '#',
+        destructive: true,
+      },
+    ],
+    []
+  );
+
+  const panelTransitionClasses = (isOpen: boolean) =>
+    isOpen
+      ? 'opacity-100 visible translate-y-0'
+      : 'opacity-0 invisible -translate-y-2';
 
   return (
-    <header className="bg-white/95 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 shadow-sm">
-      <div className="max-w-12xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-        <div className="flex items-center space-x-3">
+    <header className="glass-effect border-b border-gray-200 sticky top-0 z-9">
+      <div className="flex items-center justify-between p-4">
+        <div className="flex items-center space-x-4">
           <button
-            className="lg:hidden p-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
             onClick={onMenuToggle}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-all duration-200 lg:hidden hover:scale-105"
+            aria-label="Toggle menu"
           >
-            <Icon name="menu" className="text-lg" />
+            <Icon name="menu" className="w-5 h-5 text-gray-600" />
           </button>
-          <div className="flex items-center space-x-2">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <div className="relative inline-block w-6 h-6">
-                <User className="absolute inset-0" size={24} />
-                <Briefcase className="absolute -bottom-1 -right-1 w-3 h-3" />
-              </div>
-            </div>
-            <div className="hidden sm:block">
-              <h1 className="text-lg sm:text-xl font-bold text-gray-900 bg-gradient-to-r from-indigo-900 to-purple-900 bg-clip-text text-transparent truncate max-w-[150px] sm:max-w-none">
-                {role.charAt(0).toUpperCase() + role.slice(1)} Portal
-              </h1>
-              <p className="hidden md:block text-sm text-gray-500 font-medium">
-                {pathname === '/'
-                  ? 'Welcome back'
-                  : 'Manage your workflow efficiently'}
-              </p>
-            </div>
+
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
+            <p className="text-sm text-gray-500">
+              Welcome back, {user?.name?.split(' ')[0]}! Here's your agency
+              overview.
+            </p>
           </div>
         </div>
-        <div className="flex items-center space-x-2 sm:space-x-3">
-          <div className="relative group">
-            <button className="flex items-center justify-center p-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-600 hover:text-indigo-600 transition-colors duration-200 relative">
-              <Icon name="bell" className="text-lg" />
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center shadow-sm">
-                3
-              </span>
+
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={handleCalendarView}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            title="Calendar View"
+          >
+            <Icon name="calendar" className="w-5 h-5 text-gray-600" />
+          </button>
+
+          <div className="relative" ref={messagesRef}>
+            <button
+              onClick={() => togglePanel('messages')}
+              className="relative p-2 rounded-lg hover:bg-gray-100 transition-all duration-200 group"
+              aria-label={`Messages ${messageCount > 0 ? `(${messageCount} unread)` : ''}`}
+            >
+              <Icon
+                name="messageCircle"
+                className="w-5 h-5 text-gray-600 group-hover:text-blue-600 transition-colors"
+              />
+              {messageCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 bg-blue-500 text-white text-xs font-medium rounded-full border-2 border-white flex items-center justify-center">
+                  {formatBadgeCount(messageCount)}
+                </span>
+              )}
             </button>
 
-            {/* Remove mt-2 and use pt-2 instead */}
-            <div className="absolute right-0 top-full pt-2 w-80 bg-transparent border-none shadow-none opacity-0 scale-95 origin-top-right translate-y-1 invisible group-hover:opacity-100 group-hover:visible group-hover:scale-100 group-hover:translate-y-0 transition-all duration-200 z-50">
-              <div className="bg-white border border-gray-200 rounded-xl shadow-lg">
-                <div className="p-2">
-                  <div className="px-3 py-2 border-b border-gray-100">
-                    <p className="text-sm font-medium text-gray-900">
-                      Notifications
-                    </p>
-                    <p className="text-xs text-gray-500">3 unread</p>
-                  </div>
-                  <div className="max-h-96 overflow-y-auto">
-                    <div className="flex items-start px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors duration-150">
-                      <div className="flex-shrink-0 mt-0.5 mr-3">
-                        <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                          <Icon
-                            name="userCheck"
-                            className="text-indigo-600 text-xs"
-                          />
-                        </div>
+            <div
+              className={`absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden transition-all duration-300 ${panelTransitionClasses(panelState.messages)}`}
+            >
+              <div className="p-4 border-b border-gray-200">
+                <h3 className="font-semibold text-gray-800">Messages</h3>
+                {messageCount > 0 && (
+                  <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                    {messageCount} new
+                  </span>
+                )}
+              </div>
+              <div className="max-h-80 overflow-y-auto">
+                {messageItems.map((item, index) => (
+                  <div
+                    key={index}
+                    className="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                  >
+                    <div className="flex items-start space-x-3">
+                      <div
+                        className={`w-10 h-10 bg-${item.color}-100 rounded-full flex items-center justify-center`}
+                      >
+                        <span
+                          className={`text-${item.color}-800 text-sm font-medium`}
+                        >
+                          {item.initials}
+                        </span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium">Reference Completed</p>
-                        <p className="text-xs text-gray-500 truncate">
-                          John Smith submitted your reference
-                        </p>
-                        <p className="text-xs text-indigo-500 mt-1">
-                          2 hours ago
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors duration-150">
-                      <div className="flex-shrink-0 mt-0.5 mr-3">
-                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                          <Icon name="mail" className="text-blue-600 text-xs" />
+                        <div className="flex justify-between">
+                          <p className="font-medium text-gray-800 truncate">
+                            {item.name}
+                          </p>
+                          <span className="text-xs text-gray-500 whitespace-nowrap">
+                            {item.time}
+                          </span>
                         </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium">New Message</p>
-                        <p className="text-xs text-gray-500 truncate">
-                          You have a new message from recruiter
-                        </p>
-                        <p className="text-xs text-indigo-500 mt-1">
-                          5 hours ago
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors duration-150">
-                      <div className="flex-shrink-0 mt-0.5 mr-3">
-                        <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                          <Icon
-                            name="checkCircle"
-                            className="text-green-600 text-xs"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium">Application Updated</p>
-                        <p className="text-xs text-gray-500 truncate">
-                          Your application status has changed
-                        </p>
-                        <p className="text-xs text-indigo-500 mt-1">
-                          1 day ago
+                        <p className="text-sm text-gray-600 truncate">
+                          {item.message}
                         </p>
                       </div>
                     </div>
                   </div>
-                  <div className="px-3 py-2 border-t border-gray-100">
-                    <button className="w-full text-center text-sm font-medium text-indigo-600 hover:text-indigo-700 py-2">
-                      View All Notifications
-                    </button>
-                  </div>
-                </div>
+                ))}
+              </div>
+              <div className="p-3 border-t border-gray-200 text-center">
+                <a
+                  href="#"
+                  className="text-primary-600 hover:text-primary-700 text-sm font-medium"
+                >
+                  View All Messages
+                </a>
               </div>
             </div>
           </div>
-          <div className="relative group">
-            <button className="flex items-center space-x-2 sm:space-x-3 p-1.5 sm:p-2 rounded-xl hover:bg-gray-50 transition-colors duration-200 group">
-              <div className="relative">
-                <Image
-                  src={avatarUrl}
-                  alt="Profile"
-                  width={32}
-                  height={32}
-                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-white shadow-sm"
-                />
-                <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-500 rounded-full border-2 border-white"></div>
-              </div>
-              <div className="hidden sm:block text-left">
-                <p className="text-sm font-medium text-gray-900 truncate max-w-[100px]">
-                  {displayName}
-                </p>
-                <p className="text-xs text-gray-500">Online</p>
-              </div>
+
+          <div className="relative" ref={notificationsRef}>
+            <button
+              onClick={() => togglePanel('notifications')}
+              className="relative p-2 rounded-lg hover:bg-gray-100 transition-all duration-200 group"
+              aria-label={`Notifications ${notificationCount > 0 ? `(${notificationCount} unread)` : ''}`}
+            >
               <Icon
-                name="chevronDown"
-                className="hidden sm:block text-gray-400 text-xs transition-transform duration-200 group-hover:rotate-180"
+                name="bell"
+                className="w-5 h-5 text-gray-600 group-hover:text-red-600 transition-colors"
               />
+              {notificationCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 bg-red-500 text-white text-xs font-medium rounded-full border-2 border-white flex items-center justify-center">
+                  {formatBadgeCount(notificationCount)}
+                </span>
+              )}
             </button>
 
-            {/* Remove mt-2 and use pt-2 instead */}
-            <div className="absolute right-0 top-full pt-2 w-48 sm:w-56 bg-transparent border-none shadow-none opacity-0 scale-95 origin-top-right translate-y-1 invisible group-hover:opacity-100 group-hover:visible group-hover:scale-100 group-hover:translate-y-0 transition-all duration-200 z-50">
-              <div className="bg-white border border-gray-200 rounded-xl shadow-lg">
-                <div className="p-2">
-                  <div className="px-3 py-2 border-b border-gray-100">
-                    <p className="text-sm font-medium text-gray-900">
-                      {displayName}
-                    </p>
-                    <p className="text-xs text-gray-500">{displayEmail}</p>
-                  </div>
-                  <Link
-                    href="/profile"
-                    className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors duration-150"
-                  >
-                    <Icon name="userCog" className="text-gray-400 mr-2" />
-                    Profile
-                  </Link>
-                  <Link
-                    href="/help"
-                    className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors duration-150"
-                  >
-                    <Icon name="helpCircle" className="text-gray-400 mr-2" />
-                    Help Center
-                  </Link>
-                  <button
-                    onClick={async () => {
-                      await logoutAction();
-                    }}
-                    className="flex items-center w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-150"
-                  >
-                    <Icon name="logout" className="text-red-400 mr-2" />
-                    Sign Out
-                  </button>
-                </div>
+            <div
+              className={`absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden transition-all duration-300 ${panelTransitionClasses(panelState.notifications)}`}
+            >
+              <div className="p-4 border-b border-gray-200">
+                <h3 className="font-semibold text-gray-800">Notifications</h3>
+                {notificationCount > 0 && (
+                  <span className="ml-2 px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">
+                    {notificationCount} new
+                  </span>
+                )}
               </div>
+              <div className="max-h-80 overflow-y-auto">
+                {notificationItems.map((item, index) => (
+                  <div
+                    key={index}
+                    className="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                  >
+                    <div className="flex items-start space-x-3">
+                      <div
+                        className={`w-10 h-10 bg-${item.color}-100 rounded-xl flex items-center justify-center`}
+                      >
+                        <Icon
+                          name={item.icon}
+                          className={`w-5 h-5 text-${item.color}-600`}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-800">
+                          {item.title}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {item.description}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="p-3 border-t border-gray-200 text-center">
+                <a
+                  href="#"
+                  className="text-primary-600 hover:text-primary-700 text-sm font-medium"
+                >
+                  View All Notifications
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={handleCreateShift}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              title="Create Shift"
+            >
+              <Icon name="plusCircle" className="w-5 h-5 text-gray-600" />
+            </button>
+          </div>
+
+          <div className="relative" ref={userMenuRef}>
+            <button
+              onClick={() => togglePanel('userMenu')}
+              className="flex items-center space-x-3 pl-3 border-l border-gray-200"
+              aria-label="User menu"
+            >
+              <div className="text-right hidden sm:block">
+                <p className="text-sm font-medium text-gray-800">
+                  {user?.name}
+                </p>
+                <p className="text-xs text-gray-500 capitalize">
+                  {user?.role.replace('_', ' ')}
+                </p>
+              </div>
+              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center shadow-md">
+                <span className="text-white font-semibold text-sm">
+                  {getUserInitials(user?.name || '')}
+                </span>
+              </div>
+            </button>
+
+            <div
+              className={`absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden transition-all duration-300 ${panelTransitionClasses(panelState.userMenu)}`}
+            >
+              {userMenuItems.map((item, index) => (
+                <a
+                  key={index}
+                  href={item.href}
+                  className={`flex items-center space-x-3 p-3 transition-colors ${
+                    item.destructive
+                      ? 'hover:bg-red-50 text-red-600'
+                      : 'hover:bg-gray-50 text-gray-700'
+                  }`}
+                >
+                  <Icon name={item.icon} className="w-4 h-4" />
+                  <span className="text-sm">{item.label}</span>
+                </a>
+              ))}
             </div>
           </div>
         </div>
       </div>
-      <GradientLine />
     </header>
   );
 }

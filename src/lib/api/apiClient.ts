@@ -26,7 +26,7 @@ import {
   User,
   UserStatusUpdate,
   UsersQueryParams,
-} from './types';
+} from '../../types';
 
 export class ApiClient extends BaseClient {
   protected baseURL: string;

@@ -1,4 +1,4 @@
-import { UserRole, AuthUser } from '../../auth';
+import { UserRole, AuthUser } from '../lib/auth';
 
 export interface User extends AuthUser {
   phone?: string;

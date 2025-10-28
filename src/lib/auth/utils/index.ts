@@ -18,3 +18,5 @@ export {
   canManageShifts,
   canApproveTimesheets,
 } from './roles';
+
+export * from './auth-utils';

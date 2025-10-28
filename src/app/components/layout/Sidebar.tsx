@@ -1,571 +1,209 @@
-// @/app/components/layouts/Sidebar.tsx
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import Image from 'next/image';
-import {
-  User,
-  Users,
-  UserPlus,
-  Share2,
-  HelpCircle,
-  CreditCard,
-  FileSignature,
-  CheckCircle,
-  FileText,
-  LayoutDashboard,
-  Settings,
-  LogOut,
-  Bell,
-  Shield,
-  BookOpen,
-  Calendar,
-  MessageSquare,
-  Building,
-  ShieldCheck,
-  BarChart3,
-  Database,
-  Wallet,
-  UserCog,
-  FileSearch,
-  ClipboardCheck,
-  TrendingUp,
-  CreditCard as CreditCardIcon,
-} from 'lucide-react';
-import type { ReactNode } from 'react';
-import IndigoLine from '@/app/components/ui/IndigoLine';
-import { UserRole } from '@/lib/utils/roles';
-import { User as UserType } from '@/lib/api/types/auth';
-import { logoutAction } from '@/lib/actions/auth-actions';
-import { Logo } from '@/app/components/ui';
-
-interface MenuItem {
-  href: string;
-  label: string;
-  icon: ReactNode;
-  exact?: boolean;
-}
+import { useEffect, useState } from 'react';
+import { ChevronLeft, ChevronRight, Settings, LogOut } from 'lucide-react';
+import { MenuItems } from '@/app/components/ui';
+import { MenuItem } from '@/config';
+import { User } from '@/types';
 
 interface SidebarProps {
-  role: UserRole;
-  user?: UserType;
-  onSignOut?: () => void;
+  isOpen: boolean;
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
+  onClose: () => void;
+  user: User | null;
+  menuItems: MenuItem[];
 }
 
-const menus: Record<UserRole, MenuItem[]> = {
-  super_admin: [
-    {
-      href: '/admin/dashboard',
-      label: 'Dashboard',
-      icon: <LayoutDashboard className="w-5 h-5" />,
-    },
-    {
-      href: '/admin/companies',
-      label: 'Companies',
-      icon: <Building className="w-5 h-5" />,
-    },
-    {
-      href: '/admin/users',
-      label: 'User Management',
-      icon: <UserCog className="w-5 h-5" />,
-    },
-    {
-      href: '/admin/payment-plans',
-      label: 'Payment Plans',
-      icon: <CreditCardIcon className="w-5 h-5" />,
-    },
-    {
-      href: '/admin/subscriptions',
-      label: 'Subscriptions',
-      icon: <Wallet className="w-5 h-5" />,
-    },
-    {
-      href: '/admin/reference-requests',
-      label: 'Reference Requests',
-      icon: <FileSearch className="w-5 h-5" />,
-    },
-    {
-      href: '/admin/verifications',
-      label: 'Verifications',
-      icon: <ShieldCheck className="w-5 h-5" />,
-    },
-    {
-      href: '/admin/analytics',
-      label: 'Analytics',
-      icon: <TrendingUp className="w-5 h-5" />,
-    },
-    {
-      href: '/admin/system-logs',
-      label: 'System Logs',
-      icon: <Database className="w-5 h-5" />,
-    },
-  ],
-  admin: [
-    {
-      href: '/admin/dashboard',
-      label: 'Dashboard',
-      icon: <LayoutDashboard className="w-5 h-5" />,
-    },
-    {
-      href: '/admin/companies',
-      label: 'Companies',
-      icon: <Building className="w-5 h-5" />,
-    },
-    {
-      href: '/admin/users',
-      label: 'User Management',
-      icon: <UserCog className="w-5 h-5" />,
-    },
-    {
-      href: '/admin/payment-plans',
-      label: 'Payment Plans',
-      icon: <CreditCardIcon className="w-5 h-5" />,
-    },
-    {
-      href: '/admin/subscriptions',
-      label: 'Subscriptions',
-      icon: <Wallet className="w-5 h-5" />,
-    },
-    {
-      href: '/admin/reference-requests',
-      label: 'Reference Requests',
-      icon: <FileSearch className="w-5 h-5" />,
-    },
-    {
-      href: '/admin/verifications',
-      label: 'Verifications',
-      icon: <ShieldCheck className="w-5 h-5" />,
-    },
-    {
-      href: '/admin/analytics',
-      label: 'Analytics',
-      icon: <TrendingUp className="w-5 h-5" />,
-    },
-  ],
-  recruiter_admin: [
-    {
-      href: '/recruiter-admin/dashboard',
-      label: 'Dashboard',
-      icon: <LayoutDashboard className="w-5 h-5" />,
-    },
-    {
-      href: '/recruiter-admin/team',
-      label: 'Team Management',
-      icon: <Users className="w-5 h-5" />,
-    },
-    {
-      href: '/recruiter-admin/candidates',
-      label: 'Candidates',
-      icon: <User className="w-5 h-5" />,
-    },
-    {
-      href: '/recruiter-admin/reference-requests',
-      label: 'Reference Requests',
-      icon: <FileSignature className="w-5 h-5" />,
-    },
-    {
-      href: '/recruiter-admin/reference-profiles',
-      label: 'Reference Profiles',
-      icon: <FileText className="w-5 h-5" />,
-    },
-    {
-      href: '/recruiter-admin/subscription',
-      label: 'Subscription',
-      icon: <CreditCard className="w-5 h-5" />,
-    },
-    {
-      href: '/recruiter-admin/payments',
-      label: 'Payments',
-      icon: <Wallet className="w-5 h-5" />,
-    },
-    {
-      href: '/recruiter-admin/reports',
-      label: 'Reports & Analytics',
-      icon: <BarChart3 className="w-5 h-5" />,
-    },
-  ],
-  recruiter: [
-    {
-      href: '/recruiter',
-      label: 'Dashboard',
-      icon: <LayoutDashboard className="w-5 h-5" />,
-      exact: true,
-    },
-    {
-      href: '/recruiter/candidates',
-      label: 'Candidates',
-      icon: <User className="w-5 h-5" />,
-    },
-    {
-      href: '/recruiter/reference-profiles',
-      label: 'Reference Profiles',
-      icon: <FileText className="w-5 h-5" />,
-    },
-    {
-      href: '/recruiter/on-demand',
-      label: 'On-Demand Requests',
-      icon: <ClipboardCheck className="w-5 h-5" />,
-    },
-  ],
-  candidate: [
-    {
-      href: '/candidate/dashboard',
-      label: 'Dashboard',
-      icon: <LayoutDashboard className="w-5 h-5" />,
-    },
-    {
-      href: '/candidate/profile',
-      label: 'Profile',
-      icon: <User className="w-5 h-5" />,
-    },
-    {
-      href: '/candidate/references',
-      label: 'My References',
-      icon: <FileText className="w-5 h-5" />,
-    },
-    {
-      href: '/candidate/add-reference',
-      label: 'Add Reference',
-      icon: <UserPlus className="w-5 h-5" />,
-    },
-    {
-      href: '/candidate/share-reference',
-      label: 'Share Reference',
-      icon: <Share2 className="w-5 h-5" />,
-    },
-    {
-      href: '/candidate/on-demand',
-      label: 'On-Demand Requests',
-      icon: <ClipboardCheck className="w-5 h-5" />,
-    },
-  ],
-  referee: [
-    {
-      href: '/referee/dashboard',
-      label: 'Dashboard',
-      icon: <LayoutDashboard className="w-5 h-5" />,
-    },
-    {
-      href: '/referee/pending-requests',
-      label: 'Pending Requests',
-      icon: <FileSignature className="w-5 h-5" />,
-    },
-    {
-      href: '/referee/completed-references',
-      label: 'Completed References',
-      icon: <CheckCircle className="w-5 h-5" />,
-    },
-    {
-      href: '/referee/guidelines',
-      label: 'Guidelines',
-      icon: <BookOpen className="w-5 h-5" />,
-    },
-    {
-      href: '/referee/profile',
-      label: 'Profile Settings',
-      icon: <User className="w-5 h-5" />,
-    },
-  ],
-};
+export default function Sidebar({
+  isOpen,
+  isCollapsed,
+  onToggleCollapse,
+  onClose,
+  user,
+  menuItems,
+}: SidebarProps) {
+  const [openDropdowns, setOpenDropdowns] = useState<Set<string>>(new Set());
 
-const accountMenus: Record<UserRole, MenuItem[]> = {
-  super_admin: [
-    {
-      href: '/admin/settings',
-      label: 'System Settings',
-      icon: <Settings className="w-4 h-4" />,
-    },
-    {
-      href: '/admin/notifications',
-      label: 'Notifications',
-      icon: <Bell className="w-4 h-4" />,
-    },
-    {
-      href: '/admin/audit-logs',
-      label: 'Audit Logs',
-      icon: <Database className="w-4 h-4" />,
-    },
-  ],
-  admin: [
-    {
-      href: '/admin/settings',
-      label: 'System Settings',
-      icon: <Settings className="w-4 h-4" />,
-    },
-    {
-      href: '/admin/notifications',
-      label: 'Notifications',
-      icon: <Bell className="w-4 h-4" />,
-    },
-    {
-      href: '/admin/audit-logs',
-      label: 'Audit Logs',
-      icon: <Database className="w-4 h-4" />,
-    },
-  ],
-  recruiter_admin: [
-    {
-      href: '/recruiter-admin/settings',
-      label: 'Company Settings',
-      icon: <Settings className="w-4 h-4" />,
-    },
-    {
-      href: '/recruiter-admin/billing',
-      label: 'Billing & Payments',
-      icon: <CreditCard className="w-4 h-4" />,
-    },
-    {
-      href: '/recruiter-admin/credits',
-      label: 'Credit Management',
-      icon: <Wallet className="w-4 h-4" />,
-    },
-  ],
-  recruiter: [
-    {
-      href: '/recruiter/settings',
-      label: 'Profile Settings',
-      icon: <Settings className="w-4 h-4" />,
-    },
-    {
-      href: '/recruiter/credits',
-      label: 'My Credits',
-      icon: <CreditCard className="w-4 h-4" />,
-    },
-    {
-      href: '/recruiter/notifications',
-      label: 'Notifications',
-      icon: <Bell className="w-4 h-4" />,
-    },
-  ],
-  candidate: [
-    {
-      href: '/candidate/settings',
-      label: 'Settings',
-      icon: <Settings className="w-4 h-4" />,
-    },
-    {
-      href: '/candidate/notifications',
-      label: 'Notifications',
-      icon: <Bell className="w-4 h-4" />,
-    },
-    {
-      href: '/candidate/privacy',
-      label: 'Privacy & Security',
-      icon: <Shield className="w-4 h-4" />,
-    },
-  ],
-  referee: [
-    {
-      href: '/referee/settings',
-      label: 'Profile Settings',
-      icon: <Settings className="w-4 h-4" />,
-    },
-    {
-      href: '/referee/availability',
-      label: 'Availability',
-      icon: <Calendar className="w-4 h-4" />,
-    },
-    {
-      href: '/referee/communication',
-      label: 'Communication Preferences',
-      icon: <MessageSquare className="w-4 h-4" />,
-    },
-  ],
-};
+  useEffect(() => {
+    const handleResize = (): void => {
+      if (window.innerWidth >= 1024 && isOpen) {
+        onClose();
+      }
+    };
 
-const helpMenuItem: MenuItem = {
-  href: '/help-center',
-  label: 'Help Center',
-  icon: <HelpCircle className="w-4 h-4" />,
-};
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isOpen, onClose]);
 
-export default function Sidebar({ role, user, onSignOut }: SidebarProps) {
-  const pathname = usePathname();
-  const currentYear = new Date().getFullYear();
+  const getUserInitials = (name: string): string => {
+    return name
+      .split(' ')
+      .map((part) => part.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
-  const isActive = (item: MenuItem): boolean => {
-    if (item.exact) {
-      return pathname === item.href;
+  const handleOverlayClick = (): void => {
+    onClose();
+  };
+
+  const handleCollapseToggle = (): void => {
+    onToggleCollapse();
+  };
+
+  const handleSettingsClick = (): void => {
+    console.log('Settings clicked');
+  };
+
+  const handleLogoutClick = (): void => {
+    console.log('Logout clicked');
+  };
+
+  const toggleDropdown = (label: string): void => {
+    const newDropdowns = new Set(openDropdowns);
+    if (newDropdowns.has(label)) {
+      newDropdowns.delete(label);
+    } else {
+      newDropdowns.add(label);
     }
-
-    const nestedRoutes = [
-      '/recruiter/on-demand',
-      '/candidate/on-demand',
-      '/recruiter/candidates',
-      '/recruiter-admin/candidates',
-    ];
-
-    if (nestedRoutes.includes(item.href)) {
-      return pathname.startsWith(item.href);
-    }
-
-    return pathname === item.href || pathname.startsWith(`${item.href}/`);
+    setOpenDropdowns(newDropdowns);
   };
 
-  const formatRole = (role: UserRole): string => {
-    return role.replace(/_/g, ' ');
-  };
+  const sidebarClasses = `
+    fixed inset-y-0 left-0 z-50
+    flex flex-col
+    bg-white
+    transition-all duration-300 ease-in-out
+    shadow-[0_0_50px_rgba(0,0,0,0.08)]
+    h-full relative
+    lg:static
+    ${isCollapsed ? 'w-20' : 'w-64'}
+    ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+  `;
 
-  const getAvatarPlaceholder = (name: string) => {
-    return 'https://randomuser.me/api/portraits/women/44.jpg';
-  };
-
-  const displayName = user?.name || 'User';
-  const displayEmail = user?.email || 'user@example.com';
-  const avatarUrl = user?.avatar || getAvatarPlaceholder(displayName);
+  const overlayClasses = `
+    fixed inset-0 bg-black bg-opacity-50 z-40
+    transition-opacity duration-300
+    lg:hidden
+    ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}
+  `;
 
   return (
-    <aside className="w-64 bg-white shadow-lg min-h-screen flex flex-col border-r border-gray-200 fixed left-0 top-0 bottom-0 z-40">
-      <div className="flex flex-col">
-        <div className="flex items-center justify-center h-20 px-4 bg-white border-b border-gray-200">
-          <Logo size="2xl" backgroundColor="white" />
-        </div>
-        <IndigoLine height="md" />
-      </div>
+    <>
+      <div className={overlayClasses} onClick={handleOverlayClick} />
 
-      <div className="px-4 py-5 flex items-center bg-indigo-50 rounded-lg m-4 mt-6">
-        <div className="relative flex-shrink-0">
-          <Image
-            src={avatarUrl}
-            alt={`${displayName}'s profile`}
-            width={44}
-            height={44}
-            className="w-11 h-11 rounded-full object-cover"
-          />
-          <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
-        </div>
-        <div className="ml-3 min-w-0 flex-1">
-          <p className="text-sm font-medium text-gray-900 truncate">
-            {displayName}
-          </p>
-          <p className="text-xs text-gray-500 truncate">{displayEmail}</p>
-          <div className="mt-1">
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 capitalize">
-              {formatRole(role)}
+      <aside className={sidebarClasses}>
+        <button
+          onClick={handleCollapseToggle}
+          className="absolute -right-3 top-6 z-10 w-6 h-6 bg-indigo-50 border border-indigo-200 rounded-lg shadow-sm flex items-center justify-center transition-all duration-200 hover:bg-indigo-100 hover:shadow-lg group"
+        >
+          {isCollapsed ? (
+            <ChevronRight className="w-4 h-4 text-indigo-600 group-hover:text-indigo-700 transition-colors" />
+          ) : (
+            <ChevronLeft className="w-4 h-4 text-indigo-600 group-hover:text-indigo-700 transition-colors" />
+          )}
+        </button>
+
+        <div className="relative flex items-center p-4 border-b border-gray-100 h-20">
+          <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+            <svg
+              className="w-6 h-6 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+              />
+            </svg>
+          </div>
+          <div
+            className={`absolute left-16 transition-all duration-300 ease-in-out ${
+              isCollapsed ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
+            }`}
+          >
+            <span className="text-xl font-bold text-gray-800 block">
+              ShiftPilot
             </span>
+            <p className="text-xs text-gray-500">Staffing Platform</p>
           </div>
         </div>
-      </div>
 
-      <nav className="flex-1 px-4 pb-4 overflow-y-auto">
-        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mt-2 px-4">
-          Main Navigation
-        </h3>
-        <ul className="mt-3 space-y-1">
-          {menus[role].map((item) => {
-            const active = isActive(item);
-            return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
-                    active
-                      ? 'text-indigo-700 bg-indigo-50 shadow-sm'
-                      : 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50'
-                  }`}
-                  aria-current={active ? 'page' : undefined}
-                >
-                  <span
-                    className={`flex-shrink-0 ${
-                      active ? 'text-indigo-600' : 'text-gray-400'
-                    }`}
-                  >
-                    {item.icon}
-                  </span>
-                  <span className="ml-3 truncate">{item.label}</span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-
-        <div className="mt-8">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-4">
-            Account
-          </h3>
-          <ul className="mt-3 space-y-1">
-            {accountMenus[role]?.map((item) => {
-              const active = isActive(item);
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
-                      active
-                        ? 'text-indigo-700 bg-indigo-50 shadow-sm'
-                        : 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50'
-                    }`}
-                    aria-current={active ? 'page' : undefined}
-                  >
-                    <span
-                      className={`flex-shrink-0 ${
-                        active ? 'text-indigo-600' : 'text-gray-400'
-                      }`}
-                    >
-                      {item.icon}
-                    </span>
-                    <span className="ml-3 truncate">{item.label}</span>
-                  </Link>
-                </li>
-              );
-            })}
-
-            <li>
-              <Link
-                href={helpMenuItem.href}
-                className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
-                  isActive(helpMenuItem)
-                    ? 'text-indigo-700 bg-indigo-50 shadow-sm'
-                    : 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50'
-                }`}
-              >
-                <span
-                  className={`flex-shrink-0 ${
-                    isActive(helpMenuItem) ? 'text-indigo-600' : 'text-gray-400'
-                  }`}
-                >
-                  {helpMenuItem.icon}
+        {user && (
+          <div className="relative flex items-center p-4 border-b border-gray-100 h-20">
+            <div className="relative">
+              <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center shadow-md">
+                <span className="text-white font-semibold text-sm">
+                  {getUserInitials(user.name)}
                 </span>
-                <span className="ml-3 truncate">{helpMenuItem.label}</span>
-              </Link>
-            </li>
+              </div>
+              <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+            </div>
+            <div
+              className={`absolute left-20 transition-all duration-300 ease-in-out ${
+                isCollapsed ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
+              }`}
+            >
+              <p className="text-sm font-semibold text-gray-800 truncate">
+                {user.name}
+              </p>
+              <p className="text-xs text-gray-500 capitalize">
+                {user.role.replace('_', ' ')}
+              </p>
+            </div>
+          </div>
+        )}
 
-            <li>
-              <button
-                onClick={async () => {
-                  await logoutAction();
-                }}
-                className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                type="button"
-              >
-                <LogOut className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />
-                <span className="truncate">Sign Out</span>
-              </button>
-            </li>
-          </ul>
+        <div className="flex-1 overflow-hidden">
+          <nav className="p-4 space-y-1 h-full">
+            <MenuItems
+              isCollapsed={isCollapsed}
+              menuItems={menuItems}
+              userRole={user?.role}
+              openDropdowns={openDropdowns}
+              onToggleDropdown={toggleDropdown}
+            />
+          </nav>
         </div>
-      </nav>
 
-      <div className="p-4 border-t border-gray-200 bg-white">
-        <div className="flex items-center justify-center text-xs text-gray-500 flex-wrap gap-1">
-          <span>© {currentYear} ReferenceScope</span>
-          <span aria-hidden="true">•</span>
-          <Link
-            href="/privacy"
-            className="hover:text-indigo-600 transition-colors"
+        <div className="p-4 border-t border-gray-100 space-y-2">
+          <button
+            onClick={handleSettingsClick}
+            className="relative w-full flex items-center p-3 rounded-xl text-gray-700 hover:text-primary-600 hover:bg-primary-50 transition-all duration-200 group hover:border-r-4 hover:border-indigo-500"
           >
-            Privacy
-          </Link>
-          <span aria-hidden="true">•</span>
-          <Link
-            href="/terms"
-            className="hover:text-indigo-600 transition-colors"
+            <div className="p-2 bg-gray-50 rounded-lg group-hover:bg-primary-100 transition-colors flex-shrink-0">
+              <Settings className="w-5 h-5" />
+            </div>
+            <span
+              className={`absolute left-16 transition-all duration-300 ease-in-out font-medium ${
+                isCollapsed ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
+              }`}
+            >
+              Settings
+            </span>
+          </button>
+          <button
+            onClick={handleLogoutClick}
+            className="relative w-full flex items-center p-3 rounded-xl text-gray-700 hover:text-red-600 hover:bg-red-50 transition-all duration-200 group hover:border-r-4 hover:border-indigo-500"
           >
-            Terms
-          </Link>
+            <div className="p-2 bg-gray-50 rounded-lg group-hover:bg-red-100 transition-colors flex-shrink-0">
+              <LogOut className="w-5 h-5" />
+            </div>
+            <span
+              className={`absolute left-16 transition-all duration-300 ease-in-out font-medium ${
+                isCollapsed ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
+              }`}
+            >
+              Logout
+            </span>
+          </button>
         </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }

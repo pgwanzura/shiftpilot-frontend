@@ -3,7 +3,7 @@
 import { ReactNode, ButtonHTMLAttributes } from 'react';
 import { Loader, Icon } from '@/app/components/ui';
 import { cn } from '@/lib/utils';
-import { AppIconType, IconName } from '@/app/config/icons';
+import { AppIconType, IconName } from '@/config/icons';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;

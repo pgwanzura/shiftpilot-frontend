@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import clsx from 'clsx';
-import { AppIconType, getIconComponent } from '@/app/config/icons';
+import { AppIconType, getIconComponent } from '@/config/icons';
 
 type IconSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | number;
 

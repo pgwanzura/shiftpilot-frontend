@@ -1,217 +1,137 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { AppLink, GradientLine, Icon, Button } from '@/app/components/ui';
-import { AppIconType } from './config/icons';
-
-const useMockAuth = () => {
-  return {
-    user: { name: 'John Doe' },
-    role: 'recruiter',
-    isAuthenticated: true,
-  };
-};
-
-interface FloatingShape {
-  id: number;
-  x: number;
-  y: number;
-  size: number;
-  speed: number;
-  delay: number;
-  opacity: number;
-}
+import React from 'react';
 
 export default function NotFound() {
-  const [shapes, setShapes] = useState<FloatingShape[]>([]);
-  const { user, role, isAuthenticated } = useMockAuth();
-
-  useEffect(() => {
-    const generatedShapes: FloatingShape[] = Array.from(
-      { length: 8 },
-      (_, i) => ({
-        id: i,
-        x: Math.random() * 100,
-        y: Math.random() * 100,
-        size: 60 + Math.random() * 100,
-        speed: 25 + Math.random() * 20,
-        delay: Math.random() * 3,
-        opacity: 0.03 + Math.random() * 0.05,
-      })
-    );
-    setShapes(generatedShapes);
-  }, []);
-
-  const getQuickActions = () => {
-    if (!isAuthenticated) {
-      return [
-        { href: '/login', label: 'Sign In', icon: 'logIn' },
-        { href: '/register', label: 'Create Account', icon: 'userPlus' },
-      ];
-    }
-
-    const baseActions = [
-      { href: '/dashboard', label: 'Dashboard', icon: 'layoutDashboard' },
-    ];
-
-    switch (role) {
-      case 'agency':
-        return [
-          ...baseActions,
-          { href: '/candidates', label: 'Candidates', icon: 'search' },
-          {
-            href: '/references',
-            label: 'Reference Requests',
-            icon: 'fileText',
-          },
-        ];
-      case 'agency_admin':
-        return [
-          ...baseActions,
-          { href: '/team', label: 'Manage Team', icon: 'settings' },
-          { href: '/billing', label: 'Billing & Plans', icon: 'creditCard' },
-          { href: '/analytics', label: 'Analytics', icon: 'barChart' },
-        ];
-      case 'employer':
-        return [
-          ...baseActions,
-          {
-            href: '/references/pending',
-            label: 'Pending Requests',
-            icon: 'inbox',
-          },
-        ];
-      default:
-        return baseActions;
-    }
-  };
-
-  const quickActions = getQuickActions();
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex items-center justify-center px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      <style jsx>{`
-        @keyframes float {
-          0%,
-          100% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-20px);
-          }
-        }
-      `}</style>
-
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {shapes.map((shape) => (
-          <div
-            key={shape.id}
-            className="absolute rounded-full"
-            style={{
-              left: `${shape.x}%`,
-              top: `${shape.y}%`,
-              width: `${shape.size}px`,
-              height: `${shape.size}px`,
-              backgroundColor: `rgba(59, 130, 246, ${shape.opacity})`,
-              animation: `float ${shape.speed}s infinite ease-in-out`,
-              animationDelay: `${shape.delay}s`,
-            }}
-          />
-        ))}
-      </div>
-
-      <div className="max-w-2xl w-full text-center relative z-10">
-        <div className="relative mb-12">
-          <div className="text-8xl sm:text-9xl font-bold text-slate-800 tracking-tight mb-6">
+    <div className="min-h-screen bg-gradient-to-br from-primary-25 via-white to-primary-50/80 flex items-center justify-center px-4 sm:px-6 lg:px-8">
+      <div className="max-w-2xl w-full text-center space-y-12">
+        {/* 404 Number with elegant gradient */}
+        <div className="mb-8">
+          <h1 className="text-8xl sm:text-9xl font-black text-primary-600 leading-none">
             404
-          </div>
+          </h1>
+        </div>
 
-          <div className="max-w-xs mx-auto mb-8">
-            <GradientLine height="lg" className="rounded-full" />
+        {/* Elegant Icon */}
+        <div className="flex justify-center">
+          <div className="relative p-8">
+            <div className="absolute inset-0 bg-primary-100 rounded-full opacity-60"></div>
+            <div className="relative transform hover:scale-105 transition-transform duration-500 ease-out">
+              <svg
+                className="w-20 h-20 sm:w-24 sm:h-24 text-primary-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.2}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+            </div>
           </div>
         </div>
 
-        <div className="rounded-2xl p-10 sm:p-12 shadow-md relative">
-          <div className="space-y-8">
-            <div className="space-y-4">
-              <h1 className="text-3xl sm:text-4xl font-semibold text-slate-900">
-                Page Not Found
-              </h1>
-              <p className="text-lg text-slate-600 leading-relaxed max-w-lg mx-auto">
-                {`We couldn't find the page you're looking for. The link may be
-                broken or the page may have been removed.`}
-              </p>
+        {/* Text Content */}
+        <div className="space-y-6">
+          <h2 className="text-3xl sm:text-4xl font-light text-gray-800 tracking-wide">
+            Page Not Found
+          </h2>
 
-              {isAuthenticated && (
-                <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-                  <p className="text-sm text-slate-700">
-                    Welcome back,{' '}
-                    <span className="font-semibold text-slate-900">
-                      {user?.name}
-                    </span>
-                  </p>
-                </div>
-              )}
-            </div>
+          <p className="text-lg text-gray-600 max-w-md mx-auto leading-relaxed font-light">
+            Sorry, we couldn't find the page you're looking for. It might have
+            been moved or no longer exists.
+          </p>
+        </div>
 
-            {isAuthenticated && quickActions.length > 0 && (
-              <div className="space-y-4 pt-2">
-                <p className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
-                  Suggested Pages
-                </p>
-                <div className="flex flex-wrap gap-3 justify-center">
-                  {quickActions.map((action, index) => (
-                    <AppLink
-                      key={index}
-                      href={action.href}
-                      variant="ghost"
-                      size="sm"
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 hover:border-slate-300 transition-all duration-200"
-                    >
-                      <Icon
-                        name={action.icon as AppIconType}
-                        className="w-4 h-4"
-                      />
-                      {action.label}
-                    </AppLink>
-                  ))}
-                </div>
-              </div>
-            )}
+        {/* Clean Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <a
+            href="/"
+            className="group inline-flex items-center px-8 py-4 bg-primary-500 hover:bg-primary-600 text-white font-normal rounded-2xl transition-all duration-300 transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1"
+          >
+            <svg
+              className="w-5 h-5 mr-3 transition-transform group-hover:scale-110"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+              />
+            </svg>
+            Go to Dashboard
+          </a>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-              <AppLink
-                href="/"
-                variant="gradient"
-                size="lg"
-                icon="home"
-                className="flex-1 justify-center shadow-md hover:shadow-lg transition-shadow duration-200"
+          <button
+            onClick={() => window.history.back()}
+            className="group inline-flex items-center px-8 py-4 bg-white hover:bg-gray-25 text-primary-500 font-normal rounded-2xl border border-primary-200 hover:border-primary-300 transition-all duration-300 transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1"
+          >
+            <svg
+              className="w-5 h-5 mr-3 transition-transform group-hover:-translate-x-1"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
+            </svg>
+            Go Back
+          </button>
+        </div>
+
+        {/* Minimal Quick Links */}
+        <div className="mt-16 pt-8 border-t border-gray-100">
+          <p className="text-xs font-medium text-gray-400 mb-6 tracking-widest uppercase">
+            Quick Links
+          </p>
+          <div className="flex flex-wrap justify-center gap-8 text-base">
+            {[
+              { href: '/shifts', label: 'View Shifts' },
+              { href: '/timesheets', label: 'Timesheets' },
+              { href: '/availability', label: 'Availability' },
+              { href: '/support', label: 'Support' },
+            ].map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="text-primary-500 hover:text-primary-600 font-light hover:underline underline-offset-4 transition-colors duration-200"
               >
-                Return to Home
-              </AppLink>
-              <Button
-                variant="primary-outline"
-                onClick={() => window.history.back()}
-                className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg border-2 border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 font-medium transition-all duration-200"
-              >
-                <Icon name="arrowLeft" className="w-4 h-4" />
-                Go Back
-              </Button>
-            </div>
+                {link.label}
+              </a>
+            ))}
+          </div>
+        </div>
 
-            <div className="pt-6 border-t border-slate-200">
-              <p className="text-sm text-slate-500">
-                Need assistance?{' '}
-                <AppLink
-                  href="mailto:support@referencescope.com"
-                  variant="ghost"
-                  size="sm"
-                  className="inlin  e text-blue-600 hover:text-blue-700 underline underline-offset-2 font-medium transition-colors duration-200"
-                >
-                  Contact Support
-                </AppLink>
-              </p>
-            </div>
+        {/* Subtle Branding */}
+        <div className="mt-12">
+          <div className="inline-flex items-center text-gray-400 text-sm font-light">
+            <svg
+              className="w-4 h-4 mr-2 text-primary-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <span className="text-primary-500 font-normal">ShiftPilot</span>
+            <span className="mx-3 text-gray-300">—</span>
+            <span>Staffing Made Simple</span>
           </div>
         </div>
       </div>

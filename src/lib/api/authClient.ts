@@ -5,7 +5,7 @@ import {
   ApiResponse,
   AuthUserResponse,
   LoginResponse,
-} from './types';
+} from '../../types';
 
 export class AuthClient extends BaseClient {
   protected baseURL: string;

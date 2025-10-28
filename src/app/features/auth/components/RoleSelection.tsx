@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button, Icon } from '@/app/components/ui';
-import { IconName } from '@/app/config/icons';
+import { IconName } from '@/config/icons';
 
 interface RoleSelectionProps {
   onRoleSelect: (role: 'agency' | 'employer') => void;

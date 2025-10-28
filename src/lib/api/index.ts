@@ -6,8 +6,11 @@ export { apiClient } from './apiClient';
 export { authClient } from './authClient';
 
 // Types
-export type { PaginatedResponse, PaginationParams } from './types/pagination';
-export type { ApiResponse } from './types';
+export type {
+  PaginatedResponse,
+  PaginationParams,
+} from '../../types/pagination';
+export type { ApiResponse } from '../../types';
 
 // Utilities
 export { ApiError } from './utils/error';

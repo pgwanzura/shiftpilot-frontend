@@ -4,16 +4,34 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import {
   LoginFormData,
-  AgencyRegistrationFormData,
-  EmployerRegistrationFormData,
+  AgencyRegistrationData,
+  EmployerRegistrationData,
 } from '../schemas';
 import { AuthActionResult } from '../types';
+import { getRoleRedirectPath } from '../utils';
 
 function getApiUrl(): string {
-  if (process.env.DOCKER_ENV === 'true') {
-    return process.env.INTERNAL_API_URL || 'http://shiftpilot-api:80';
+  const isDocker = process.env.DOCKER_ENV === 'true';
+  const internalApiUrl = process.env.INTERNAL_API_URL;
+  const publicApiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  if (isDocker) {
+    return validateUrl(internalApiUrl, 'http://shiftpilot-api:80');
   }
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+  return validateUrl(publicApiUrl, 'http://localhost:8000');
+}
+
+function validateUrl(url: string | undefined, fallback: string): string {
+  if (!url) return fallback;
+
+  try {
+    new URL(url);
+    return url;
+  } catch {
+    console.warn(`Invalid URL configured: ${url}, using fallback: ${fallback}`);
+    return fallback;
+  }
 }
 
 const API_URL = getApiUrl();
@@ -55,20 +73,17 @@ async function serverFetch(endpoint: string, options: RequestInit = {}) {
   });
 
   try {
-    // Create a simple cookie store for the server-side request
     const cookieStore = await cookies();
     const existingCookies = cookieStore.toString();
-
-    // First, get CSRF token - with simplified approach
     const csrfUrl = `${baseURL}/sanctum/csrf-cookie`;
     logDebug('Fetching CSRF token', csrfUrl);
 
     const csrfResponse = await fetch(csrfUrl, {
       method: 'GET',
-      credentials: 'include', // Important for cookies
+      credentials: 'include',
       headers: {
         Accept: 'application/json',
-        Cookie: existingCookies, // Pass existing cookies
+        Cookie: existingCookies,
       },
     });
 
@@ -271,7 +286,7 @@ export async function loginAction(
 
 // Keep other actions the same but use simpleServerFetch for now
 export async function registerAgencyAction(
-  data: AgencyRegistrationFormData
+  data: AgencyRegistrationData
 ): Promise<AuthActionResult> {
   logDebug('Agency registration started', { email: data.email });
 
@@ -312,7 +327,7 @@ export async function registerAgencyAction(
 }
 
 export async function registerEmployerAction(
-  data: EmployerRegistrationFormData
+  data: EmployerRegistrationData
 ): Promise<AuthActionResult> {
   logDebug('Employer registration started', { email: data.email });
 
@@ -373,22 +388,5 @@ export async function logoutAction(): Promise<void> {
     cookieStore.delete('auth_token');
     cookieStore.delete('auth_user');
     redirect('/login');
-  }
-}
-
-function getRoleRedirectPath(role: string): string {
-  switch (role) {
-    case 'agency_admin':
-    case 'agent':
-      return '/agency/dashboard';
-    case 'employer_admin':
-    case 'contact':
-      return '/employer/dashboard';
-    case 'super_admin':
-      return '/admin/dashboard';
-    case 'employee':
-      return '/employee/dashboard';
-    default:
-      return '/dashboard';
   }
 }

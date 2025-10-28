@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Icon } from './Icons';
-import { IconName } from '@/app/config/icons';
+import { IconName } from '@/config/icons';
 
 export interface AppLinkProps {
   href: string;

@@ -1,4 +1,4 @@
-export type { UserRole, AuthUser } from '../../auth';
+export type { UserRole, AuthUser } from '../lib/auth';
 export type { User, ApiResponse, ApiError, QueryParams } from './api';
 export type {
   AuthResponse,
@@ -36,3 +36,6 @@ export type {
   UserStatusUpdate,
   UsersQueryParams,
 } from './api';
+
+export * from './layout';
+export * from './user';

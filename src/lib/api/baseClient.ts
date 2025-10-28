@@ -1,4 +1,4 @@
-import { ApiError, QueryParams } from './types';
+import { ApiError, QueryParams } from '../../types';
 
 export abstract class BaseClient {
   protected abstract baseURL: string;
