@@ -13,7 +13,7 @@ interface MenuItemsProps {
   onToggleDropdown: (label: string) => void;
 }
 
-export default function MenuItems({
+export function MenuItems({
   isCollapsed,
   menuItems,
   userRole,
@@ -48,10 +48,10 @@ export default function MenuItems({
               <>
                 <button
                   onClick={() => onToggleDropdown(item.label)}
-                  className={`relative w-full flex items-center justify-between p-3 rounded-xl transition-all duration-300 ease-in-out group ${
+                  className={`relative w-full flex items-center justify-between p-3 rounded-xl transition-all duration-300 ease-in-out group cursor-pointer ${
                     isActive
-                      ? 'bg-gradient-to-r from-primary-50/80 to-primary-50/20 border-r-4 border-indigo-500 text-primary-600'
-                      : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50 hover:border-r-4 hover:border-indigo-500'
+                      ? 'bg-indigo-50 border-r-4 border-indigo-500 text-primary-600'
+                      : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50 border-r-2 border-white hover:border-indigo-500'
                   } ${isCollapsed ? 'justify-center' : ''}`}
                 >
                   <div
@@ -110,10 +110,10 @@ export default function MenuItems({
                         <Link
                           key={child.label}
                           href={child.path || '#'}
-                          className={`relative flex items-center justify-between p-2 rounded-lg transition-all duration-300 ease-in-out group ${
+                          className={`relative flex items-center justify-between p-2 rounded-lg transition-all duration-300 ease-in-out group cursor-pointer ${
                             isChildActive
                               ? 'bg-primary-50 text-primary-600 border-r-4 border-indigo-500'
-                              : 'text-gray-600 hover:text-primary-600 hover:bg-primary-50 hover:border-r-4 hover:border-indigo-500'
+                              : 'text-gray-600 hover:text-primary-600 hover:bg-primary-50 border-r-2 border-white hover:border-indigo-500'
                           }`}
                         >
                           <div className="flex items-center space-x-3">
@@ -148,10 +148,10 @@ export default function MenuItems({
             ) : (
               <Link
                 href={item.path || '#'}
-                className={`relative flex items-center justify-between p-3 rounded-xl transition-all duration-300 ease-in-out group ${
+                className={`relative flex items-center justify-between p-3 rounded-xl transition-all duration-300 ease-in-out group cursor-pointer ${
                   isActive
                     ? 'bg-gradient-to-r from-primary-50/80 to-primary-50/20 border-r-4 border-indigo-500 text-primary-600'
-                    : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50 hover:border-r-4 hover:border-indigo-500'
+                    : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50 border-r-2 border-white hover:border-indigo-500'
                 } ${isCollapsed ? 'justify-center' : ''}`}
               >
                 <div

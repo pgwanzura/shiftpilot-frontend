@@ -27,5 +27,6 @@ export {
   type NumberStepperProps,
 } from './NumberStepper';
 export { default as SearchInput, type SearchInputProps } from './SearchInput';
-export { default as MenuItems } from './MenuItems';
+export * from './MenuItems';
 export * from './StatCard';
+export * from './QuickActions';

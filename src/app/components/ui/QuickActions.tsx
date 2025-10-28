@@ -1,8 +1,8 @@
-// components/agency/quick-actions.tsx
 'use client';
 
 import { Plus, Calendar, Users, FileText } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { Button, Icon } from '@/app/components/ui';
 
 interface QuickActionsProps {
   userRole: string;
@@ -21,25 +21,25 @@ export function QuickActions({ userRole }: QuickActionsProps) {
   const actions: ActionItem[] = [
     {
       label: 'Create Shift',
-      icon: <Plus className="w-4 h-4" />,
+      icon: <Icon name="plus" className="w-4 h-4" />,
       href: '/agency/shifts/create',
       permissions: ['agency_admin', 'agent'],
     },
     {
       label: 'Add Employee',
-      icon: <Users className="w-4 h-4" />,
+      icon: <Icon name="user" className="w-4 h-4" />,
       href: '/agency/employees/create',
-      permissions: ['agency_admin'],
+      permissions: ['agency_admin', 'agent'],
     },
     {
       label: 'Schedule',
-      icon: <Calendar className="w-4 h-4" />,
+      icon: <Icon name="calendar" className="w-4 h-4" />,
       href: '/agency/shifts',
       permissions: ['agency_admin', 'agent'],
     },
     {
       label: 'Timesheets',
-      icon: <FileText className="w-4 h-4" />,
+      icon: <Icon name="fileText" className="w-4 h-4" />,
       href: '/agency/timesheets',
       permissions: ['agency_admin', 'agent'],
     },
@@ -56,14 +56,14 @@ export function QuickActions({ userRole }: QuickActionsProps) {
   return (
     <div className="flex flex-wrap gap-2">
       {filteredActions.map((action) => (
-        <button
+        <Button
           key={action.label}
           onClick={() => handleActionClick(action.href)}
           className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
         >
           {action.icon}
           <span className="ml-2">{action.label}</span>
-        </button>
+        </Button>
       ))}
     </div>
   );

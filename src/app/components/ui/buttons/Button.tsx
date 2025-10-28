@@ -44,7 +44,7 @@ const Button = ({
   ...props
 }: ButtonProps) => {
   const baseClasses =
-    'inline-flex items-center justify-center select-none font-medium outline-none transition-all duration-200 ease-out focus:ring-2 focus:ring-offset-1 border';
+    'inline-flex items-center justify-center select-none font-medium outline-none transition-all duration-200 ease-out focus:ring-2 focus:ring-offset-1 border cursor-pointer';
 
   const variants = {
     primary:
@@ -83,7 +83,7 @@ const Button = ({
 
   const sizes = {
     sm: 'px-3 py-1.5 text-xs gap-1 font-medium',
-    md: 'px-4 py-2 text-sm gap-1.5 font-semibold',
+    md: 'px-4 py-2 text-sm gap-2 font-medium',
     lg: 'px-6 py-2.5 text-base gap-2 font-semibold',
     xl: 'px-8 py-3 text-lg gap-2.5 font-bold',
   };
@@ -99,8 +99,15 @@ const Button = ({
   const iconSizes = {
     sm: 'h-3.5 w-3.5',
     md: 'h-4 w-4',
-    lg: 'h-4.5 w-4.5',
+    lg: 'h-5 w-5',
     xl: 'h-5 w-5',
+  };
+
+  const iconMargins = {
+    sm: 'ml-1.5',
+    md: 'ml-2',
+    lg: 'ml-2',
+    xl: 'ml-2.5',
   };
 
   const classes = cn(
@@ -141,23 +148,44 @@ const Button = ({
   const renderContent = () => {
     if (loading) {
       return (
-        <span className="flex items-center justify-center gap-2">
+        <>
           <Loader
             size={size === 'sm' ? 'xs' : 'sm'}
             className="flex-shrink-0"
           />
-          <span className="truncate">{processingText || children}</span>
-        </span>
+          <span className={cn('truncate', iconMargins[size])}>
+            {processingText || children}
+          </span>
+        </>
       );
     }
 
-    return (
-      <span className="flex items-center justify-center gap-2">
-        {renderIcon('left')}
-        <span className="truncate">{children}</span>
-        {renderIcon('right')}
-      </span>
-    );
+    if (icon && iconPosition === 'left') {
+      return (
+        <>
+          {renderIcon('left')}
+          <span className={cn('truncate', iconMargins[size])}>{children}</span>
+        </>
+      );
+    }
+
+    if (icon && iconPosition === 'right') {
+      return (
+        <>
+          <span className="truncate">{children}</span>
+          <span
+            className={cn(
+              'flex items-center justify-center',
+              iconMargins[size]
+            )}
+          >
+            {renderIcon('right')}
+          </span>
+        </>
+      );
+    }
+
+    return <span className="truncate">{children}</span>;
   };
 
   return (

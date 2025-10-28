@@ -139,7 +139,7 @@ export default function Header({
         <div className="flex items-center space-x-4">
           <button
             onClick={onMenuToggle}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-all duration-200 lg:hidden hover:scale-105"
+            className="p-2 rounded-lg hover:bg-gray-100 transition-all duration-200 lg:hidden hover:scale-105 cursor-pointer"
             aria-label="Toggle menu"
           >
             <Icon name="menu" className="w-5 h-5 text-gray-600" />
@@ -157,7 +157,7 @@ export default function Header({
         <div className="flex items-center space-x-4">
           <button
             onClick={handleCalendarView}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
             title="Calendar View"
           >
             <Icon name="calendar" className="w-5 h-5 text-gray-600" />
@@ -166,7 +166,7 @@ export default function Header({
           <div className="relative" ref={messagesRef}>
             <button
               onClick={() => togglePanel('messages')}
-              className="relative p-2 rounded-lg hover:bg-gray-100 transition-all duration-200 group"
+              className="relative p-2 rounded-lg hover:bg-gray-100 transition-all duration-200 group cursor-pointer"
               aria-label={`Messages ${messageCount > 0 ? `(${messageCount} unread)` : ''}`}
             >
               <Icon
@@ -227,7 +227,7 @@ export default function Header({
               <div className="p-3 border-t border-gray-200 text-center">
                 <a
                   href="#"
-                  className="text-primary-600 hover:text-primary-700 text-sm font-medium"
+                  className="text-primary-600 hover:text-primary-700 text-sm font-medium cursor-pointer"
                 >
                   View All Messages
                 </a>
@@ -238,7 +238,7 @@ export default function Header({
           <div className="relative" ref={notificationsRef}>
             <button
               onClick={() => togglePanel('notifications')}
-              className="relative p-2 rounded-lg hover:bg-gray-100 transition-all duration-200 group"
+              className="relative p-2 rounded-lg hover:bg-gray-100 transition-all duration-200 group cursor-pointer"
               aria-label={`Notifications ${notificationCount > 0 ? `(${notificationCount} unread)` : ''}`}
             >
               <Icon
@@ -293,7 +293,7 @@ export default function Header({
               <div className="p-3 border-t border-gray-200 text-center">
                 <a
                   href="#"
-                  className="text-primary-600 hover:text-primary-700 text-sm font-medium"
+                  className="text-primary-600 hover:text-primary-700 text-sm font-medium cursor-pointer"
                 >
                   View All Notifications
                 </a>
@@ -304,7 +304,7 @@ export default function Header({
           <div className="flex items-center space-x-2">
             <button
               onClick={handleCreateShift}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
               title="Create Shift"
             >
               <Icon name="plusCircle" className="w-5 h-5 text-gray-600" />
@@ -314,7 +314,7 @@ export default function Header({
           <div className="relative" ref={userMenuRef}>
             <button
               onClick={() => togglePanel('userMenu')}
-              className="flex items-center space-x-3 pl-3 border-l border-gray-200"
+              className="flex items-center space-x-3 pl-3 border-l border-gray-200 cursor-pointer"
               aria-label="User menu"
             >
               <div className="text-right hidden sm:block">
@@ -325,7 +325,7 @@ export default function Header({
                   {user?.role.replace('_', ' ')}
                 </p>
               </div>
-              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center shadow-md">
+              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center shadow-md cursor-pointer">
                 <span className="text-white font-semibold text-sm">
                   {getUserInitials(user?.name || '')}
                 </span>
@@ -339,7 +339,7 @@ export default function Header({
                 <a
                   key={index}
                   href={item.href}
-                  className={`flex items-center space-x-3 p-3 transition-colors ${
+                  className={`flex items-center space-x-3 p-3 transition-colors cursor-pointer ${
                     item.destructive
                       ? 'hover:bg-red-50 text-red-600'
                       : 'hover:bg-gray-50 text-gray-700'

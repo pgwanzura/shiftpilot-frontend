@@ -1,7 +1,6 @@
-// app/components/ui/Icon/Icon.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import clsx from 'clsx';
 import { AppIconType, getIconComponent } from '@/config/icons';
 
@@ -29,44 +28,37 @@ const SIZE_MAP: Record<string, number> = {
   xl: 32,
 } as const;
 
-const Spinner: React.FC<{
-  size: number;
-  spin?: boolean;
-  className?: string;
-}> = ({ size, spin = true, className }) => {
-  return (
-    <span
-      className={clsx(
-        'inline-flex animate-spin text-current',
-        spin && 'animate-spin',
-        className
-      )}
-      style={{ width: size, height: size }}
-      aria-hidden="true"
-    >
-      <svg
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <circle
-          className="opacity-25"
-          cx="12"
-          cy="12"
-          r="10"
-          stroke="currentColor"
-          strokeWidth="4"
-        />
-        <path
-          className="opacity-75"
-          fill="currentColor"
-          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-        />
-      </svg>
-    </span>
-  );
+const clientIconCache = new Map<
+  AppIconType,
+  React.ComponentType<LucideIconProps>
+>();
+
+export const preloadIconsClient = async (
+  iconNames: AppIconType[]
+): Promise<void> => {
+  const uniqueIcons = [...new Set(iconNames)];
+  const loadPromises = uniqueIcons.map(async (name) => {
+    if (!clientIconCache.has(name)) {
+      try {
+        const component = await getIconComponent(name);
+        if (component) {
+          clientIconCache.set(
+            name,
+            component as React.ComponentType<LucideIconProps>
+          );
+        }
+      } catch {
+        console.warn(`Failed to preload icon: ${name}`);
+      }
+    }
+  });
+  await Promise.allSettled(loadPromises);
+};
+
+const getCachedIconClient = (
+  name: AppIconType
+): React.ComponentType<LucideIconProps> | null => {
+  return clientIconCache.get(name) || null;
 };
 
 const Icon: React.FC<IconProps> = ({
@@ -74,35 +66,49 @@ const Icon: React.FC<IconProps> = ({
   size = 'md',
   spin = false,
   className,
+  ...props
 }) => {
   const [IconComponent, setIconComponent] =
-    useState<React.ComponentType<LucideIconProps> | null>(null);
-  const [loading, setLoading] = useState(true);
+    useState<React.ComponentType<LucideIconProps> | null>(() =>
+      getCachedIconClient(name)
+    );
   const [error, setError] = useState<string | null>(null);
 
-  const iconSize = typeof size === 'number' ? size : SIZE_MAP[size];
+  const iconSize = useMemo(
+    () => (typeof size === 'number' ? size : SIZE_MAP[size]),
+    [size]
+  );
 
   useEffect(() => {
     let isMounted = true;
 
-    const loadIcon = async () => {
+    if (IconComponent) return;
+
+    const loadIcon = async (): Promise<void> => {
       try {
-        setLoading(true);
+        const cached = getCachedIconClient(name);
+        if (cached) {
+          if (isMounted) {
+            setIconComponent(() => cached);
+            setError(null);
+          }
+          return;
+        }
+
         const component = await getIconComponent(name);
-        if (isMounted) {
-          setIconComponent(
-            () => component as React.ComponentType<LucideIconProps>
-          );
+        if (isMounted && component) {
+          const typedComponent =
+            component as React.ComponentType<LucideIconProps>;
+          clientIconCache.set(name, typedComponent);
+          setIconComponent(() => typedComponent);
           setError(null);
         }
-      } catch (err) {
+      } catch (err: unknown) {
         if (isMounted) {
-          setError(err instanceof Error ? err.message : 'Failed to load icon');
+          const errorMessage =
+            err instanceof Error ? err.message : 'Failed to load icon';
+          setError(errorMessage);
           setIconComponent(null);
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
         }
       }
     };
@@ -112,24 +118,25 @@ const Icon: React.FC<IconProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [name]);
-
-  if (loading) {
-    return <Spinner size={iconSize} spin={spin} className={className} />;
-  }
+  }, [name, IconComponent]);
 
   if (error || !IconComponent) {
-    console.error(`Failed to load icon: ${name}`, error);
     return (
       <span
         className={clsx(
-          'inline-flex items-center justify-center bg-red-100 text-red-600',
+          'inline-flex items-center justify-center bg-gray-100 text-gray-400',
           className
         )}
         style={{ width: iconSize, height: iconSize }}
-        title={`Icon ${name} not found`}
+        title={`Icon "${name}" not available`}
+        {...props}
       >
-        <span className="text-xs">❌</span>
+        <span
+          className="text-xs font-medium"
+          style={{ fontSize: Math.max(iconSize * 0.5, 8) }}
+        >
+          ?
+        </span>
       </span>
     );
   }
@@ -138,7 +145,12 @@ const Icon: React.FC<IconProps> = ({
     <IconComponent
       size={iconSize}
       color="currentColor"
-      className={clsx('inline-flex', spin && 'animate-spin', className)}
+      className={clsx(
+        'inline-flex flex-shrink-0',
+        spin && 'animate-spin',
+        className
+      )}
+      {...props}
     />
   );
 };

@@ -79,6 +79,7 @@ export default function Sidebar({
     shadow-[0_0_50px_rgba(0,0,0,0.08)]
     h-full relative
     lg:static
+    border-r border-gray-100
     ${isCollapsed ? 'w-20' : 'w-64'}
     ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
   `;
@@ -97,7 +98,7 @@ export default function Sidebar({
       <aside className={sidebarClasses}>
         <button
           onClick={handleCollapseToggle}
-          className="absolute -right-3 top-6 z-10 w-6 h-6 bg-indigo-50 border border-indigo-200 rounded-lg shadow-sm flex items-center justify-center transition-all duration-200 hover:bg-indigo-100 hover:shadow-lg group"
+          className="absolute -right-3 top-6 z-10 w-6 h-6 bg-indigo-50 border border-indigo-200 rounded-lg shadow-sm flex items-center justify-center transition-all duration-200 hover:bg-indigo-100 hover:shadow-lg group cursor-pointer"
         >
           {isCollapsed ? (
             <ChevronRight className="w-4 h-4 text-indigo-600 group-hover:text-indigo-700 transition-colors" />
@@ -174,7 +175,7 @@ export default function Sidebar({
         <div className="p-4 border-t border-gray-100 space-y-2">
           <button
             onClick={handleSettingsClick}
-            className="relative w-full flex items-center p-3 rounded-xl text-gray-700 hover:text-primary-600 hover:bg-primary-50 transition-all duration-200 group hover:border-r-4 hover:border-indigo-500"
+            className="relative w-full flex items-center p-3 rounded-xl text-gray-700 hover:text-primary-600 hover:bg-primary-50 transition-all duration-200 group border-r-2 border-white hover:border-primary-500 cursor-pointer"
           >
             <div className="p-2 bg-gray-50 rounded-lg group-hover:bg-primary-100 transition-colors flex-shrink-0">
               <Settings className="w-5 h-5" />
@@ -189,7 +190,7 @@ export default function Sidebar({
           </button>
           <button
             onClick={handleLogoutClick}
-            className="relative w-full flex items-center p-3 rounded-xl text-gray-700 hover:text-red-600 hover:bg-red-50 transition-all duration-200 group hover:border-r-4 hover:border-indigo-500"
+            className="relative w-full flex items-center p-3 rounded-xl text-gray-700 hover:text-red-600 hover:bg-red-50 transition-all duration-200 group border-r-2 border-white hover:border-red-500 cursor-pointer"
           >
             <div className="p-2 bg-gray-50 rounded-lg group-hover:bg-red-100 transition-colors flex-shrink-0">
               <LogOut className="w-5 h-5" />

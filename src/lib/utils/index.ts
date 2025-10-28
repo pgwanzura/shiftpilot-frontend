@@ -55,3 +55,4 @@ export * from './auth';
 export * from './error-handling';
 export * from './fetch';
 export * from './date-formatter';
+export * from './icon-preload';
