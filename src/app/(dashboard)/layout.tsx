@@ -10,33 +10,35 @@ export default function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const parseUserFromCookie = (cookieValue: string): User | null => {
-      try {
-        return JSON.parse(cookieValue) as User;
-      } catch {
-        return null;
-      }
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
     };
 
-    const getCookieValue = (name: string): string | null => {
-      if (typeof document === 'undefined') return null;
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) {
-        return parts.pop()?.split(';').shift() || null;
-      }
-      return null;
-    };
-
+  useEffect(() => {
     const getUserFromCookie = (): void => {
-      const userCookie = getCookieValue('auth_user');
-      if (userCookie) {
-        const decodedUser = decodeURIComponent(userCookie);
-        const parsedUser = parseUserFromCookie(decodedUser);
-        setUser(parsedUser);
+      try {
+        if (typeof document === 'undefined') return;
+
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; auth_user=`);
+        if (parts.length === 2) {
+          const cookieValue = parts.pop()?.split(';').shift();
+          if (cookieValue) {
+            const decodedUser = decodeURIComponent(cookieValue);
+            const parsedUser = JSON.parse(decodedUser) as User;
+            setUser(parsedUser);
+          }
+        }
+      } catch (error) {
+        console.log('Error parsing user cookie:', error);
       }
     };
 
@@ -48,7 +50,10 @@ export default function Layout({ children }: LayoutProps) {
   };
 
   const handleToggleCollapse = (): void => {
-    setSidebarCollapsed((prevState) => !prevState);
+    // Only allow collapsing on desktop, not mobile
+    if (!isMobile) {
+      setSidebarCollapsed((prevState) => !prevState);
+    }
   };
 
   const handleCloseSidebar = (): void => {
@@ -57,7 +62,8 @@ export default function Layout({ children }: LayoutProps) {
 
   const sidebarState: SidebarState = {
     isOpen: sidebarOpen,
-    isCollapsed: sidebarCollapsed,
+    // On mobile, sidebar is never collapsed - always full width when open
+    isCollapsed: isMobile ? false : sidebarCollapsed,
   };
 
   const sidebarHandlers: SidebarHandlers = {
@@ -69,7 +75,7 @@ export default function Layout({ children }: LayoutProps) {
   const userMenu = user ? getMenuForRole(user.role) : [];
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-gray-50">
       <Sidebar
         isOpen={sidebarState.isOpen}
         isCollapsed={sidebarState.isCollapsed}
@@ -79,7 +85,6 @@ export default function Layout({ children }: LayoutProps) {
         menuItems={userMenu}
       />
 
-      {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         <Header
           onMenuToggle={sidebarHandlers.onMenuToggle}

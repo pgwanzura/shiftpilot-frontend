@@ -17,6 +17,20 @@ import {
   Banknote,
   Receipt,
   Workflow,
+  MapPin,
+  Target,
+  Star,
+  Zap,
+  HeartHandshake,
+  BookOpen,
+  Download,
+  Upload,
+  MessageSquare,
+  HelpCircle,
+  Search,
+  TrendingUp,
+  FileCheck,
+  ClipboardList,
 } from 'lucide-react';
 
 export interface MenuItem {
@@ -37,93 +51,97 @@ export const menuConfig: MenuConfig = {
     {
       label: 'Dashboard',
       icon: LayoutDashboard,
-      path: '/dashboard',
+      path: '/admin',
     },
     {
-      label: 'Agencies',
-      icon: Building,
-      path: '/agencies',
-    },
-    {
-      label: 'Employers',
-      icon: Briefcase,
-      path: '/employers',
-    },
-    {
-      label: 'Users',
-      icon: Users,
+      label: 'Platform Management',
+      icon: Settings,
       children: [
         {
-          label: 'All Users',
-          icon: Users,
-          path: '/users',
+          label: 'Agencies',
+          icon: Building,
+          path: '/admin/agencies',
+          badge: '12',
         },
         {
-          label: 'Agents',
-          icon: UserCog,
-          path: '/agents',
+          label: 'Employers',
+          icon: Briefcase,
+          path: '/admin/employers',
+          badge: '45',
         },
         {
-          label: 'Contacts',
+          label: 'Users & Roles',
           icon: Users,
-          path: '/contacts',
+          path: '/admin/users',
+        },
+        {
+          label: 'System Configuration',
+          icon: Settings,
+          path: '/admin/system-config',
         },
       ],
     },
     {
-      label: 'Shifts',
-      icon: Calendar,
+      label: 'Financial Oversight',
+      icon: PoundSterling,
+      children: [
+        {
+          label: 'Revenue Dashboard',
+          icon: BarChart3,
+          path: '/admin/revenue',
+        },
+        {
+          label: 'Platform Invoices',
+          icon: Receipt,
+          path: '/admin/platform-invoices',
+          badge: '23',
+        },
+        {
+          label: 'Payment Reconciliation',
+          icon: Banknote,
+          path: '/admin/payments',
+        },
+        {
+          label: 'Commission Tracking',
+          icon: PoundSterling,
+          path: '/admin/commissions',
+        },
+        {
+          label: 'Tax Settings',
+          icon: Receipt,
+          path: '/admin/tax',
+        },
+      ],
+    },
+    {
+      label: 'Operations',
+      icon: Workflow,
       children: [
         {
           label: 'All Shifts',
           icon: Calendar,
-          path: '/shifts',
+          path: '/admin/shifts',
         },
         {
           label: 'Shift Templates',
           icon: CalendarDays,
-          path: '/shift-templates',
+          path: '/admin/shift-templates',
         },
         {
-          label: 'Shift Offers',
-          icon: Workflow,
-          path: '/shift-offers',
-        },
-      ],
-    },
-    {
-      label: 'Timesheets',
-      icon: Clock,
-      path: '/timesheets',
-    },
-    {
-      label: 'Financial',
-      icon: PoundSterling,
-      children: [
-        {
-          label: 'Invoices',
-          icon: Receipt,
-          path: '/invoices',
+          label: 'Timesheets',
+          icon: Clock,
+          path: '/admin/timesheets',
+          badge: '15',
         },
         {
-          label: 'Payments',
-          icon: Banknote,
-          path: '/payments',
+          label: 'Placements',
+          icon: Link,
+          path: '/admin/placements',
         },
         {
-          label: 'Payroll',
-          icon: PoundSterling,
-          path: '/payroll',
-        },
-        {
-          label: 'Payouts',
-          icon: Banknote,
-          path: '/payouts',
-        },
-        {
-          label: 'Subscriptions',
-          icon: Receipt,
-          path: '/subscriptions',
+          label: 'Rate Cards',
+          icon: BookOpen,
+          path: '/admin/rate-cards',
         },
       ],
     },
@@ -132,55 +150,77 @@ export const menuConfig: MenuConfig = {
       icon: Users,
       children: [
         {
-          label: 'Employees',
+          label: 'All Employees',
           icon: Users,
-          path: '/employees',
+          path: '/admin/employees',
         },
         {
-          label: 'Availability',
+          label: 'Agents',
+          icon: UserCog,
+          path: '/admin/agents',
+        },
+        {
+          label: 'Contacts',
+          icon: Users,
+          path: '/admin/contacts',
+        },
+        {
+          label: 'Availability Overview',
           icon: CalendarDays,
-          path: '/availability',
+          path: '/admin/availability',
         },
         {
-          label: 'Time Off',
+          label: 'Time Off Requests',
           icon: Clock,
-          path: '/time-off',
-        },
-        {
-          label: 'Placements',
-          icon: Link,
-          path: '/placements',
+          path: '/admin/time-off',
+          badge: '8',
         },
       ],
     },
     {
-      label: 'Analytics',
-      icon: BarChart3,
-      path: '/analytics',
-    },
-    {
-      label: 'System',
-      icon: Settings,
+      label: 'Compliance & Audit',
+      icon: Shield,
       children: [
         {
           label: 'Audit Logs',
           icon: Shield,
-          path: '/audit-logs',
+          path: '/admin/audit-logs',
         },
+        {
+          label: 'Compliance Reports',
+          icon: FileText,
+          path: '/admin/compliance',
+        },
+        {
+          label: 'System Health',
+          icon: Zap,
+          path: '/admin/health',
+        },
+        {
+          label: 'Performance Metrics',
+          icon: Target,
+          path: '/admin/metrics',
+        },
+      ],
+    },
+    {
+      label: 'Integrations',
+      icon: Link,
+      children: [
         {
           label: 'Webhooks',
           icon: Link,
-          path: '/webhooks',
+          path: '/admin/webhooks',
         },
         {
-          label: 'Notifications',
-          icon: Bell,
-          path: '/notifications',
+          label: 'API Management',
+          icon: Zap,
+          path: '/admin/api',
         },
         {
-          label: 'Platform Settings',
-          icon: Settings,
-          path: '/platform-settings',
+          label: 'Payment Providers',
+          icon: Banknote,
+          path: '/admin/payment-providers',
         },
       ],
     },
@@ -190,126 +230,262 @@ export const menuConfig: MenuConfig = {
     {
       label: 'Dashboard',
       icon: LayoutDashboard,
-      path: '/dashboard',
-    },
-    {
-      label: 'My Agency',
-      icon: Building,
       path: '/agency',
     },
     {
-      label: 'Team',
-      icon: Users,
+      label: 'Placement Opportunities',
+      icon: Search,
       children: [
         {
-          label: 'Agents',
-          icon: UserCog,
-          path: '/agents',
+          label: 'Available Placements',
+          icon: ClipboardList,
+          path: '/agency/placements',
+          badge: '15',
         },
         {
-          label: 'Employees',
-          icon: Users,
-          path: '/employees',
+          label: 'My Responses',
+          icon: FileCheck,
+          path: '/agency/placement-responses',
+        },
+        {
+          label: 'Placement Calendar',
+          icon: CalendarDays,
+          path: '/agency/placement-calendar',
+        },
+        {
+          label: 'Quick Match',
+          icon: Zap,
+          path: '/agency/quick-match',
         },
       ],
     },
     {
-      label: 'Shifts',
+      label: 'Staff Management',
+      icon: Users,
+      children: [
+        {
+          label: 'Employees',
+          icon: Users,
+          path: '/agency/employees',
+          badge: '89',
+        },
+        {
+          label: 'Agents',
+          icon: UserCog,
+          path: '/agency/agents',
+          badge: '5',
+        },
+        {
+          label: 'Onboarding',
+          icon: Upload,
+          path: '/agency/onboarding',
+        },
+        {
+          label: 'Qualifications',
+          icon: Star,
+          path: '/agency/qualifications',
+        },
+        {
+          label: 'Performance',
+          icon: Target,
+          path: '/agency/performance',
+        },
+      ],
+    },
+    {
+      label: 'Shift Operations',
       icon: Calendar,
       children: [
         {
           label: 'All Shifts',
           icon: Calendar,
-          path: '/shifts',
+          path: '/agency/shifts',
+        },
+        {
+          label: 'Shift Calendar',
+          icon: CalendarDays,
+          path: '/agency/shift-calendar',
         },
         {
           label: 'Shift Offers',
           icon: Workflow,
-          path: '/shift-offers',
+          path: '/agency/shift-offers',
+          badge: '12',
         },
         {
-          label: 'Shift Approval',
-          icon: Shield,
-          path: '/shift-approvals',
+          label: 'Create Shift',
+          icon: Calendar,
+          path: '/agency/shifts/create',
+        },
+        {
+          label: 'Auto Scheduling',
+          icon: Zap,
+          path: '/agency/auto-scheduling',
         },
       ],
     },
     {
-      label: 'Workforce',
+      label: 'Workforce Planning',
       icon: Users,
       children: [
         {
-          label: 'Placements',
-          icon: Link,
-          path: '/placements',
-        },
-        {
           label: 'Availability',
           icon: CalendarDays,
-          path: '/availability',
+          path: '/agency/availability',
         },
         {
           label: 'Time Off Requests',
           icon: Clock,
-          path: '/time-off-requests',
+          path: '/agency/time-off-requests',
+          badge: '7',
+        },
+        {
+          label: 'Employee Preferences',
+          icon: HeartHandshake,
+          path: '/agency/preferences',
+        },
+        {
+          label: 'Capacity Planning',
+          icon: TrendingUp,
+          path: '/agency/capacity',
         },
       ],
     },
     {
-      label: 'Timesheets',
+      label: 'Timesheets & Approval',
       icon: Clock,
-      path: '/timesheets',
-    },
-    {
-      label: 'Financial',
-      icon: PoundSterling,
       children: [
         {
-          label: 'Invoices',
-          icon: Receipt,
-          path: '/invoices',
+          label: 'Pending Approval',
+          icon: Clock,
+          path: '/agency/timesheets',
+          badge: '15',
         },
         {
-          label: 'Payroll',
-          icon: PoundSterling,
-          path: '/payroll',
+          label: 'Approval History',
+          icon: FileText,
+          path: '/agency/timesheets/history',
         },
         {
-          label: 'Payouts',
-          icon: Banknote,
-          path: '/payouts',
+          label: 'Clock In/Out Logs',
+          icon: Clock,
+          path: '/agency/attendance',
         },
       ],
     },
     {
-      label: 'Clients',
+      label: 'Client Management',
       icon: Briefcase,
       children: [
         {
           label: 'Employers',
           icon: Briefcase,
-          path: '/employers',
+          path: '/agency/employers',
+          badge: '23',
         },
         {
           label: 'Contracts',
-          icon: Link,
-          path: '/contracts',
+          icon: FileText,
+          path: '/agency/contracts',
+        },
+        {
+          label: 'Service Level Monitoring',
+          icon: Target,
+          path: '/agency/service-levels',
+        },
+        {
+          label: 'Client Communications',
+          icon: MessageSquare,
+          path: '/agency/client-comms',
         },
       ],
     },
     {
-      label: 'Settings',
+      label: 'Financial Operations',
+      icon: PoundSterling,
+      children: [
+        {
+          label: 'Invoices',
+          icon: Receipt,
+          path: '/agency/invoices',
+          badge: '8',
+        },
+        {
+          label: 'Payroll Processing',
+          icon: PoundSterling,
+          path: '/agency/payroll',
+        },
+        {
+          label: 'Payouts',
+          icon: Banknote,
+          path: '/agency/payouts',
+        },
+        {
+          label: 'Revenue Reports',
+          icon: BarChart3,
+          path: '/agency/revenue',
+        },
+        {
+          label: 'Commission Tracking',
+          icon: PoundSterling,
+          path: '/agency/commissions',
+        },
+        {
+          label: 'Expense Management',
+          icon: Receipt,
+          path: '/agency/expenses',
+        },
+      ],
+    },
+    {
+      label: 'Rate Management',
+      icon: BookOpen,
+      children: [
+        {
+          label: 'Rate Cards',
+          icon: BookOpen,
+          path: '/agency/rate-cards',
+        },
+        {
+          label: 'Client Rates',
+          icon: PoundSterling,
+          path: '/agency/client-rates',
+        },
+        {
+          label: 'Employee Pay Rates',
+          icon: Banknote,
+          path: '/agency/pay-rates',
+        },
+      ],
+    },
+    {
+      label: 'Agency Settings',
       icon: Settings,
       children: [
         {
-          label: 'Webhooks',
-          icon: Link,
-          path: '/webhooks',
+          label: 'Profile & Branding',
+          icon: Building,
+          path: '/agency/profile',
         },
         {
-          label: 'Subscription',
+          label: 'Billing & Subscription',
           icon: Receipt,
-          path: '/subscription',
+          path: '/agency/billing',
+        },
+        {
+          label: 'Integrations',
+          icon: Link,
+          path: '/agency/integrations',
+        },
+        {
+          label: 'Webhooks',
+          icon: Link,
+          path: '/agency/webhooks',
+        },
+        {
+          label: 'Document Templates',
+          icon: FileText,
+          path: '/agency/templates',
         },
       ],
     },
@@ -319,48 +495,132 @@ export const menuConfig: MenuConfig = {
     {
       label: 'Dashboard',
       icon: LayoutDashboard,
-      path: '/dashboard',
+      path: '/agency',
     },
     {
-      label: 'Shifts',
-      icon: Calendar,
+      label: 'Placement Opportunities',
+      icon: Search,
       children: [
         {
-          label: 'Manage Shifts',
-          icon: Calendar,
-          path: '/shifts',
+          label: 'Available Placements',
+          icon: ClipboardList,
+          path: '/agency/placements',
+          badge: '15',
         },
         {
-          label: 'Shift Offers',
-          icon: Workflow,
-          path: '/shift-offers',
+          label: 'My Responses',
+          icon: FileCheck,
+          path: '/agency/placement-responses',
+        },
+        {
+          label: 'Quick Match',
+          icon: Zap,
+          path: '/agency/quick-match',
         },
       ],
     },
     {
-      label: 'Employees',
-      icon: Users,
-      path: '/employees',
+      label: 'Shift Management',
+      icon: Calendar,
+      children: [
+        {
+          label: 'Available Shifts',
+          icon: Calendar,
+          path: '/agency/shifts',
+          badge: '18',
+        },
+        {
+          label: 'Shift Offers',
+          icon: Workflow,
+          path: '/agency/shift-offers',
+          badge: '12',
+        },
+        {
+          label: 'Create Shift Offer',
+          icon: Calendar,
+          path: '/agency/shifts/create-offer',
+        },
+        {
+          label: 'Shift Calendar',
+          icon: CalendarDays,
+          path: '/agency/calendar',
+        },
+      ],
     },
     {
-      label: 'Placements',
-      icon: Link,
-      path: '/placements',
+      label: 'Employee Management',
+      icon: Users,
+      children: [
+        {
+          label: 'My Employees',
+          icon: Users,
+          path: '/agency/employees',
+        },
+        {
+          label: 'Availability',
+          icon: CalendarDays,
+          path: '/agency/availability',
+        },
+        {
+          label: 'Quick Assign',
+          icon: Zap,
+          path: '/agency/quick-assign',
+        },
+      ],
     },
     {
       label: 'Timesheets',
       icon: Clock,
-      path: '/timesheets',
+      children: [
+        {
+          label: 'Pending Approval',
+          icon: Clock,
+          path: '/agency/timesheets',
+          badge: '8',
+        },
+        {
+          label: 'Approval History',
+          icon: FileText,
+          path: '/agency/timesheets/history',
+        },
+      ],
     },
     {
-      label: 'Availability',
-      icon: CalendarDays,
-      path: '/availability',
+      label: 'Client Coordination',
+      icon: Briefcase,
+      children: [
+        {
+          label: 'My Employers',
+          icon: Briefcase,
+          path: '/agency/employers',
+        },
+        {
+          label: 'Client Communications',
+          icon: MessageSquare,
+          path: '/agency/client-comms',
+        },
+      ],
     },
     {
-      label: 'Invoices',
-      icon: Receipt,
-      path: '/invoices',
+      label: 'Reports',
+      icon: BarChart3,
+      children: [
+        {
+          label: 'Shift Fill Rate',
+          icon: Target,
+          path: '/agency/reports/fill-rate',
+        },
+        {
+          label: 'Employee Performance',
+          icon: Star,
+          path: '/agency/reports/performance',
+        },
+        {
+          label: 'My Activity',
+          icon: BarChart3,
+          path: '/agency/reports/activity',
+        },
+      ],
     },
   ],
 
@@ -368,80 +628,193 @@ export const menuConfig: MenuConfig = {
     {
       label: 'Dashboard',
       icon: LayoutDashboard,
-      path: '/dashboard',
-    },
-    {
-      label: 'My Company',
-      icon: Building,
       path: '/employer',
     },
     {
-      label: 'Shifts',
+      label: 'Placement Management',
+      icon: ClipboardList,
+      children: [
+        {
+          label: 'Create Placement',
+          icon: Calendar,
+          path: '/employer/placements/create',
+        },
+        {
+          label: 'My Placements',
+          icon: ClipboardList,
+          path: '/employer/placements',
+        },
+        {
+          label: 'Agency Responses',
+          icon: FileCheck,
+          path: '/employer/placement-responses',
+          badge: '8',
+        },
+        {
+          label: 'Placement Calendar',
+          icon: CalendarDays,
+          path: '/employer/placement-calendar',
+        },
+      ],
+    },
+    {
+      label: 'Shift Management',
       icon: Calendar,
       children: [
         {
           label: 'All Shifts',
           icon: Calendar,
-          path: '/shifts',
+          path: '/employer/shifts',
         },
         {
-          label: 'Create Shift',
-          icon: Calendar,
-          path: '/shifts/create',
-        },
-        {
-          label: 'Shift Templates',
+          label: 'Shift Calendar',
           icon: CalendarDays,
-          path: '/shift-templates',
+          path: '/employer/calendar',
+        },
+        {
+          label: 'Bulk Shift Upload',
+          icon: Upload,
+          path: '/employer/shifts/upload',
         },
       ],
     },
     {
-      label: 'Team',
+      label: 'Team & Locations',
       icon: Users,
       children: [
         {
-          label: 'Contacts',
+          label: 'Contacts & Approvers',
           icon: Users,
-          path: '/contacts',
+          path: '/employer/contacts',
         },
         {
           label: 'Locations',
+          icon: MapPin,
+          path: '/employer/locations',
+        },
+        {
+          label: 'Departments',
           icon: Building,
-          path: '/locations',
+          path: '/employer/departments',
+        },
+        {
+          label: 'Assigned Staff',
+          icon: Users,
+          path: '/employer/staff',
         },
       ],
     },
     {
-      label: 'Timesheets',
+      label: 'Timesheets & Approval',
       icon: Clock,
-      path: '/timesheets',
+      children: [
+        {
+          label: 'Pending Approval',
+          icon: Clock,
+          path: '/employer/timesheets',
+          badge: '12',
+        },
+        {
+          label: 'Approval History',
+          icon: FileText,
+          path: '/employer/timesheets/history',
+        },
+        {
+          label: 'Digital Sign-off',
+          icon: Shield,
+          path: '/employer/sign-off',
+        },
+      ],
     },
     {
-      label: 'Financial',
+      label: 'Financial Management',
       icon: PoundSterling,
       children: [
         {
           label: 'Invoices',
           icon: Receipt,
-          path: '/invoices',
+          path: '/employer/invoices',
+          badge: '5',
         },
         {
-          label: 'Payments',
+          label: 'Payment History',
           icon: Banknote,
-          path: '/payments',
+          path: '/employer/payments',
+        },
+        {
+          label: 'Spend Analysis',
+          icon: BarChart3,
+          path: '/employer/analytics',
+        },
+        {
+          label: 'Budget Management',
+          icon: PoundSterling,
+          path: '/employer/budget',
         },
       ],
     },
     {
-      label: 'Agencies',
+      label: 'Agency Management',
       icon: Briefcase,
-      path: '/agencies',
+      children: [
+        {
+          label: 'Agency Partners',
+          icon: Briefcase,
+          path: '/employer/agencies',
+        },
+        {
+          label: 'Contracts',
+          icon: FileText,
+          path: '/employer/contracts',
+        },
+        {
+          label: 'Service Reviews',
+          icon: Star,
+          path: '/employer/service-reviews',
+        },
+      ],
     },
     {
-      label: 'Subscription',
-      icon: Receipt,
-      path: '/subscription',
+      label: 'Rate Management',
+      icon: BookOpen,
+      children: [
+        {
+          label: 'Rate Cards',
+          icon: BookOpen,
+          path: '/employer/rate-cards',
+        },
+        {
+          label: 'Budget Rates',
+          icon: PoundSterling,
+          path: '/employer/budget-rates',
+        },
+      ],
+    },
+    {
+      label: 'Employer Settings',
+      icon: Settings,
+      children: [
+        {
+          label: 'Company Profile',
+          icon: Building,
+          path: '/employer/profile',
+        },
+        {
+          label: 'Billing & Subscription',
+          icon: Receipt,
+          path: '/employer/billing',
+        },
+        {
+          label: 'Approval Workflow',
+          icon: Workflow,
+          path: '/employer/approval-workflow',
+        },
+        {
+          label: 'Notification Settings',
+          icon: Bell,
+          path: '/employer/notifications',
+        },
+      ],
     },
   ],
 
@@ -449,22 +822,198 @@ export const menuConfig: MenuConfig = {
     {
       label: 'Dashboard',
       icon: LayoutDashboard,
-      path: '/dashboard',
+      path: '/employer',
     },
     {
       label: 'Shifts',
       icon: Calendar,
-      path: '/shifts',
+      children: [
+        {
+          label: "Today's Shifts",
+          icon: Calendar,
+          path: '/employer/shifts/today',
+          badge: '6',
+        },
+        {
+          label: 'Upcoming Shifts',
+          icon: CalendarDays,
+          path: '/employer/shifts/upcoming',
+        },
+        {
+          label: 'Shift Calendar',
+          icon: CalendarDays,
+          path: '/employer/calendar',
+        },
+      ],
+    },
+    {
+      label: 'Approval Center',
+      icon: Shield,
+      children: [
+        {
+          label: 'Timesheet Approval',
+          icon: Clock,
+          path: '/employer/approvals/timesheets',
+          badge: '8',
+        },
+        {
+          label: 'Shift Sign-off',
+          icon: Calendar,
+          path: '/employer/approvals/shifts',
+          badge: '3',
+        },
+        {
+          label: 'Approval History',
+          icon: FileText,
+          path: '/employer/approvals/history',
+        },
+      ],
+    },
+    {
+      label: 'Staff Management',
+      icon: Users,
+      children: [
+        {
+          label: 'Assigned Staff',
+          icon: Users,
+          path: '/employer/staff',
+        },
+        {
+          label: 'Attendance',
+          icon: Clock,
+          path: '/employer/attendance',
+        },
+      ],
+    },
+    {
+      label: 'Communications',
+      icon: MessageSquare,
+      path: '/employer/comms',
+    },
+  ],
+
+  employee: [
+    {
+      label: 'Dashboard',
+      icon: LayoutDashboard,
+      path: '/employee',
+    },
+    {
+      label: 'My Shifts',
+      icon: Calendar,
+      children: [
+        {
+          label: 'Upcoming Shifts',
+          icon: Calendar,
+          path: '/employee/shifts',
+          badge: '5',
+        },
+        {
+          label: 'Shift Offers',
+          icon: Workflow,
+          path: '/employee/shift-offers',
+          badge: '2',
+        },
+        {
+          label: 'Shift History',
+          icon: CalendarDays,
+          path: '/employee/shift-history',
+        },
+        {
+          label: 'Shift Calendar',
+          icon: CalendarDays,
+          path: '/employee/calendar',
+        },
+      ],
     },
     {
       label: 'Timesheets',
       icon: Clock,
-      path: '/timesheets',
+      children: [
+        {
+          label: 'Clock In/Out',
+          icon: Clock,
+          path: '/employee/timesheets/clock',
+        },
+        {
+          label: 'My Timesheets',
+          icon: FileText,
+          path: '/employee/timesheets',
+        },
+        {
+          label: 'Submission History',
+          icon: FileText,
+          path: '/employee/timesheets/history',
+        },
+      ],
     },
     {
-      label: 'Approval Queue',
-      icon: Shield,
-      path: '/approvals',
+      label: 'Availability',
+      icon: CalendarDays,
+      children: [
+        {
+          label: 'Set Availability',
+          icon: CalendarDays,
+          path: '/employee/availability',
+        },
+        {
+          label: 'Time Off Requests',
+          icon: Clock,
+          path: '/employee/time-off',
+        },
+        {
+          label: 'Preferences',
+          icon: HeartHandshake,
+          path: '/employee/preferences',
+        },
+      ],
+    },
+    {
+      label: 'Pay & Documents',
+      icon: PoundSterling,
+      children: [
+        {
+          label: 'Pay History',
+          icon: Banknote,
+          path: '/employee/pay-history',
+        },
+        {
+          label: 'Payslips',
+          icon: Receipt,
+          path: '/employee/payslips',
+        },
+        {
+          label: 'Tax Documents',
+          icon: FileText,
+          path: '/employee/tax-documents',
+        },
+        {
+          label: 'Qualifications',
+          icon: Star,
+          path: '/employee/qualifications',
+        },
+      ],
+    },
+    {
+      label: 'Profile & Settings',
+      icon: Settings,
+      children: [
+        {
+          label: 'My Profile',
+          icon: UserCog,
+          path: '/employee/profile',
+        },
+        {
+          label: 'Documents',
+          icon: FileText,
+          path: '/employee/documents',
+        },
+        {
+          label: 'Notification Settings',
+          icon: Bell,
+          path: '/employee/notifications',
+        },
+      ],
     },
   ],
 
@@ -477,12 +1026,27 @@ export const menuConfig: MenuConfig = {
     {
       label: 'Process Queue',
       icon: Workflow,
-      path: '/process-queue',
+      path: '/system/process-queue',
     },
     {
-      label: 'Webhooks',
+      label: 'Scheduled Jobs',
+      icon: Clock,
+      path: '/system/scheduled-jobs',
+    },
+    {
+      label: 'Webhook Management',
       icon: Link,
-      path: '/webhooks',
+      path: '/system/webhooks',
+    },
+    {
+      label: 'Integration Health',
+      icon: Zap,
+      path: '/system/integration-health',
+    },
+    {
+      label: 'System Logs',
+      icon: FileText,
+      path: '/system/logs',
     },
   ],
 };
@@ -499,7 +1063,6 @@ export const hasMenuAccess = (
 ): boolean => {
   if (!requiredPermission) return true;
 
-  // Implement permission checking logic based on your user_roles config
   const rolePermissions = {
     super_admin: ['*'],
     agency_admin: [

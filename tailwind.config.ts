@@ -8,6 +8,9 @@ module.exports = {
   ],
   theme: {
     extend: {
+      // screens: {
+      //   xs: '475px',
+      // },
       colors: {
         primary: {
           50: '#eef2ff',
@@ -17,9 +20,9 @@ module.exports = {
           700: '#4338ca',
           800: '#3730a3',
           900: '#312e81',
-        }
-      }
+        },
+      },
     },
   },
   plugins: [],
-}
+};

@@ -1,5 +1,3 @@
-// Example: Agency layout with role protection
-// src/app/(dashboard)/agency/layout.tsx
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 

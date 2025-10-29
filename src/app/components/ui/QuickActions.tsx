@@ -1,6 +1,5 @@
 'use client';
 
-import { Plus, Calendar, Users, FileText } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Button, Icon } from '@/app/components/ui';
 
@@ -12,6 +11,7 @@ interface ActionItem {
   label: string;
   icon: React.ReactNode;
   href: string;
+  buttonVariant?: string;
   permissions: string[];
 }
 
@@ -19,6 +19,12 @@ export function QuickActions({ userRole }: QuickActionsProps) {
   const router = useRouter();
 
   const actions: ActionItem[] = [
+    {
+      label: 'Browse Placements',
+      icon: <Icon name="search" className="w-4 h-4" />,
+      href: '/agency/placements',
+      permissions: ['agency_admin', 'agent'],
+    },
     {
       label: 'Create Shift',
       icon: <Icon name="plus" className="w-4 h-4" />,
@@ -32,15 +38,15 @@ export function QuickActions({ userRole }: QuickActionsProps) {
       permissions: ['agency_admin', 'agent'],
     },
     {
-      label: 'Schedule',
-      icon: <Icon name="calendar" className="w-4 h-4" />,
-      href: '/agency/shifts',
-      permissions: ['agency_admin', 'agent'],
-    },
-    {
       label: 'Timesheets',
       icon: <Icon name="fileText" className="w-4 h-4" />,
       href: '/agency/timesheets',
+      permissions: ['agency_admin', 'agent'],
+    },
+    {
+      label: 'My Responses',
+      icon: <Icon name="fileCheck" className="w-4 h-4" />,
+      href: '/agency/placement-responses',
       permissions: ['agency_admin', 'agent'],
     },
   ];
@@ -59,7 +65,7 @@ export function QuickActions({ userRole }: QuickActionsProps) {
         <Button
           key={action.label}
           onClick={() => handleActionClick(action.href)}
-          className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
+          className="inline-flex items-center px-4 py-2 bg-primary-600 rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
         >
           {action.icon}
           <span className="ml-2">{action.label}</span>
