@@ -30,3 +30,5 @@ export { default as SearchInput, type SearchInputProps } from './SearchInput';
 export * from './MenuItems';
 export * from './StatCard';
 export * from './QuickActions';
+export * from './Badge';
+export * from './InteractiveStatsCard';

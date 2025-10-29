@@ -1,0 +1,155 @@
+export interface Timesheet {
+  id: string;
+  employeeName: string;
+  employeeId: string;
+  shiftDate: string;
+  clockIn: string;
+  clockOut: string;
+  breakMinutes: number;
+  totalHours: number;
+  status: 'pending' | 'approved' | 'rejected' | 'disputed';
+  employer: string;
+  location: string;
+  hourlyRate: number;
+  totalAmount: number;
+  submittedAt: string;
+}
+
+export const mockTimesheets: Timesheet[] = [
+  {
+    id: 'TS-001',
+    employeeName: 'Sarah Johnson',
+    employeeId: 'EMP-001',
+    shiftDate: '2024-01-15',
+    clockIn: '2024-01-15T08:00:00Z',
+    clockOut: '2024-01-15T16:30:00Z',
+    breakMinutes: 30,
+    totalHours: 8.0,
+    status: 'pending',
+    employer: 'St. Mary Hospital',
+    location: 'ICU Ward',
+    hourlyRate: 25.5,
+    totalAmount: 204.0,
+    submittedAt: '2024-01-15T17:00:00Z',
+  },
+  {
+    id: 'TS-002',
+    employeeName: 'Mike Chen',
+    employeeId: 'EMP-002',
+    shiftDate: '2024-01-15',
+    clockIn: '2024-01-15T09:00:00Z',
+    clockOut: '2024-01-15T17:15:00Z',
+    breakMinutes: 45,
+    totalHours: 7.5,
+    status: 'pending',
+    employer: 'Tech Solutions Ltd',
+    location: 'Data Center',
+    hourlyRate: 22.0,
+    totalAmount: 165.0,
+    submittedAt: '2024-01-15T17:30:00Z',
+  },
+  {
+    id: 'TS-003',
+    employeeName: 'Emma Davis',
+    employeeId: 'EMP-003',
+    shiftDate: '2024-01-14',
+    clockIn: '2024-01-14T08:30:00Z',
+    clockOut: '2024-01-14T16:00:00Z',
+    breakMinutes: 30,
+    totalHours: 7.0,
+    status: 'approved',
+    employer: 'City Elementary',
+    location: 'Classroom 4B',
+    hourlyRate: 20.5,
+    totalAmount: 143.5,
+    submittedAt: '2024-01-14T16:30:00Z',
+  },
+  {
+    id: 'TS-004',
+    employeeName: 'James Wilson',
+    employeeId: 'EMP-004',
+    shiftDate: '2024-01-14',
+    clockIn: '2024-01-14T07:45:00Z',
+    clockOut: '2024-01-14T15:45:00Z',
+    breakMinutes: 60,
+    totalHours: 7.0,
+    status: 'rejected',
+    employer: 'Metro Construction',
+    location: 'Site A',
+    hourlyRate: 28.0,
+    totalAmount: 196.0,
+    submittedAt: '2024-01-14T16:15:00Z',
+  },
+  {
+    id: 'TS-005',
+    employeeName: 'Lisa Brown',
+    employeeId: 'EMP-005',
+    shiftDate: '2024-01-13',
+    clockIn: '2024-01-13T10:00:00Z',
+    clockOut: '2024-01-13T18:30:00Z',
+    breakMinutes: 30,
+    totalHours: 8.0,
+    status: 'disputed',
+    employer: 'Retail Plus',
+    location: 'Main Store',
+    hourlyRate: 18.5,
+    totalAmount: 148.0,
+    submittedAt: '2024-01-13T19:00:00Z',
+  },
+  {
+    id: 'TS-006',
+    employeeName: 'David Miller',
+    employeeId: 'EMP-006',
+    shiftDate: '2024-01-13',
+    clockIn: '2024-01-13T08:00:00Z',
+    clockOut: '2024-01-13T17:00:00Z',
+    breakMinutes: 60,
+    totalHours: 8.0,
+    status: 'pending',
+    employer: 'Office Complex Ltd',
+    location: 'Reception',
+    hourlyRate: 19.75,
+    totalAmount: 158.0,
+    submittedAt: '2024-01-13T17:30:00Z',
+  },
+  {
+    id: 'TS-007',
+    employeeName: 'Maria Garcia',
+    employeeId: 'EMP-007',
+    shiftDate: '2024-01-12',
+    clockIn: '2024-01-12T14:00:00Z',
+    clockOut: '2024-01-13T02:00:00Z',
+    breakMinutes: 45,
+    totalHours: 11.25,
+    status: 'approved',
+    employer: 'Night Security Inc',
+    location: 'Building B',
+    hourlyRate: 26.0,
+    totalAmount: 292.5,
+    submittedAt: '2024-01-13T02:30:00Z',
+  },
+  {
+    id: 'TS-008',
+    employeeName: 'Robert Taylor',
+    employeeId: 'EMP-008',
+    shiftDate: '2024-01-12',
+    clockIn: '2024-01-12T06:00:00Z',
+    clockOut: '2024-01-12T14:30:00Z',
+    breakMinutes: 30,
+    totalHours: 8.0,
+    status: 'pending',
+    employer: 'Early Morning Cafe',
+    location: 'Kitchen',
+    hourlyRate: 17.5,
+    totalAmount: 140.0,
+    submittedAt: '2024-01-12T15:00:00Z',
+  },
+];
+
+export const timesheetStats = {
+  pending: 4,
+  approved: 2,
+  rejected: 1,
+  disputed: 1,
+  totalAmount: 1447.0,
+};
