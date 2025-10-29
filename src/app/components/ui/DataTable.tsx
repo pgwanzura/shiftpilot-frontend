@@ -241,16 +241,27 @@ export function DataTable<T extends Record<string, any>>({
                   onMouseEnter={() => setHoveredRow(rowIndex)}
                   onMouseLeave={() => setHoveredRow(null)}
                   onClick={() => onRowClick?.(row)}
-                  className={`group grid grid-cols-12 gap-3 sm:gap-4 px-4 sm:px-6 py-3 text-sm transition-all duration-300 border-b border-gray-100 last:border-b-0 ${
+                  className={`group relative grid grid-cols-12 gap-3 sm:gap-4 px-4 sm:px-6 py-3 text-sm transition-all duration-300 border-b border-gray-100 last:border-b-0 ${
                     onRowClick ? 'cursor-pointer' : ''
                   } ${
                     hoveredRow === rowIndex
-                      ? 'bg-indigo-50 border-l-4 border-l-indigo-500'
+                      ? 'bg-indigo-50'
                       : rowIndex % 2 === 0
                         ? 'bg-white'
                         : 'bg-gray-50/30'
                   } ${rowClassName?.(row, rowIndex) || ''}`}
                 >
+                  {/* Vertical line - matches row background */}
+                  <div
+                    className={`absolute left-0 top-0 h-full w-0.5 transition-colors duration-300 ${
+                      hoveredRow === rowIndex
+                        ? 'bg-indigo-500'
+                        : rowIndex % 2 === 0
+                          ? 'bg-white'
+                          : 'bg-gray-50/30'
+                    }`}
+                  />
+
                   {columns.map((column: any, colIndex: number) => (
                     <div
                       key={colIndex}
