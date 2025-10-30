@@ -7,7 +7,6 @@ import {
   XCircle,
   AlertCircle,
   PoundSterling,
-  ChevronRight,
 } from 'lucide-react';
 import { PageHeader } from '@/app/components/layout';
 import { QuickActions, Badge, InteractiveStatsCard } from '@/app/components/ui';
@@ -18,7 +17,6 @@ import {
   timesheetStats,
 } from '@/app/mocks/timesheets';
 
-// Status badge component
 const StatusBadge = ({ status }: { status: Timesheet['status'] }) => {
   const statusConfig = {
     pending: { label: 'Pending', variant: 'warning' as const },
@@ -27,11 +25,10 @@ const StatusBadge = ({ status }: { status: Timesheet['status'] }) => {
     disputed: { label: 'Disputed', variant: 'warning' as const },
   };
 
-  const config = statusConfig[status as keyof typeof statusConfig];
+  const config = statusConfig[status];
   return <Badge variant={config.variant}>{config.label}</Badge>;
 };
 
-// Format currency
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-GB', {
     style: 'currency',
@@ -39,12 +36,10 @@ const formatCurrency = (amount: number) => {
   }).format(amount);
 };
 
-// Format date
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString('en-GB');
 };
 
-// Format time
 const formatTime = (dateString: string) => {
   return new Date(dateString).toLocaleTimeString('en-GB', {
     hour: '2-digit',
@@ -78,41 +73,41 @@ const timesheetColumns: Column<Timesheet>[] = [
     key: 'shiftDate',
     header: 'Shift Date',
     sortable: true,
-    width: 'col-span-1',
-    render: (value: string) => formatDate(value),
+    render: (value) => formatDate(value as string),
+    width: 'col-span-2',
   },
   {
     key: 'clockIn',
     header: 'Clock In/Out',
     sortable: true,
-    width: 'col-span-2',
-    render: (value: string, row: Timesheet) => (
+    render: (value, row) => (
       <div className="text-sm">
         <div>{formatTime(row.clockIn)}</div>
         <div className="text-gray-500">{formatTime(row.clockOut)}</div>
       </div>
     ),
+    width: 'col-span-2',
   },
   {
     key: 'totalHours',
     header: 'Hours',
     sortable: true,
-    width: 'col-span-1',
-    render: (value: number) => `${value}h`,
+    render: (value) => `${value as number}h`,
+    width: 'col-span-2',
   },
   {
     key: 'status',
     header: 'Status',
     sortable: true,
-    width: 'col-span-1',
     render: (value: Timesheet['status']) => <StatusBadge status={value} />,
+    width: 'col-span-2',
   },
   {
     key: 'totalAmount',
     header: 'Amount',
     sortable: true,
-    width: 'col-span-1',
-    render: (value: number) => formatCurrency(value),
+    render: (value) => formatCurrency(value as number),
+    width: 'col-span-2',
   },
 ];
 
@@ -124,53 +119,39 @@ export default function TimesheetsPage() {
   });
 
   const handleRowClick = (timesheet: Timesheet) => {
-    // Navigate to timesheet detail page
     console.log('Navigate to timesheet:', timesheet.id);
-    // router.push(`/agency/timesheets/${timesheet.id}`);
   };
 
   const handleSortChange = (sort: any) => {
     console.log('Sort changed:', sort);
   };
 
-  const handleFilterChange = (filters: any) => {
-    console.log('Filters changed:', filters);
-  };
-
-  // Mock user for now - you'll replace this with your auth logic
   const user = { role: 'agency_admin' };
 
-  // Click handlers for stats cards
   const handlePendingClick = () => {
     console.log('Navigate to pending timesheets');
-    // Filter table to show only pending timesheets
   };
 
   const handleApprovedClick = () => {
     console.log('Navigate to approved timesheets');
-    // Filter table to show only approved timesheets
   };
 
   const handleRejectedClick = () => {
     console.log('Navigate to rejected timesheets');
-    // Filter table to show only rejected timesheets
   };
 
   const handleDisputedClick = () => {
     console.log('Navigate to disputed timesheets');
-    // Filter table to show only disputed timesheets
   };
 
   const handleTotalValueClick = () => {
     console.log('Navigate to financial report');
-    // Navigate to financial analytics
   };
 
   return (
     <div className="space-y-6">
       <PageHeader actions={<QuickActions userRole={user.role} />} />
 
-      {/* Beautiful Interactive Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         <InteractiveStatsCard
           title="Pending Approval"
@@ -214,14 +195,12 @@ export default function TimesheetsPage() {
         />
       </div>
 
-      {/* Timesheets Table */}
       <DataTable<Timesheet>
         data={mockTimesheets}
         columns={timesheetColumns}
         pagination={pagination}
         onPaginationChange={setPagination}
         onSortChange={handleSortChange}
-        onFilterChange={handleFilterChange}
         onRowClick={handleRowClick}
         emptyMessage="No timesheets found matching your criteria"
         className="mt-6"

@@ -1,25 +1,51 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import {
-  ChevronUp,
-  ChevronDown,
-  Search,
-  SlidersHorizontal,
-  Download,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  Eye,
-  Edit,
-  FileText,
-  MoreHorizontal,
-} from 'lucide-react';
-import Loader from '@/app/components/ui/Loader';
+import { useState, useMemo, useRef, ReactNode, DragEvent } from 'react';
+import { Button, Icon, Loader } from '@/app/components/ui';
+
+export interface Column<T> {
+  key: string;
+  header: string;
+  sortable?: boolean;
+  filterable?: boolean;
+  render?: (value: T[keyof T], row: T) => ReactNode;
+  width: string;
+}
+
+interface Pagination {
+  page: number;
+  pageSize: number;
+  total: number;
+}
+
+interface SortState {
+  key: string;
+  direction: 'asc' | 'desc';
+}
+
+interface Action {
+  label: string;
+  icon: ReactNode;
+  onClick: () => void;
+}
+
+interface DataTableProps<T> {
+  data: T[];
+  columns: Column<T>[];
+  pagination?: Pagination;
+  onPaginationChange?: (pagination: Pagination) => void;
+  onSortChange?: (sort: SortState) => void;
+  loading?: boolean;
+  emptyMessage?: string;
+  className?: string;
+  rowClassName?: (row: T, rowIndex: number) => string;
+  onRowClick?: (row: T) => void;
+  actions?: (row: T) => Action[];
+}
 
 export function DataTable<T extends Record<string, any>>({
   data,
-  columns,
+  columns: initialColumns,
   pagination,
   onPaginationChange,
   onSortChange,
@@ -29,14 +55,31 @@ export function DataTable<T extends Record<string, any>>({
   rowClassName,
   onRowClick,
   actions,
-}: any) {
-  const [sort, setSort] = useState<any>(null);
+}: DataTableProps<T>) {
+  const [sort, setSort] = useState<SortState | null>(null);
   const [globalFilter, setGlobalFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+  const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
+  const [columnOrder, setColumnOrder] = useState<string[]>(
+    initialColumns.map((col) => col.key)
+  );
+  const [visibleColumns, setVisibleColumns] = useState<Set<string>>(
+    new Set(initialColumns.map((col) => col.key))
+  );
+  const [showColumnSettings, setShowColumnSettings] = useState(false);
+
+  const tableRef = useRef<HTMLDivElement>(null);
+
+  const columns = useMemo(() => {
+    return columnOrder
+      .map((key) => initialColumns.find((col) => col.key === key))
+      .filter((col): col is Column<T> => col !== undefined)
+      .filter((col) => visibleColumns.has(col.key));
+  }, [initialColumns, columnOrder, visibleColumns]);
 
   const handleSort = (key: string) => {
-    const newSort =
+    const newSort: SortState =
       sort?.key === key && sort.direction === 'asc'
         ? { key, direction: 'desc' }
         : { key, direction: 'asc' };
@@ -45,11 +88,53 @@ export function DataTable<T extends Record<string, any>>({
     onSortChange?.(newSort);
   };
 
+  const handleDragStart = (e: DragEvent, columnKey: string) => {
+    setDraggedColumn(columnKey);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: DragEvent, targetColumnKey: string) => {
+    e.preventDefault();
+    if (draggedColumn === targetColumnKey) return;
+
+    const newOrder = [...columnOrder];
+    const draggedIndex = newOrder.indexOf(draggedColumn!);
+    const targetIndex = newOrder.indexOf(targetColumnKey);
+
+    newOrder.splice(draggedIndex, 1);
+    newOrder.splice(targetIndex, 0, draggedColumn!);
+
+    setColumnOrder(newOrder);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedColumn(null);
+  };
+
+  const toggleColumnVisibility = (columnKey: string) => {
+    const newVisible = new Set(visibleColumns);
+    if (newVisible.has(columnKey)) {
+      newVisible.delete(columnKey);
+    } else {
+      newVisible.add(columnKey);
+    }
+    setVisibleColumns(newVisible);
+  };
+
+  const selectAllColumns = () => {
+    setVisibleColumns(new Set(initialColumns.map((col) => col.key)));
+  };
+
+  const deselectAllColumns = () => {
+    setVisibleColumns(new Set());
+  };
+
   const processedData = useMemo(() => {
     let result = [...data];
+
     if (globalFilter) {
       result = result.filter((row) =>
-        columns.some((col: any) => {
+        columns.some((col) => {
           const value = row[col.key];
           return value
             ?.toString()
@@ -58,17 +143,21 @@ export function DataTable<T extends Record<string, any>>({
         })
       );
     }
+
     if (sort) {
       result.sort((a, b) => {
         const aValue = a[sort.key];
         const bValue = b[sort.key];
         if (aValue === bValue) return 0;
+
         const direction = sort.direction === 'asc' ? 1 : -1;
         if (aValue == null) return direction;
         if (bValue == null) return -direction;
+
         return aValue < bValue ? -direction : direction;
       });
     }
+
     return result;
   }, [data, sort, globalFilter, columns]);
 
@@ -86,13 +175,14 @@ export function DataTable<T extends Record<string, any>>({
     <div
       className={`bg-white rounded-xl border border-gray-200 shadow-xs hover:shadow-md transition-all duration-300 ${className}`}
     >
-      {/* Header */}
       <div className="p-4 sm:p-6 border-b border-gray-200">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 sm:gap-4">
-          {/* Search */}
           <div className="flex-1 w-full lg:max-w-md">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4 transition-transform duration-300 group-hover:scale-105" />
+              <Icon
+                name="search"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4 transition-transform duration-300 group-hover:scale-105"
+              />
               <input
                 type="text"
                 value={globalFilter}
@@ -103,7 +193,6 @@ export function DataTable<T extends Record<string, any>>({
             </div>
           </div>
 
-          {/* Actions */}
           <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
             <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200 group">
               <div className="w-1.5 h-1.5 bg-gradient-to-r from-emerald-400 to-blue-500 rounded-full transition-transform duration-300 group-hover:scale-110" />
@@ -113,32 +202,103 @@ export function DataTable<T extends Record<string, any>>({
               <span className="text-gray-500 hidden sm:inline">records</span>
             </div>
 
-            <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-300 whitespace-nowrap group">
-              <Download className="h-4 w-4 transition-transform duration-300 group-hover:scale-105" />
+            <Button variant="secondary-outline" size="sm">
+              <Icon
+                name="download"
+                className="h-4 w-4 transition-transform duration-300 group-hover:scale-105"
+              />
               <span className="hidden sm:inline">Export</span>
-            </button>
+            </Button>
 
-            <button
+            <Button
+              variant={showFilters ? 'primary' : 'secondary-outline'}
+              size="sm"
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg border transition-all duration-300 whitespace-nowrap group ${
-                showFilters
-                  ? 'bg-blue-500 text-white border-blue-500'
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
-              }`}
             >
-              <SlidersHorizontal className="h-4 w-4 transition-transform duration-300 group-hover:scale-105" />
+              <Icon
+                name="slidersHorizontal"
+                className="h-4 w-4 transition-transform duration-300 group-hover:scale-105"
+              />
               <span className="hidden sm:inline">Filters</span>
-            </button>
+            </Button>
+
+            <div className="relative">
+              <Button
+                onClick={() => setShowColumnSettings(!showColumnSettings)}
+                variant={showColumnSettings ? 'primary' : 'secondary-outline'}
+                size="sm"
+              >
+                <Icon
+                  name="settings"
+                  className="h-4 w-4 transition-transform duration-300 group-hover:scale-105"
+                />
+                <span className="hidden sm:inline">Columns</span>
+              </Button>
+
+              <div
+                className={`absolute right-0 top-full mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-20 transition-all duration-300 ease-out ${
+                  showColumnSettings
+                    ? 'opacity-100 scale-100 translate-y-0'
+                    : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'
+                }`}
+              >
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-semibold text-gray-900">
+                      Columns
+                    </h4>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={selectAllColumns}
+                        className="text-xs text-indigo-600 hover:text-indigo-700 font-medium transition-colors duration-200"
+                      >
+                        All
+                      </button>
+                      <span className="text-gray-300">•</span>
+                      <button
+                        onClick={deselectAllColumns}
+                        className="text-xs text-gray-600 hover:text-gray-700 font-medium transition-colors duration-200"
+                      >
+                        None
+                      </button>
+                    </div>
+                  </div>
+                  <div className="space-y-1 max-h-60 overflow-y-auto">
+                    {initialColumns.map((column) => (
+                      <label
+                        key={column.key}
+                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200 ease-out"
+                      >
+                        <div className="flex items-center gap-2 flex-1">
+                          <Icon
+                            name="gripVertical"
+                            className="h-3 w-3 text-gray-400 flex-shrink-0 transition-colors duration-200"
+                          />
+                          <span className="text-sm text-gray-700 flex-1 transition-colors duration-200">
+                            {column.header}
+                          </span>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={visibleColumns.has(column.key)}
+                          onChange={() => toggleColumnVisibility(column.key)}
+                          className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 transition-all duration-200"
+                        />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Filter Panel */}
         <div
           className={`transition-all duration-500 overflow-hidden ${
             showFilters ? 'max-h-96 mt-4' : 'max-h-0'
           }`}
         >
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-semibold text-gray-800">
                 Advanced Filters
@@ -147,13 +307,16 @@ export function DataTable<T extends Record<string, any>>({
                 onClick={() => setShowFilters(false)}
                 className="p-1.5 text-gray-400 hover:text-gray-600 rounded-md hover:bg-white transition-all duration-300 border border-transparent hover:border-gray-300 group"
               >
-                <X className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
+                <Icon
+                  name="x"
+                  className="h-4 w-4 transition-transform duration-300 group-hover:scale-110"
+                />
               </button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               {columns
-                .filter((col: any) => col.filterable)
-                .map((column: any) => (
+                .filter((col) => col.filterable)
+                .map((column) => (
                   <div key={column.key}>
                     <label className="block text-xs font-medium text-gray-700 mb-2">
                       {column.header}
@@ -170,41 +333,76 @@ export function DataTable<T extends Record<string, any>>({
         </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-hidden">
-        <div className="max-h-[500px] overflow-y-auto">
-          {/* Header Row */}
-          <div className="sticky top-0 z-10 bg-gradient-to-b from-white to-gray-50/80 backdrop-blur-sm border-b border-gray-200">
-            <div className="grid grid-cols-12 gap-3 sm:gap-4 px-4 sm:px-6 py-3">
-              {columns.map((column: any) => (
-                <div key={column.key} className="flex items-center gap-2 group">
-                  <span className="text-xs font-semibold text-gray-700 tracking-wide truncate">
+      <div className="overflow-hidden" ref={tableRef}>
+        <div className="max-h-[500px] overflow-auto">
+          <div className="sticky top-0 z-10 bg-gradient-to-b from-white to-gray-50/80 backdrop-blur-sm border-b border-gray-200 min-w-fit">
+            <div
+              className="grid gap-3 sm:gap-4 px-4 sm:px-6 py-3 min-w-fit"
+              style={{
+                gridTemplateColumns: `repeat(${columns.length + 1}, minmax(100px, 1fr))`,
+              }}
+            >
+              {columns.map((column) => (
+                <div
+                  key={column.key}
+                  className={`flex items-center gap-2 group relative ${
+                    sort?.key === column.key
+                      ? 'bg-indigo-25 rounded-lg px-2 -mx-2'
+                      : ''
+                  }`}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, column.key)}
+                  onDragOver={(e) => handleDragOver(e, column.key)}
+                  onDragEnd={handleDragEnd}
+                >
+                  <Icon
+                    name="gripVertical"
+                    className="h-3 w-3 text-gray-400 cursor-grab active:cursor-grabbing flex-shrink-0 opacity-40 group-hover:opacity-100 transition-opacity duration-200"
+                  />
+
+                  <span
+                    className={`text-xs font-semibold tracking-wide truncate flex-1 ${
+                      sort?.key === column.key
+                        ? 'text-indigo-600'
+                        : 'text-gray-700'
+                    }`}
+                  >
                     {column.header}
                   </span>
                   {column.sortable && (
                     <button
                       onClick={() => handleSort(column.key)}
-                      className="flex flex-col border border-transparent hover:border-gray-200 rounded-md flex-shrink-0 hover:scale-105 transition-all duration-300 p-1 opacity-60 hover:opacity-100 group/sort"
+                      className={`flex flex-col border rounded-md flex-shrink-0 hover:scale-105 transition-all duration-300 p-1 ${
+                        sort?.key === column.key
+                          ? 'bg-indigo-50 border-indigo-200 shadow-xs opacity-100'
+                          : 'border-transparent hover:border-gray-200 opacity-60 hover:opacity-100'
+                      } group/sort`}
                     >
-                      <ChevronUp
+                      <Icon
+                        name="chevronUp"
                         className={`h-3 w-3 -mb-1 transition-colors duration-300 ${
                           sort?.key === column.key && sort.direction === 'asc'
-                            ? 'text-indigo-600 opacity-100'
+                            ? 'text-indigo-600'
                             : 'text-gray-500 group-hover/sort:text-gray-700'
                         }`}
                       />
-                      <ChevronDown
+                      <Icon
+                        name="chevronDown"
                         className={`h-3 w-3 transition-colors duration-300 ${
                           sort?.key === column.key && sort.direction === 'desc'
-                            ? 'text-indigo-600 opacity-100'
+                            ? 'text-indigo-600'
                             : 'text-gray-500 group-hover/sort:text-gray-700'
                         }`}
                       />
                     </button>
                   )}
+
+                  {draggedColumn === column.key && (
+                    <div className="absolute inset-0 bg-indigo-50 border-2 border-indigo-300 border-dashed rounded-lg" />
+                  )}
                 </div>
               ))}
-              <div className="col-span-1 text-right">
+              <div className="text-right">
                 <span className="text-xs font-semibold text-gray-700 tracking-wide">
                   Actions
                 </span>
@@ -212,8 +410,7 @@ export function DataTable<T extends Record<string, any>>({
             </div>
           </div>
 
-          {/* Body */}
-          <div className="bg-white">
+          <div className="bg-white min-w-fit">
             {loading ? (
               <div className="flex justify-center items-center py-16">
                 <Loader
@@ -228,20 +425,23 @@ export function DataTable<T extends Record<string, any>>({
             ) : paginatedData.length === 0 ? (
               <div className="text-center py-12">
                 <div className="w-12 h-12 bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center mx-auto mb-3 group">
-                  <Search className="h-5 w-5 text-gray-400 transition-transform duration-300 group-hover:scale-110" />
+                  <Icon
+                    name="search"
+                    className="h-5 w-5 text-gray-400 transition-transform duration-300 group-hover:scale-110"
+                  />
                 </div>
                 <div className="text-gray-500 text-sm font-medium transition-colors duration-300 group-hover:text-gray-600">
                   {emptyMessage}
                 </div>
               </div>
             ) : (
-              paginatedData.map((row: any, rowIndex: number) => (
+              paginatedData.map((row, rowIndex) => (
                 <div
                   key={rowIndex}
                   onMouseEnter={() => setHoveredRow(rowIndex)}
                   onMouseLeave={() => setHoveredRow(null)}
                   onClick={() => onRowClick?.(row)}
-                  className={`group relative grid grid-cols-12 gap-3 sm:gap-4 px-4 sm:px-6 py-3 text-sm transition-all duration-300 border-b border-gray-100 last:border-b-0 ${
+                  className={`group relative grid gap-3 sm:gap-4 px-4 sm:px-6 py-3 text-sm transition-all duration-300 border-b border-gray-100 last:border-b-0 min-w-fit ${
                     onRowClick ? 'cursor-pointer' : ''
                   } ${
                     hoveredRow === rowIndex
@@ -250,8 +450,10 @@ export function DataTable<T extends Record<string, any>>({
                         ? 'bg-white'
                         : 'bg-gray-50/30'
                   } ${rowClassName?.(row, rowIndex) || ''}`}
+                  style={{
+                    gridTemplateColumns: `repeat(${columns.length + 1}, minmax(100px, 1fr))`,
+                  }}
                 >
-                  {/* Vertical line - matches row background */}
                   <div
                     className={`absolute left-0 top-0 h-full w-0.5 transition-colors duration-300 ${
                       hoveredRow === rowIndex
@@ -262,7 +464,7 @@ export function DataTable<T extends Record<string, any>>({
                     }`}
                   />
 
-                  {columns.map((column: any, colIndex: number) => (
+                  {columns.map((column, colIndex) => (
                     <div
                       key={colIndex}
                       className="flex items-center transition-all duration-300 min-w-0"
@@ -283,8 +485,7 @@ export function DataTable<T extends Record<string, any>>({
                     </div>
                   ))}
 
-                  {/* Actions */}
-                  <div className="col-span-1 flex justify-end">
+                  <div className="flex justify-end">
                     <div
                       className={`flex items-center gap-1 transition-all duration-300 ${
                         hoveredRow === rowIndex ? 'opacity-100' : 'opacity-70'
@@ -293,7 +494,7 @@ export function DataTable<T extends Record<string, any>>({
                       {actions ? (
                         actions(row).length > 0 ? (
                           <div className="flex gap-1">
-                            {actions(row).map((action: any, index: number) => (
+                            {actions(row).map((action, index) => (
                               <button
                                 key={index}
                                 onClick={(e) => {
@@ -315,13 +516,22 @@ export function DataTable<T extends Record<string, any>>({
                       ) : (
                         <>
                           <button className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md border border-transparent hover:border-indigo-200 transition-all duration-300 group hover:scale-105">
-                            <Eye className="h-3 w-3 transition-transform duration-300 group-hover:scale-110" />
+                            <Icon
+                              name="eye"
+                              className="h-3 w-3 transition-transform duration-300 group-hover:scale-110"
+                            />
                           </button>
                           <button className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md border border-transparent hover:border-emerald-200 transition-all duration-300 group hover:scale-105">
-                            <Edit className="h-3 w-3 transition-transform duration-300 group-hover:scale-110" />
+                            <Icon
+                              name="edit"
+                              className="h-3 w-3 transition-transform duration-300 group-hover:scale-110"
+                            />
                           </button>
                           <button className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-md border border-transparent hover:border-purple-200 transition-all duration-300 group hover:scale-105">
-                            <MoreHorizontal className="h-3 w-3 transition-transform duration-300 group-hover:scale-110" />
+                            <Icon
+                              name="moreHorizontal"
+                              className="h-3 w-3 transition-transform duration-300 group-hover:scale-110"
+                            />
                           </button>
                         </>
                       )}
@@ -334,7 +544,6 @@ export function DataTable<T extends Record<string, any>>({
         </div>
       </div>
 
-      {/* Pagination */}
       {pagination && (
         <div className="px-4 sm:px-6 py-4 border-t border-gray-200">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
@@ -368,7 +577,10 @@ export function DataTable<T extends Record<string, any>>({
                 disabled={pagination.page === 1}
                 className="p-1.5 bg-white border border-gray-300 rounded-lg disabled:opacity-30 hover:bg-gray-50 transition-all duration-300 group hover:scale-105"
               >
-                <ChevronLeft className="h-3 w-3 transition-transform duration-300 group-hover:-translate-x-0.5" />
+                <Icon
+                  name="chevronLeft"
+                  className="h-3 w-3 transition-transform duration-300 group-hover:-translate-x-0.5"
+                />
               </button>
 
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -408,7 +620,10 @@ export function DataTable<T extends Record<string, any>>({
                 disabled={pagination.page >= totalPages}
                 className="p-1.5 bg-white border border-gray-300 rounded-lg disabled:opacity-30 hover:bg-gray-50 transition-all duration-300 group hover:scale-105"
               >
-                <ChevronRight className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-0.5" />
+                <Icon
+                  name="chevronRight"
+                  className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-0.5"
+                />
               </button>
             </div>
           </div>

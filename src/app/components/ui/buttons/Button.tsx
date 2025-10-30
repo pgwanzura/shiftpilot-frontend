@@ -39,173 +39,106 @@ const Button = ({
   processingText,
   iconPosition = 'left',
   fullWidth = false,
-  rounded = 'md',
+  rounded = 'lg',
   className = '',
+  disabled,
   ...props
 }: ButtonProps) => {
-  const baseClasses =
-    'inline-flex items-center justify-center select-none font-medium outline-none transition-all duration-200 ease-out focus:ring-2 focus:ring-offset-1 border cursor-pointer';
+  const baseStyles =
+    'inline-flex items-center justify-center gap-2 font-medium transition-all duration-300 group disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer';
 
-  const variants = {
+  const variantStyles = {
     primary:
-      'bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 hover:border-indigo-700 focus:ring-indigo-500 active:bg-indigo-800 active:border-indigo-800',
+      'bg-blue-500 text-white border border-blue-500 hover:bg-blue-600 hover:border-blue-600',
     'primary-outline':
-      'bg-white text-indigo-600 border-indigo-600 hover:bg-indigo-600 hover:text-white focus:ring-indigo-500 active:bg-indigo-700 active:border-indigo-700',
-
+      'bg-white text-blue-500 border border-blue-500 hover:bg-blue-50',
     secondary:
-      'bg-gray-100 text-gray-900 border-gray-200 hover:bg-gray-200 hover:border-gray-300 focus:ring-gray-400 active:bg-gray-300',
+      'bg-gray-500 text-white border border-gray-500 hover:bg-gray-600 hover:border-gray-600',
     'secondary-outline':
-      'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400 focus:ring-gray-400 active:bg-gray-100',
-
+      'bg-white text-gray-500 border border-gray-300 hover:bg-gray-50 hover:border-gray-400',
     gradient:
-      'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white border-indigo-600 hover:from-indigo-700 hover:to-indigo-800 focus:ring-indigo-500 active:from-indigo-800 active:to-indigo-900',
-
+      'bg-gradient-to-r from-blue-500 to-purple-600 text-white border border-transparent hover:from-blue-600 hover:to-purple-700',
     ghost:
-      'bg-transparent text-gray-600 border-transparent hover:bg-gray-100 hover:text-gray-700 focus:ring-gray-400 active:bg-gray-200',
-
+      'bg-transparent text-gray-700 border border-transparent hover:bg-gray-100',
     danger:
-      'bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 focus:ring-red-500 active:bg-red-800',
+      'bg-red-500 text-white border border-red-500 hover:bg-red-600 hover:border-red-600',
     'danger-outline':
-      'bg-white text-red-600 border-red-600 hover:bg-red-600 hover:text-white focus:ring-red-500 active:bg-red-700',
+      'bg-white text-red-500 border border-red-500 hover:bg-red-50',
     'danger-gradient':
-      'bg-gradient-to-r from-red-600 to-red-700 text-white border-red-600 hover:from-red-700 hover:to-red-800 focus:ring-red-500 active:from-red-800 active:to-red-900',
-
+      'bg-gradient-to-r from-red-500 to-pink-600 text-white border border-transparent hover:from-red-600 hover:to-pink-700',
     success:
-      'bg-green-600 text-white border-green-600 hover:bg-green-700 hover:border-green-700 focus:ring-green-500 active:bg-green-800',
+      'bg-green-500 text-white border border-green-500 hover:bg-green-600 hover:border-green-600',
     'success-outline':
-      'bg-white text-green-600 border-green-600 hover:bg-green-600 hover:text-white focus:ring-green-500 active:bg-green-700',
-
+      'bg-white text-green-500 border border-green-500 hover:bg-green-50',
     warning:
-      'bg-amber-500 text-white border-amber-500 hover:bg-amber-600 hover:border-amber-600 focus:ring-amber-500 active:bg-amber-700',
+      'bg-yellow-500 text-white border border-yellow-500 hover:bg-yellow-600 hover:border-yellow-600',
     'warning-outline':
-      'bg-white text-amber-600 border-amber-500 hover:bg-amber-500 hover:text-white focus:ring-amber-500 active:bg-amber-600',
+      'bg-white text-yellow-600 border border-yellow-500 hover:bg-yellow-50',
   };
 
-  const sizes = {
-    sm: 'px-3 py-1.5 text-xs gap-1 font-medium',
-    md: 'px-4 py-2 text-sm gap-2 font-medium',
-    lg: 'px-6 py-2.5 text-base gap-2 font-semibold',
-    xl: 'px-8 py-3 text-lg gap-2.5 font-bold',
+  const sizeStyles = {
+    sm: 'px-3 py-1.5 text-sm',
+    md: 'px-3 py-1.5 text-sm',
+    lg: 'px-4 py-2 text-base',
+    xl: 'px-5 py-2.5 text-lg',
   };
 
-  const borderRadius = {
+  const roundedStyles = {
     none: 'rounded-none',
-    sm: 'rounded',
+    sm: 'rounded-md',
     md: 'rounded-lg',
-    lg: 'rounded-xl',
+    lg: 'rounded-lg',
     full: 'rounded-full',
   };
 
-  const iconSizes = {
-    sm: 'h-3.5 w-3.5',
+  const iconSizeStyles = {
+    sm: 'h-4 w-4',
     md: 'h-4 w-4',
-    lg: 'h-5 w-5',
+    lg: 'h-4 w-4',
     xl: 'h-5 w-5',
   };
 
-  const iconMargins = {
-    sm: 'ml-1.5',
-    md: 'ml-2',
-    lg: 'ml-2',
-    xl: 'ml-2.5',
-  };
-
-  const classes = cn(
-    baseClasses,
-    variants[variant],
-    sizes[size],
-    borderRadius[rounded],
-    {
-      'w-full': fullWidth,
-      'opacity-70 cursor-not-allowed pointer-events-none border-opacity-50':
-        loading || props.disabled,
-      'cursor-not-allowed opacity-60 border-opacity-40':
-        props.disabled && !loading,
-      'active:scale-[0.98]': !loading && !props.disabled,
-    },
-    className
-  );
-
-  const renderIcon = (side: 'left' | 'right') => {
-    if (!icon) return null;
-    if (iconPosition !== side) return null;
-
-    const iconElement =
-      typeof icon === 'string' ? (
+  const renderIcon = (iconElement: AppIconType | ReactNode) => {
+    if (typeof iconElement === 'string') {
+      return (
         <Icon
-          name={icon as IconName}
-          className={cn('flex-shrink-0', iconSizes[size])}
+          name={iconElement as AppIconType}
+          className={`${iconSizeStyles[size]} transition-transform duration-300 group-hover:scale-105`}
         />
-      ) : (
-        <span className={cn('flex-shrink-0', iconSizes[size])}>{icon}</span>
       );
-
-    return (
-      <span className="flex items-center justify-center">{iconElement}</span>
-    );
+    }
+    return iconElement;
   };
 
-  const renderContent = () => {
-    if (loading) {
-      return (
-        <>
-          <Loader
-            size={size === 'sm' ? 'xs' : 'sm'}
-            className="flex-shrink-0"
-          />
-          <span className={cn('truncate', iconMargins[size])}>
-            {processingText || children}
-          </span>
-        </>
-      );
-    }
-
-    if (icon && iconPosition === 'left') {
-      return (
-        <>
-          {renderIcon('left')}
-          <span className={cn('truncate', iconMargins[size])}>{children}</span>
-        </>
-      );
-    }
-
-    if (icon && iconPosition === 'right') {
-      return (
-        <>
-          <span className="truncate">{children}</span>
-          <span
-            className={cn(
-              'flex items-center justify-center',
-              iconMargins[size]
-            )}
-          >
-            {renderIcon('right')}
-          </span>
-        </>
-      );
-    }
-
-    return <span className="truncate">{children}</span>;
-  };
+  const displayText = loading && processingText ? processingText : children;
 
   return (
     <button
-      className={classes}
-      disabled={loading || props.disabled}
+      className={cn(
+        baseStyles,
+        variantStyles[variant],
+        sizeStyles[size],
+        roundedStyles[rounded],
+        fullWidth && 'w-full',
+        !fullWidth && 'whitespace-nowrap',
+        className
+      )}
+      disabled={disabled || loading}
       {...props}
-      onMouseDown={(e) => {
-        e.preventDefault();
-        props.onMouseDown?.(e);
-      }}
-      onKeyDown={(e) => {
-        if ([' ', 'Spacebar', 'Enter'].includes(e.key)) {
-          e.preventDefault();
-          e.currentTarget.click();
-        }
-        props.onKeyDown?.(e);
-      }}
     >
-      {renderContent()}
+      {loading && iconPosition === 'left' && (
+        <Loader size="sm" className={iconSizeStyles[size]} />
+      )}
+
+      {!loading && icon && iconPosition === 'left' && renderIcon(icon)}
+
+      {displayText}
+
+      {!loading && icon && iconPosition === 'right' && renderIcon(icon)}
+
+      {loading && iconPosition === 'right' && (
+        <Loader size="sm" className={iconSizeStyles[size]} />
+      )}
     </button>
   );
 };
