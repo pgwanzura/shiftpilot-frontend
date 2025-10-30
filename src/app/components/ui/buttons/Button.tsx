@@ -45,13 +45,13 @@ const Button = ({
   ...props
 }: ButtonProps) => {
   const baseStyles =
-    'inline-flex items-center justify-center gap-2 font-medium transition-all duration-300 group disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer';
+    'inline-flex items-center justify-center font-medium transition-all duration-300 group disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer';
 
   const variantStyles = {
     primary:
-      'bg-blue-500 text-white border border-blue-500 hover:bg-blue-600 hover:border-blue-600',
+      'bg-primary-700 text-white border border-primary-500 hover:bg-primary-600 hover:border-primary-600',
     'primary-outline':
-      'bg-white text-blue-500 border border-blue-500 hover:bg-blue-50',
+      'bg-white text-primary-500 border border-pprimary-500 hover:bg-primary-50',
     secondary:
       'bg-gray-500 text-white border border-gray-500 hover:bg-gray-600 hover:border-gray-600',
     'secondary-outline':
@@ -77,10 +77,10 @@ const Button = ({
   };
 
   const sizeStyles = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-3 py-1.5 text-sm',
-    lg: 'px-4 py-2 text-base',
-    xl: 'px-5 py-2.5 text-lg',
+    sm: 'px-3 py-1.5 text-sm gap-2',
+    md: 'px-4 py-2 text-sm gap-2',
+    lg: 'px-5 py-2.5 text-base gap-2',
+    xl: 'px-6 py-3 text-lg gap-2',
   };
 
   const roundedStyles = {
@@ -94,7 +94,7 @@ const Button = ({
   const iconSizeStyles = {
     sm: 'h-4 w-4',
     md: 'h-4 w-4',
-    lg: 'h-4 w-4',
+    lg: 'h-5 w-5',
     xl: 'h-5 w-5',
   };
 

@@ -3,14 +3,18 @@
 import { useState, useEffect } from 'react';
 import { Sidebar } from '@/app/components/layout';
 import { Header } from '@/app/components/layout';
-import { getMenuForRole } from '../../config/menu';
+import { PageTitleProvider } from '@/contexts/PageTitleContext';
+import { usePageMetadata } from '@/hooks/usePageMetadata';
+import { getMenuForRole } from '@/config/menu';
 import { LayoutProps, User, SidebarState, SidebarHandlers } from '@/types';
 
-export default function Layout({ children }: LayoutProps) {
+function LayoutContent({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+
+  const { useRouteMetadata } = usePageMetadata();
 
   useEffect(() => {
     const checkMobile = () => {
@@ -45,12 +49,14 @@ export default function Layout({ children }: LayoutProps) {
     getUserFromCookie();
   }, []);
 
+  // Use the route metadata hook
+  useRouteMetadata(user?.role);
+
   const handleMenuToggle = (): void => {
     setSidebarOpen((prevState) => !prevState);
   };
 
   const handleToggleCollapse = (): void => {
-    // Only allow collapsing on desktop, not mobile
     if (!isMobile) {
       setSidebarCollapsed((prevState) => !prevState);
     }
@@ -62,7 +68,6 @@ export default function Layout({ children }: LayoutProps) {
 
   const sidebarState: SidebarState = {
     isOpen: sidebarOpen,
-    // On mobile, sidebar is never collapsed - always full width when open
     isCollapsed: isMobile ? false : sidebarCollapsed,
   };
 
@@ -94,5 +99,13 @@ export default function Layout({ children }: LayoutProps) {
         <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
       </div>
     </div>
+  );
+}
+
+export default function Layout({ children }: LayoutProps) {
+  return (
+    <PageTitleProvider>
+      <LayoutContent>{children}</LayoutContent>
+    </PageTitleProvider>
   );
 }

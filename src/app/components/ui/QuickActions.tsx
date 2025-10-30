@@ -60,15 +60,15 @@ export function QuickActions({ userRole }: QuickActionsProps) {
   };
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-3">
       {filteredActions.map((action) => (
         <Button
+          variant="primary"
           key={action.label}
           onClick={() => handleActionClick(action.href)}
-          className="inline-flex items-center px-4 py-2 bg-primary-600 rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
         >
           {action.icon}
-          <span className="ml-2">{action.label}</span>
+          <span className="whitespace-nowrap">{action.label}</span>
         </Button>
       ))}
     </div>

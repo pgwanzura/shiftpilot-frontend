@@ -2,11 +2,13 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Icon } from '@/app/components/ui';
+import { User } from '@/types';
+import { usePageMetadata } from '@/hooks/usePageMetadata';
 
 interface HeaderProps {
   onMenuToggle: () => void;
   sidebarCollapsed: boolean;
-  user: any;
+  user: User | null;
 }
 
 export default function Header({
@@ -18,6 +20,9 @@ export default function Header({
   const [isMessagesOpen, setIsMessagesOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+
+  // Using the consolidated usePageMetadata hook
+  const { pageTitle, pageDescription } = usePageMetadata();
 
   const notificationsRef = useRef<HTMLDivElement>(null);
   const messagesRef = useRef<HTMLDivElement>(null);
@@ -77,19 +82,23 @@ export default function Header({
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
+      {/* Mobile Header */}
       <div className="lg:hidden">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center space-x-3">
             <button
               onClick={onMenuToggle}
               className="p-2 rounded-lg hover:bg-gray-100 transition-all duration-200"
+              aria-label="Toggle menu"
             >
               <Icon name="menu" className="w-5 h-5 text-gray-600" />
             </button>
-            <div>
-              <h1 className="text-lg font-semibold text-gray-800">Dashboard</h1>
-              <p className="text-xs text-gray-500">
-                Welcome back, {user?.name?.split(' ')[0]}
+            <div className="min-w-0 flex-1">
+              <h1 className="text-lg font-semibold text-gray-800 truncate">
+                {pageTitle}
+              </h1>
+              <p className="text-xs text-gray-500 line-clamp-2">
+                {pageDescription}
               </p>
             </div>
           </div>
@@ -99,6 +108,7 @@ export default function Header({
               <button
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
                 className="relative p-2 rounded-lg hover:bg-gray-100 transition-all duration-200"
+                aria-label="Notifications"
               >
                 <Icon name="bell" className="w-5 h-5 text-gray-600" />
                 {notificationCount > 0 && (
@@ -113,10 +123,11 @@ export default function Header({
               <button
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                 className="flex items-center"
+                aria-label="User menu"
               >
                 <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center">
                   <span className="text-white font-semibold text-xs">
-                    {getUserInitials(user?.name || '')}
+                    {getUserInitials(user?.name || 'User')}
                   </span>
                 </div>
               </button>
@@ -125,27 +136,25 @@ export default function Header({
         </div>
       </div>
 
+      {/* Desktop Header */}
       <div className="hidden lg:block">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center space-x-4">
-            <button
-              onClick={onMenuToggle}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-all duration-200"
-            >
-              <Icon name="menu" className="w-5 h-5 text-gray-600" />
-            </button>
-
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-              <p className="text-sm text-gray-500">
-                Welcome back, {user?.name?.split(' ')[0]}! Here's your agency
-                overview.
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold text-gray-800 truncate">
+                {pageTitle}
+              </h1>
+              <p className="text-sm text-gray-500 max-w-2xl truncate">
+                {pageDescription}
               </p>
             </div>
           </div>
 
           <div className="flex items-center space-x-4">
-            <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+            <button
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              aria-label="Calendar"
+            >
               <Icon name="calendar" className="w-5 h-5 text-gray-600" />
             </button>
 
@@ -153,6 +162,7 @@ export default function Header({
               <button
                 onClick={() => setIsMessagesOpen(!isMessagesOpen)}
                 className="relative p-2 rounded-lg hover:bg-gray-100 transition-all duration-200"
+                aria-label="Messages"
               >
                 <Icon name="messageCircle" className="w-5 h-5 text-gray-600" />
                 {messageCount > 0 && (
@@ -167,6 +177,7 @@ export default function Header({
               <button
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
                 className="relative p-2 rounded-lg hover:bg-gray-100 transition-all duration-200"
+                aria-label="Notifications"
               >
                 <Icon name="bell" className="w-5 h-5 text-gray-600" />
                 {notificationCount > 0 && (
@@ -177,7 +188,10 @@ export default function Header({
               </button>
             </div>
 
-            <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+            <button
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              aria-label="Create new"
+            >
               <Icon name="plusCircle" className="w-5 h-5 text-gray-600" />
             </button>
 
@@ -185,18 +199,19 @@ export default function Header({
               <button
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                 className="flex items-center space-x-3 pl-3 border-l border-gray-200"
+                aria-label="User menu"
               >
-                <div className="text-right">
-                  <p className="text-sm font-medium text-gray-800">
-                    {user?.name}
+                <div className="text-right min-w-0">
+                  <p className="text-sm font-medium text-gray-800 truncate">
+                    {user?.name || 'User'}
                   </p>
-                  <p className="text-xs text-gray-500 capitalize">
-                    {user?.role?.replace('_', ' ')}
+                  <p className="text-xs text-gray-500 capitalize truncate">
+                    {user?.role?.replace('_', ' ') || 'Unknown Role'}
                   </p>
                 </div>
-                <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="text-white font-semibold text-sm">
-                    {getUserInitials(user?.name || '')}
+                    {getUserInitials(user?.name || 'User')}
                   </span>
                 </div>
               </button>
