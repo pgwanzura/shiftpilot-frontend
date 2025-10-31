@@ -10,7 +10,7 @@ export abstract class BaseClient {
 
   protected async ensureCSRF(): Promise<void> {
     try {
-      await fetch(`${ this.baseURL}/sanctum/csrf-cookie`, {
+      await fetch(`${this.baseURL}/sanctum/csrf-cookie`, {
         method: 'GET',
         credentials: 'include',
         mode: 'cors',
@@ -79,6 +79,7 @@ export abstract class BaseClient {
     } catch (error) {
       if (error instanceof Error) {
         // Handle CORS-specific errors
+        console.log(error.message);
         if (
           error.message.includes('CORS') ||
           error.message.includes('Failed to fetch')

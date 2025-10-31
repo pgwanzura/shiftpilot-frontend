@@ -2,13 +2,55 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { DataTable } from '@/app/components/ui';
+import { DataTable, Column } from '@/app/components/ui/DataTable';
+import { Button, Icon, Badge } from '@/app/components/ui';
 import { usePlacements } from '@/hooks/usePlacements';
-import { Button, Icon } from '@/app/components/ui';
 
 interface PlacementsTableProps {
   authToken: string | null;
 }
+
+interface Placement {
+  id: string | number;
+  title: string;
+  employer?: { name: string };
+  location?: { name: string };
+  start_date?: string;
+  budget_amount?: number;
+  currency?: string;
+  budget_type?: string;
+  status: 'active' | 'draft' | 'filled' | 'cancelled' | 'completed';
+  experience_level?: string;
+  location_instructions?: string;
+  agency_responses_count?: number;
+  response_deadline?: string;
+}
+
+const StatusBadge = ({ status }: { status: Placement['status'] }) => {
+  const statusConfig = {
+    active: { label: 'Active', variant: 'success' as const },
+    draft: { label: 'Draft', variant: 'warning' as const },
+    filled: { label: 'Filled', variant: 'info' as const },
+    cancelled: { label: 'Cancelled', variant: 'error' as const },
+    completed: { label: 'Completed', variant: 'primary' as const },
+  };
+
+  const config = statusConfig[status];
+  return <Badge variant={config.variant}>{config.label}</Badge>;
+};
+
+const formatCurrency = (amount: number, currency: string = 'USD') => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+};
+
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString('en-US');
+};
 
 export function PlacementsTable({ authToken }: PlacementsTableProps) {
   const router = useRouter();
@@ -58,7 +100,7 @@ export function PlacementsTable({ authToken }: PlacementsTableProps) {
         ? `?${params.toString()}`
         : '/agency/placements';
       router.push(newUrl, { scroll: false });
-    }, 300); // Debounce for 300ms
+    }, 300);
 
     return () => clearTimeout(timeoutId);
   }, [filters, router]);
@@ -88,19 +130,26 @@ export function PlacementsTable({ authToken }: PlacementsTableProps) {
     }));
   };
 
-  // Column definitions
-  const placementColumns = [
+  const handleRowClick = (placement: Placement) => {
+    if (placement?.id) {
+      router.push(`/agency/placements/${placement.id}`);
+    }
+  };
+
+  const placementColumns: Column<Placement>[] = [
     {
       key: 'title',
       header: 'Position',
-      label: 'Position',
       sortable: true,
-      width: '2fr',
-      render: (value: string, row: any) => (
+      filterable: true,
+      width: 'col-span-3',
+      render: (value, row) => (
         <div className="min-w-0">
-          <div className="font-semibold text-gray-900 truncate">{value}</div>
+          <div className="font-semibold text-gray-900 truncate">
+            {row.title || 'Untitled Position'}
+          </div>
           <div className="text-sm text-gray-500 truncate">
-            {row.employer?.name || 'Employer'}
+            {row.employer?.name || 'Employer not specified'}
           </div>
           {row.experience_level && (
             <div className="text-xs text-gray-400 capitalize mt-1">
@@ -113,12 +162,12 @@ export function PlacementsTable({ authToken }: PlacementsTableProps) {
     {
       key: 'location',
       header: 'Location',
-      label: 'Location',
-      sortable: false,
-      width: '1fr',
-      render: (value: any, row: any) => (
+      sortable: true,
+      filterable: true,
+      width: 'col-span-2',
+      render: (value, row) => (
         <div className="text-sm text-gray-700">
-          {row.location?.name || 'Not specified'}
+          {row.location?.name || 'Location not specified'}
           {row.location_instructions && (
             <div className="text-xs text-gray-500 mt-1 truncate">
               {row.location_instructions}
@@ -130,28 +179,28 @@ export function PlacementsTable({ authToken }: PlacementsTableProps) {
     {
       key: 'start_date',
       header: 'Start Date',
-      label: 'Start Date',
       sortable: true,
-      width: '1fr',
-      render: (value: string) => (
+      width: 'col-span-2',
+      render: (value) => (
         <div className="text-sm text-gray-700">
-          {value ? new Date(value).toLocaleDateString() : 'Flexible'}
+          {value ? formatDate(value as string) : 'Flexible'}
         </div>
       ),
     },
     {
       key: 'budget_amount',
       header: 'Budget',
-      label: 'Budget',
       sortable: true,
-      width: '1fr',
-      render: (value: number, row: any) => (
+      width: 'col-span-2',
+      render: (value, row) => (
         <div className="text-right">
           <div className="font-semibold text-gray-900">
-            {row.currency} {value?.toLocaleString()}
+            {row.budget_amount
+              ? formatCurrency(row.budget_amount, row.currency)
+              : 'Not specified'}
           </div>
           <div className="text-xs text-gray-500 capitalize">
-            {row.budget_type}
+            {row.budget_type || 'fixed'}
           </div>
         </div>
       ),
@@ -159,71 +208,40 @@ export function PlacementsTable({ authToken }: PlacementsTableProps) {
     {
       key: 'status',
       header: 'Status',
-      label: 'Status',
       sortable: true,
-      width: '1fr',
-      render: (value: string) => {
-        const statusConfig = {
-          active: {
-            bg: 'bg-green-100',
-            text: 'text-green-800',
-            label: 'Active',
-          },
-          draft: { bg: 'bg-gray-100', text: 'text-gray-800', label: 'Draft' },
-          filled: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Filled' },
-          cancelled: {
-            bg: 'bg-red-100',
-            text: 'text-red-800',
-            label: 'Cancelled',
-          },
-          completed: {
-            bg: 'bg-purple-100',
-            text: 'text-purple-800',
-            label: 'Completed',
-          },
-        };
-
-        const config =
-          statusConfig[value as keyof typeof statusConfig] ||
-          statusConfig.draft;
-
-        return (
-          <span
-            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.bg} ${config.text}`}
-          >
-            {config.label}
-          </span>
-        );
-      },
+      width: 'col-span-2',
+      render: (value) => <StatusBadge status={value as Placement['status']} />,
     },
     {
       key: 'agency_responses_count',
       header: 'Responses',
-      label: 'Responses',
       sortable: true,
-      width: '1fr',
-      render: (value: number, row: any) => (
-        <div className="text-center">
-          <div
-            className={`font-semibold ${value > 0 ? 'text-blue-600' : 'text-gray-500'}`}
-          >
-            {value || 0}
+      width: 'col-span-2',
+      render: (value) => {
+        const responseCount = (value as number) || 0;
+        return (
+          <div className="text-center">
+            <div
+              className={`font-semibold ${responseCount > 0 ? 'text-blue-600' : 'text-gray-500'}`}
+            >
+              {responseCount}
+            </div>
+            <div className="text-xs text-gray-500">responses</div>
           </div>
-          <div className="text-xs text-gray-500">responses</div>
-        </div>
-      ),
+        );
+      },
     },
     {
       key: 'response_deadline',
       header: 'Deadline',
-      label: 'Deadline',
       sortable: true,
-      width: '1fr',
-      render: (value: string) => {
-        if (!value)
+      width: 'col-span-2',
+      render: (value, row) => {
+        if (!row.response_deadline) {
           return <div className="text-sm text-gray-400">No deadline</div>;
+        }
 
-        const deadline = new Date(value);
+        const deadline = new Date(row.response_deadline);
         const today = new Date();
         const isPast = deadline < today;
 
@@ -231,7 +249,7 @@ export function PlacementsTable({ authToken }: PlacementsTableProps) {
           <div
             className={`text-sm ${isPast ? 'text-red-600' : 'text-gray-700'}`}
           >
-            {deadline.toLocaleDateString()}
+            {formatDate(row.response_deadline)}
             {isPast && <div className="text-xs text-red-500">Expired</div>}
           </div>
         );
@@ -239,63 +257,55 @@ export function PlacementsTable({ authToken }: PlacementsTableProps) {
     },
   ];
 
- 
-  const actions = (placement: any) => {
-    const baseActions = [
-      {
-        label: 'View Details',
-        icon: <Icon name="eye" className="h-4 w-4" />,
-        onClick: () => {
+  const actions = (placement: Placement) => (
+    <div className="flex space-x-1">
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
           router.push(`/agency/placements/${placement.id}`);
-        },
-      },
-      {
-        label: 'Submit Candidate',
-        icon: <Icon name="userPlus" className="h-4 w-4" />,
-        onClick: () => {
+        }}
+        className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all duration-300"
+        title="View Details"
+      >
+        <Icon name="eye" className="h-4 w-4" />
+      </button>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
           console.log('Submit candidate for placement:', placement.id);
-        },
-      },
-    ];
+        }}
+        className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all duration-300"
+        title="Submit Candidate"
+      >
+        <Icon name="userPlus" className="h-4 w-4" />
+      </button>
+      {placement.status === 'active' && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            router.push(`/agency/placements/${placement.id}/analytics`);
+          }}
+          className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all duration-300"
+          title="Track Responses"
+        >
+          <Icon name="barChart" className="h-4 w-4" />
+        </button>
+      )}
+      {placement.status === 'draft' && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            router.push(`/agency/placements/${placement.id}/edit`);
+          }}
+          className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all duration-300"
+          title="Edit Placement"
+        >
+          <Icon name="edit" className="h-4 w-4" />
+        </button>
+      )}
+    </div>
+  );
 
-    if (placement.status === 'active') {
-      baseActions.push({
-        label: 'Track Responses',
-        icon: <Icon name="barChart" className="h-4 w-4" />,
-        onClick: () => {
-          router.push(`/agency/placements/${placement.id}/analytics`);
-        },
-      });
-    }
-
-    if (placement.status === 'draft') {
-      baseActions.push({
-        label: 'Edit Placement',
-        icon: <Icon name="edit" className="h-4 w-4" />,
-        onClick: () => {
-          router.push(`/agency/placements/${placement.id}/edit`);
-        },
-      });
-    }
-
-    // Return as ReactNode by wrapping in Fragment or mapping
-    return (
-      <>
-        {baseActions.map((action, index) => (
-          <button
-            key={index}
-            onClick={action.onClick}
-            className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all duration-300"
-            title={action.label}
-          >
-            {action.icon}
-          </button>
-        ))}
-      </>
-    );
-  };
-
-  // Enhanced empty state message based on filters
   const getEmptyMessage = () => {
     if (filters.search) {
       return `No placements found matching "${filters.search}". Try adjusting your search terms.`;
@@ -386,29 +396,22 @@ export function PlacementsTable({ authToken }: PlacementsTableProps) {
       </div>
 
       {/* Data Table */}
-      <DataTable
+      <DataTable<Placement>
         data={placementsResponse?.data || []}
         columns={placementColumns}
-        pagination={placementsResponse?.meta}
+        pagination={{
+          page: filters.page,
+          pageSize: filters.per_page,
+          total: placementsResponse?.meta?.total || 0,
+        }}
         onPaginationChange={handlePaginationChange}
         onSortChange={handleSortChange}
+        onRowClick={handleRowClick}
+        actions={actions}
         isLoading={isLoading}
         error={error}
         onRetry={refetch}
         emptyMessage={getEmptyMessage()}
-        actions={actions}
-        onRowClick={(placement) => {
-          router.push(`/agency/placements/${placement.id}`);
-        }}
-        rowClassName={(row) =>
-          row.status === 'active' &&
-          row.response_deadline &&
-          new Date(row.response_deadline) < new Date()
-            ? 'border-l-4 border-l-orange-500 bg-orange-50'
-            : row.status === 'active'
-              ? 'border-l-4 border-l-green-500'
-              : ''
-        }
       />
     </div>
   );

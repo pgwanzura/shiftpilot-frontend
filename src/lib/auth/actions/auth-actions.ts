@@ -84,10 +84,8 @@ async function serverFetch(endpoint: string, options: RequestInit = {}) {
       );
     }
 
-    // Extract cookies from response and store them
     const responseCookies = csrfResponse.headers.getSetCookie();
 
-    // Get XSRF token from cookies
     let xsrfToken = '';
     for (const cookie of responseCookies) {
       const match = cookie.match(/XSRF-TOKEN=([^;]+)/);
@@ -97,17 +95,15 @@ async function serverFetch(endpoint: string, options: RequestInit = {}) {
       }
     }
 
-    // For the actual API request, use the same origin and include credentials
     const apiUrl = `${baseURL}/api/${cleanEndpoint}`;
 
     const config: RequestInit = {
       ...options,
-      credentials: 'include', // Important for session cookies
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
         ...(xsrfToken && { 'X-XSRF-TOKEN': xsrfToken }),
-        // Include any cookies we received
         Cookie: csrfResponse.headers.get('set-cookie') || existingCookies,
         ...options.headers,
       },

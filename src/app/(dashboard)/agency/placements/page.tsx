@@ -1,23 +1,22 @@
+// app/agency/placements/page.tsx
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { PageHeader } from '@/app/components/layout';
 import { QuickActions } from '@/app/components/ui';
 import { PlacementsTable } from '@/app/components/role/agency/placements/PlacementsTable';
-import { PlacementStats } from '@/app/components/role/agency/placements/PlacementStats';
-import { useDashboardStats } from '@/hooks/useDashboardStats';
-import { AuthUser, UserRole } from '@/lib/auth';
+import { PlacementStatsCards } from '@/app/components/role/agency/placements/PlacementStatsCards';
 
 interface PlacementsPageProps {
   searchParams: { [key: string]: string | string[] | undefined };
 }
 
-async function getAuthUser(): Promise<{ user: AuthUser | null; token: string | null }> {
+async function getAuthUser(): Promise<{
+  user: any | null;
+  token: string | null;
+}> {
   const cookieStore = await cookies();
   const userCookie = cookieStore.get('auth_user');
   const tokenCookie = cookieStore.get('auth_token');
-
-  console.log('Server-side: auth_user cookie', userCookie);
-  console.log('Server-side: auth_token cookie', tokenCookie);
 
   if (!userCookie || !tokenCookie) {
     return { user: null, token: null };
@@ -27,35 +26,53 @@ async function getAuthUser(): Promise<{ user: AuthUser | null; token: string | n
     const user = JSON.parse(userCookie.value);
     return { user, token: tokenCookie.value };
   } catch (error) {
-    console.error('Server-side: Error parsing auth_user cookie', error);
+    console.error('Failed to parse auth_user cookie:', error);
     return { user: null, token: null };
   }
 }
 
-export default async function PlacementsPage({ searchParams }: PlacementsPageProps) {
+// Mock stats data - replace with actual API call
+async function getPlacementStats(token: string) {
+  // TODO: Replace with actual API call to get stats
+  return {
+    total: 24,
+    active: 12,
+    draft: 5,
+    filled: 4,
+    completed: 3,
+    responses: 47,
+  };
+}
+
+export default async function PlacementsPage({
+  searchParams,
+}: PlacementsPageProps) {
   const { user, token } = await getAuthUser();
 
   if (!user || !token) {
     redirect('/login');
   }
 
-  const allowedRoles: UserRole[] = ['agency_admin', 'agent'];
+  const allowedRoles = ['agency_admin', 'agent'];
   if (!allowedRoles.includes(user.role)) {
     redirect('/unauthorized');
   }
 
-  // Client component specific hooks and state will be managed within PlacementsTable
-  // and other child client components. Here we only fetch server-side data.
-  
+  // Fetch stats data
+  const stats = await getPlacementStats(token);
+
   return (
     <div className="space-y-6">
-      <PageHeader actions={<QuickActions userRole={user.role} />} />
+      <PageHeader
+        title="Placements"
+        description="Manage and track your placement opportunities"
+        actions={<QuickActions userRole={user.role} />}
+      />
 
-      {/* Stats Overview */}
-      {/* useDashboardStats will need to be a client component and fetch stats client-side or be wrapped */}
-      {/* For now, we will remove direct usage here to fix the immediate issue */}
+      {/* Stats Cards - Now using client component */}
+      <PlacementStatsCards stats={stats} />
 
-      {/* Placements Table */}
+      {/* Table Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="p-6">
           <PlacementsTable authToken={token} />

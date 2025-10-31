@@ -187,7 +187,7 @@ export function DataTable<T extends TableData>({
 
   return (
     <div
-      className={`bg-white rounded-xl border border-gray-200 shadow-xs hover:shadow-md transition-all duration-300 ${className}`}
+      className={`bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all duration-300 ${className}`}
     >
       <div className="p-4 sm:p-6 border-b border-gray-200">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 sm:gap-4">

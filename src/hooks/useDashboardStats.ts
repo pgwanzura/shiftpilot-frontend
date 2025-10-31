@@ -1,9 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { ApiClient } from '@/lib/api/apiClient';
 
-const apiClient = new ApiClient();
-
-export function useDashboardStats(role: string) {
+export function useDashboardStats(role: string, authToken: string | null) {
+  const apiClient = new ApiClient(undefined, authToken);
   return useQuery({
     queryKey: ['dashboard-stats', role],
     queryFn: async () => {

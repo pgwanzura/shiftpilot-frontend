@@ -15,6 +15,7 @@ export interface AuthUser {
   email_verified_at?: string;
   last_login_at?: string;
   status: 'active' | 'inactive' | 'suspended';
+  meta?: Record<string, any>;
 }
 
 export interface AuthResponse {
