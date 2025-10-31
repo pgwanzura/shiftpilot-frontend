@@ -3,7 +3,7 @@ import { BaseClient } from './baseClient';
 import {
   ApiResponse,
   Contact,
-  CreateJobRequest,
+  // CreateJobRequest,
   DashboardStats,
   Employee,
   EmployeeAvailability,
@@ -19,7 +19,7 @@ import {
   ShiftApproval,
   ShiftOffer,
   ShiftTemplate,
-  SubmitCandidateRequest,
+  // SubmitCandidateRequest,
   Subscription,
   TimeOffRequest,
   Timesheet,
@@ -32,8 +32,8 @@ export class ApiClient extends BaseClient {
   protected baseURL: string;
   public auth: AuthClient;
 
-  constructor(baseURL?: string) {
-    super();
+  constructor(baseURL?: string, authToken: string | null = null) {
+    super(authToken);
     this.baseURL =
       baseURL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
     this.auth = new AuthClient(this.baseURL);
@@ -160,6 +160,16 @@ export class ApiClient extends BaseClient {
 
   async getAgencyPlacements(params?: {
     status?: string;
+    search?: string;
+    experience_level?: string;
+    budget_type?: string;
+    location_id?: number;
+    start_date_from?: string;
+    start_date_to?: string;
+    sort_by?: string;
+    sort_direction?: string;
+    page?: number;
+    per_page?: number;
   }): Promise<PaginatedResponse<Placement>> {
     return this.get<PaginatedResponse<Placement>>('/agency/placements', params);
   }
@@ -189,36 +199,6 @@ export class ApiClient extends BaseClient {
     return this.post<ApiResponse<Payroll[]>>(
       '/agency/payroll/process',
       payrollData
-    );
-  }
-
-  async submitCandidate(
-    jobId: number,
-    candidateData: SubmitCandidateRequest
-  ): Promise<ApiResponse<any>> {
-    if (candidateData.resume) {
-      const formData = new FormData();
-      formData.append('name', candidateData.name);
-      formData.append('email', candidateData.email);
-      formData.append('experience', candidateData.experience);
-      formData.append('skills', JSON.stringify(candidateData.skills));
-
-      if (candidateData.phone) formData.append('phone', candidateData.phone);
-      if (candidateData.resume) formData.append('resume', candidateData.resume);
-
-      return this.request<ApiResponse<any>>(
-        `/agency/jobs/${jobId}/candidates`,
-        {
-          method: 'POST',
-          headers: { Accept: 'application/json' },
-          body: formData,
-        }
-      );
-    }
-
-    return this.post<ApiResponse<any>>(
-      `/agency/jobs/${jobId}/candidates`,
-      candidateData
     );
   }
 

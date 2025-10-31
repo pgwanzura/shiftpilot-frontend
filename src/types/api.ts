@@ -610,7 +610,7 @@ export interface UsersQueryParams {
 // ==================== API RESPONSES ====================
 
 export interface ApiResponse<T> {
-  data: T;
+  data: T[];
   message?: string;
   meta?: {
     page: number;
@@ -620,14 +620,71 @@ export interface ApiResponse<T> {
   };
 }
 
+export interface ApiErrorDetails {
+  code?: string | number;
+  exception?: string;
+  file?: string;
+  line?: number;
+  trace?: string[];
+  validation_errors?: Record<string, string[]>;
+  business_reason?: string;
+  suggestion?: string;
+  retry_after?: number;
+  current_page?: number;
+  total?: number;
+}
+
 export interface ApiError {
   message: string;
   status: number;
   errors?: Record<string, string[]>;
+  details?: ApiErrorDetails;
 }
+
+export interface ValidationApiError extends ApiError {
+  errors: Record<string, string[]>;
+  details: ApiErrorDetails & {
+    validation_errors: Record<string, string[]>;
+  };
+}
+
+export interface BusinessApiError extends ApiError {
+  details: ApiErrorDetails & {
+    business_reason: string;
+    code: string | number;
+  };
+}
+
+export interface RateLimitApiError extends ApiError {
+  details: ApiErrorDetails & {
+    retry_after: number;
+  };
+}
+
+export const isValidationError = (
+  error: ApiError
+): error is ValidationApiError => {
+  return !!(error.errors && Object.keys(error.errors).length > 0);
+};
+
+export const isBusinessError = (error: ApiError): error is BusinessApiError => {
+  return !!(error.details?.business_reason && error.details?.code);
+};
+
+export const isRateLimitError = (
+  error: ApiError
+): error is RateLimitApiError => {
+  return !!error.details?.retry_after;
+};
 
 export interface QueryParams {
   [key: string]: string | number | boolean | undefined;
+}
+
+export interface RequestOptions {
+  timeout?: number;
+  headers?: Record<string, string>;
+  skipCSRF?: boolean;
 }
 
 // ==================== DASHBOARD INTERFACES ====================

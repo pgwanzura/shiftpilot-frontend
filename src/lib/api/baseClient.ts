@@ -2,12 +2,18 @@ import { ApiError, QueryParams } from '../../types';
 
 export abstract class BaseClient {
   protected abstract baseURL: string;
+  protected authToken: string | null;
+
+  constructor(authToken: string | null = null) {
+    this.authToken = authToken;
+  }
 
   protected async ensureCSRF(): Promise<void> {
     try {
-      await fetch(`${this.baseURL}/sanctum/csrf-cookie`, {
+      await fetch(`${ this.baseURL}/sanctum/csrf-cookie`, {
         method: 'GET',
         credentials: 'include',
+        mode: 'cors',
       });
     } catch {
       throw new Error('Failed to get CSRF token');
@@ -34,7 +40,12 @@ export abstract class BaseClient {
       return undefined as T;
     }
 
-    return response.json();
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return response.json();
+    }
+
+    return undefined as T;
   }
 
   protected async request<T>(
@@ -49,17 +60,35 @@ export abstract class BaseClient {
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
+        ...(this.authToken && { Authorization: `Bearer ${this.authToken}` }),
         ...options.headers,
       },
       credentials: 'include',
+      mode: 'cors', // Explicitly enable CORS mode
       ...options,
     };
+
+    // For GET requests, don't include Content-Type header
+    if (options.method === 'GET') {
+      delete (config.headers as any)['Content-Type'];
+    }
 
     try {
       const response = await fetch(`${this.baseURL}${endpoint}`, config);
       return await this.handleResponse<T>(response);
     } catch (error) {
-      if (error instanceof Error) throw error;
+      if (error instanceof Error) {
+        // Handle CORS-specific errors
+        if (
+          error.message.includes('CORS') ||
+          error.message.includes('Failed to fetch')
+        ) {
+          throw new Error(
+            `CORS error: Unable to connect to API. Please check if the server is running and CORS is configured properly.`
+          );
+        }
+        throw error;
+      }
       throw new Error('Network request failed');
     }
   }

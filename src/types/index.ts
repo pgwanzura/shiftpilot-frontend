@@ -1,5 +1,11 @@
 export type { UserRole, AuthUser } from '../lib/auth';
-export type { User, ApiResponse, ApiError, QueryParams } from './api';
+export type {
+  User,
+  ApiResponse,
+  ApiError,
+  QueryParams,
+  RequestOptions,
+} from './api';
 export type {
   AuthResponse,
   LoginCredentials,
@@ -31,8 +37,8 @@ export type {
   Subscription,
   TimeOffRequest,
   Timesheet,
-  CreateJobRequest,
-  SubmitCandidateRequest,
+  // CreateJobRequest,
+  // SubmitCandidateRequest,
   UserStatusUpdate,
   UsersQueryParams,
 } from './api';

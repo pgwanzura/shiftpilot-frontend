@@ -36,10 +36,6 @@ function validateUrl(url: string | undefined, fallback: string): string {
 
 const API_URL = getApiUrl();
 
-function logDebug(message: string, data?: any) {
-  console.log(`[AUTH DEBUG] ${message}`, data || '');
-}
-
 async function storeAuth(token: string, user: any): Promise<void> {
   const cookieStore = await cookies();
   const cookieOptions = {
@@ -67,16 +63,10 @@ async function serverFetch(endpoint: string, options: RequestInit = {}) {
   const baseURL = API_URL.replace(/\/$/, '');
   const cleanEndpoint = endpoint.replace(/^\//, '');
 
-  logDebug('Making server fetch request', {
-    baseURL,
-    endpoint: `${baseURL}/api/${cleanEndpoint}`,
-  });
-
   try {
     const cookieStore = await cookies();
     const existingCookies = cookieStore.toString();
     const csrfUrl = `${baseURL}/sanctum/csrf-cookie`;
-    logDebug('Fetching CSRF token', csrfUrl);
 
     const csrfResponse = await fetch(csrfUrl, {
       method: 'GET',
@@ -87,15 +77,8 @@ async function serverFetch(endpoint: string, options: RequestInit = {}) {
       },
     });
 
-    logDebug('CSRF response status', csrfResponse.status);
-    logDebug(
-      'CSRF response headers',
-      Object.fromEntries(csrfResponse.headers.entries())
-    );
-
     if (!csrfResponse.ok) {
       const errorText = await csrfResponse.text();
-      logDebug('CSRF error response', errorText);
       throw new Error(
         `CSRF request failed: ${csrfResponse.status} ${csrfResponse.statusText}`
       );
@@ -103,7 +86,6 @@ async function serverFetch(endpoint: string, options: RequestInit = {}) {
 
     // Extract cookies from response and store them
     const responseCookies = csrfResponse.headers.getSetCookie();
-    logDebug('CSRF response cookies', responseCookies);
 
     // Get XSRF token from cookies
     let xsrfToken = '';
@@ -114,8 +96,6 @@ async function serverFetch(endpoint: string, options: RequestInit = {}) {
         break;
       }
     }
-
-    logDebug('XSRF Token extracted', xsrfToken ? 'Yes' : 'No');
 
     // For the actual API request, use the same origin and include credentials
     const apiUrl = `${baseURL}/api/${cleanEndpoint}`;
@@ -133,19 +113,10 @@ async function serverFetch(endpoint: string, options: RequestInit = {}) {
       },
     };
 
-    logDebug('Making API request', {
-      url: apiUrl,
-      method: options.method,
-      hasXsrfToken: !!xsrfToken,
-    });
-
     const response = await fetch(apiUrl, config);
-
-    logDebug('API response status', response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
-      logDebug('API error response', errorText);
 
       let errorData: { message?: string; errors?: Record<string, string[]> } =
         {};
@@ -165,63 +136,8 @@ async function serverFetch(endpoint: string, options: RequestInit = {}) {
     }
 
     const responseData = await response.json();
-    logDebug('API success response', {
-      hasToken: !!responseData.access_token,
-      userRole: responseData.user?.role,
-    });
     return responseData;
   } catch (error) {
-    logDebug('Fetch error details', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-    });
-    throw error;
-  }
-}
-
-// Alternative simplified version without CSRF for testing
-async function simpleServerFetch(endpoint: string, options: RequestInit = {}) {
-  const baseURL = API_URL.replace(/\/$/, '');
-  const cleanEndpoint = endpoint.replace(/^\//, '');
-  const apiUrl = `${baseURL}/api/${cleanEndpoint}`;
-
-  logDebug('Making simple fetch request', { apiUrl });
-
-  try {
-    const config: RequestInit = {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        ...options.headers,
-      },
-    };
-
-    const response = await fetch(apiUrl, config);
-
-    logDebug('Simple fetch response status', response.status);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      logDebug('Simple fetch error response', errorText);
-
-      let errorData: { message?: string; errors?: Record<string, string[]> } =
-        {};
-      try {
-        errorData = JSON.parse(errorText);
-      } catch {
-        errorData = { message: errorText };
-      }
-
-      throw new Error(
-        errorData.message || `Request failed: ${response.status}`
-      );
-    }
-
-    const responseData = await response.json();
-    return responseData;
-  } catch (error) {
-    logDebug('Simple fetch error', error);
     throw error;
   }
 }
@@ -229,11 +145,8 @@ async function simpleServerFetch(endpoint: string, options: RequestInit = {}) {
 export async function loginAction(
   data: LoginFormData
 ): Promise<AuthActionResult> {
-  logDebug('Login action started', { email: data.email });
-
   try {
-    // Try simple fetch first (without CSRF)
-    const response = await simpleServerFetch('/auth/login', {
+    const response = await serverFetch('/auth/login', {
       method: 'POST',
       body: JSON.stringify({
         email: data.email,
@@ -246,52 +159,26 @@ export async function loginAction(
     await storeAuth(response.access_token, response.user);
 
     const redirectTo = getRoleRedirectPath(response.user.role);
-    logDebug('Login successful', { redirectTo });
     return { success: true, redirectTo };
   } catch (error: any) {
-    logDebug('Login action failed', error);
 
-    // If simple fetch fails, try with CSRF
-    try {
-      logDebug('Trying login with CSRF flow');
-      const response = await serverFetch('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({
-          email: data.email,
-          password: data.password,
-          remember: data.remember,
-          device_name: 'shiftpilot-web',
-        }),
-      });
-
-      await storeAuth(response.access_token, response.user);
-      const redirectTo = getRoleRedirectPath(response.user.role);
-      logDebug('Login successful with CSRF', { redirectTo });
-      return { success: true, redirectTo };
-    } catch (csrfError: any) {
-      logDebug('CSRF login also failed', csrfError);
-
-      if (csrfError.errors) {
-        const errorEntries = Object.entries(csrfError.errors);
-        const firstError = errorEntries[0]?.[1];
-        return {
-          error: Array.isArray(firstError) ? firstError[0] : 'Login failed',
-        };
-      }
-
-      return { error: csrfError.message || 'An unexpected error occurred' };
+    if (error.errors) {
+      const errorEntries = Object.entries(error.errors);
+      const firstError = errorEntries[0]?.[1];
+      return {
+        error: Array.isArray(firstError) ? firstError[0] : 'Login failed',
+      };
     }
+
+    return { error: error.message || 'An unexpected error occurred' };
   }
 }
 
-// Keep other actions the same but use simpleServerFetch for now
 export async function registerAgencyAction(
   data: AgencyRegistrationData
 ): Promise<AuthActionResult> {
-  logDebug('Agency registration started', { email: data.email });
-
   try {
-    const response = await simpleServerFetch('/auth/register/agency', {
+    const response = await serverFetch('/auth/register/agency', {
       method: 'POST',
       body: JSON.stringify({
         name: data.name,
@@ -307,10 +194,8 @@ export async function registerAgencyAction(
 
     await storeAuth(response.access_token, response.user);
     const redirectTo = getRoleRedirectPath(response.user.role);
-    logDebug('Agency registration successful', { redirectTo });
     return { success: true, redirectTo };
   } catch (error: any) {
-    logDebug('Agency registration failed', error);
 
     if (error.errors) {
       const errorEntries = Object.entries(error.errors);
@@ -329,10 +214,8 @@ export async function registerAgencyAction(
 export async function registerEmployerAction(
   data: EmployerRegistrationData
 ): Promise<AuthActionResult> {
-  logDebug('Employer registration started', { email: data.email });
-
   try {
-    const response = await simpleServerFetch('/auth/register/employer', {
+    const response = await serverFetch('/auth/register/employer', {
       method: 'POST',
       body: JSON.stringify({
         name: data.name,
@@ -348,10 +231,8 @@ export async function registerEmployerAction(
 
     await storeAuth(response.access_token, response.user);
     const redirectTo = getRoleRedirectPath(response.user.role);
-    logDebug('Employer registration successful', { redirectTo });
     return { success: true, redirectTo };
   } catch (error: any) {
-    logDebug('Employer registration failed', error);
 
     if (error.errors) {
       const errorEntries = Object.entries(error.errors);
@@ -367,7 +248,6 @@ export async function registerEmployerAction(
   }
 }
 
-// Keep logoutAction and getRoleRedirectPath the same
 export async function logoutAction(): Promise<void> {
   const cookieStore = await cookies();
 
@@ -375,7 +255,7 @@ export async function logoutAction(): Promise<void> {
     const token = cookieStore.get('auth_token')?.value;
 
     if (token) {
-      await simpleServerFetch('/auth/logout', {
+      await serverFetch('/auth/logout', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

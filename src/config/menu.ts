@@ -276,7 +276,7 @@ export const menuConfig: MenuConfig = {
       path: '/agency',
     },
     {
-      label: 'Placement Opportunities',
+      label: 'Placements',
       description: 'Find and respond to available job placements',
       icon: Search,
       children: [
@@ -591,7 +591,7 @@ export const menuConfig: MenuConfig = {
       path: '/agency',
     },
     {
-      label: 'Placement Opportunities',
+      label: 'Placements',
       description: 'Find and manage placement opportunities for your team',
       icon: Search,
       children: [

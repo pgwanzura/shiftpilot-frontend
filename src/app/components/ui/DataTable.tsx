@@ -1,10 +1,16 @@
 'use client';
 
+import React from 'react';
+import type { JSX } from 'react';
 import { useState, useMemo, useRef, ReactNode, DragEvent } from 'react';
 import { Button, Icon, Loader } from '@/app/components/ui';
 
-export interface Column<T> {
-  key: string;
+export interface TableData {
+  id: string | number;
+}
+
+export interface Column<T extends TableData> {
+  key: keyof T;
   header: string;
   sortable?: boolean;
   filterable?: boolean;
@@ -12,26 +18,26 @@ export interface Column<T> {
   width: string;
 }
 
-interface Pagination {
+export interface Pagination {
   page: number;
   pageSize: number;
   total: number;
 }
 
-interface SortState {
+export interface SortState {
   key: string;
   direction: 'asc' | 'desc';
 }
 
-interface Action {
+export interface Action<T extends TableData> {
   label: string;
   icon: ReactNode;
-  onClick: () => void;
+  onClick: (row: T) => void;
 }
 
-interface DataTableProps<T> {
+export interface DataTableProps<T extends TableData> {
   data: T[];
-  columns: Column<T>[];
+  columns: Array<Column<T>>;
   pagination?: Pagination;
   onPaginationChange?: (pagination: Pagination) => void;
   onSortChange?: (sort: SortState) => void;
@@ -40,10 +46,10 @@ interface DataTableProps<T> {
   className?: string;
   rowClassName?: (row: T, rowIndex: number) => string;
   onRowClick?: (row: T) => void;
-  actions?: (row: T) => Action[];
+  actions?: (row: T) => Array<Action<T>>;
 }
 
-export function DataTable<T extends Record<string, any>>({
+export function DataTable<T extends TableData>({
   data,
   columns: initialColumns,
   pagination,
@@ -55,30 +61,30 @@ export function DataTable<T extends Record<string, any>>({
   rowClassName,
   onRowClick,
   actions,
-}: DataTableProps<T>) {
+}: DataTableProps<T>): JSX.Element {
   const [sort, setSort] = useState<SortState | null>(null);
-  const [globalFilter, setGlobalFilter] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
+  const [globalFilter, setGlobalFilter] = useState<string>('');
+  const [showFilters, setShowFilters] = useState<boolean>(false);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
   const [columnOrder, setColumnOrder] = useState<string[]>(
-    initialColumns.map((col) => col.key)
+    initialColumns.map((col) => col.key as string)
   );
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(
-    new Set(initialColumns.map((col) => col.key))
+    new Set(initialColumns.map((col) => col.key as string))
   );
-  const [showColumnSettings, setShowColumnSettings] = useState(false);
+  const [showColumnSettings, setShowColumnSettings] = useState<boolean>(false);
 
   const tableRef = useRef<HTMLDivElement>(null);
 
-  const columns = useMemo(() => {
+  const columns = useMemo((): Array<Column<T>> => {
     return columnOrder
       .map((key) => initialColumns.find((col) => col.key === key))
       .filter((col): col is Column<T> => col !== undefined)
-      .filter((col) => visibleColumns.has(col.key));
+      .filter((col) => visibleColumns.has(col.key as string));
   }, [initialColumns, columnOrder, visibleColumns]);
 
-  const handleSort = (key: string) => {
+  const handleSort = (key: string): void => {
     const newSort: SortState =
       sort?.key === key && sort.direction === 'asc'
         ? { key, direction: 'desc' }
@@ -88,30 +94,36 @@ export function DataTable<T extends Record<string, any>>({
     onSortChange?.(newSort);
   };
 
-  const handleDragStart = (e: DragEvent, columnKey: string) => {
+  const handleDragStart = (
+    e: DragEvent<HTMLDivElement>,
+    columnKey: string
+  ): void => {
     setDraggedColumn(columnKey);
     e.dataTransfer.effectAllowed = 'move';
   };
 
-  const handleDragOver = (e: DragEvent, targetColumnKey: string) => {
+  const handleDragOver = (
+    e: DragEvent<HTMLDivElement>,
+    targetColumnKey: string
+  ): void => {
     e.preventDefault();
-    if (draggedColumn === targetColumnKey) return;
+    if (!draggedColumn || draggedColumn === targetColumnKey) return;
 
     const newOrder = [...columnOrder];
-    const draggedIndex = newOrder.indexOf(draggedColumn!);
+    const draggedIndex = newOrder.indexOf(draggedColumn);
     const targetIndex = newOrder.indexOf(targetColumnKey);
 
     newOrder.splice(draggedIndex, 1);
-    newOrder.splice(targetIndex, 0, draggedColumn!);
+    newOrder.splice(targetIndex, 0, draggedColumn);
 
     setColumnOrder(newOrder);
   };
 
-  const handleDragEnd = () => {
+  const handleDragEnd = (): void => {
     setDraggedColumn(null);
   };
 
-  const toggleColumnVisibility = (columnKey: string) => {
+  const toggleColumnVisibility = (columnKey: string): void => {
     const newVisible = new Set(visibleColumns);
     if (newVisible.has(columnKey)) {
       newVisible.delete(columnKey);
@@ -121,15 +133,15 @@ export function DataTable<T extends Record<string, any>>({
     setVisibleColumns(newVisible);
   };
 
-  const selectAllColumns = () => {
-    setVisibleColumns(new Set(initialColumns.map((col) => col.key)));
+  const selectAllColumns = (): void => {
+    setVisibleColumns(new Set(initialColumns.map((col) => col.key as string)));
   };
 
-  const deselectAllColumns = () => {
+  const deselectAllColumns = (): void => {
     setVisibleColumns(new Set());
   };
 
-  const processedData = useMemo(() => {
+  const processedData = useMemo((): T[] => {
     let result = [...data];
 
     if (globalFilter) {
@@ -146,11 +158,13 @@ export function DataTable<T extends Record<string, any>>({
 
     if (sort) {
       result.sort((a, b) => {
-        const aValue = a[sort.key];
-        const bValue = b[sort.key];
+        const aValue = a[sort.key as keyof T];
+        const bValue = b[sort.key as keyof T];
+
         if (aValue === bValue) return 0;
 
         const direction = sort.direction === 'asc' ? 1 : -1;
+
         if (aValue == null) return direction;
         if (bValue == null) return -direction;
 
@@ -161,7 +175,7 @@ export function DataTable<T extends Record<string, any>>({
     return result;
   }, [data, sort, globalFilter, columns]);
 
-  const paginatedData = useMemo(() => {
+  const paginatedData = useMemo((): T[] => {
     if (!pagination) return processedData;
     const start = (pagination.page - 1) * pagination.pageSize;
     return processedData.slice(start, start + pagination.pageSize);
@@ -235,102 +249,98 @@ export function DataTable<T extends Record<string, any>>({
                 <span className="hidden sm:inline">Columns</span>
               </Button>
 
-              <div
-                className={`absolute right-0 top-full mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-20 transition-all duration-300 ease-out ${
-                  showColumnSettings
-                    ? 'opacity-100 scale-100 translate-y-0'
-                    : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'
-                }`}
-              >
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-sm font-semibold text-gray-900">
-                      Columns
-                    </h4>
-                    <div className="flex gap-1">
-                      <button
-                        onClick={selectAllColumns}
-                        className="text-xs text-indigo-600 hover:text-indigo-700 font-medium transition-colors duration-200"
-                      >
-                        All
-                      </button>
-                      <span className="text-gray-300">•</span>
-                      <button
-                        onClick={deselectAllColumns}
-                        className="text-xs text-gray-600 hover:text-gray-700 font-medium transition-colors duration-200"
-                      >
-                        None
-                      </button>
+              {showColumnSettings && (
+                <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-20">
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-semibold text-gray-900">
+                        Columns
+                      </h4>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={selectAllColumns}
+                          className="text-xs text-indigo-600 hover:text-indigo-700 font-medium transition-colors duration-200"
+                        >
+                          All
+                        </button>
+                        <span className="text-gray-300">•</span>
+                        <button
+                          onClick={deselectAllColumns}
+                          className="text-xs text-gray-600 hover:text-gray-700 font-medium transition-colors duration-200"
+                        >
+                          None
+                        </button>
+                      </div>
+                    </div>
+                    <div className="space-y-1 max-h-60 overflow-y-auto">
+                      {initialColumns.map((column) => (
+                        <label
+                          key={column.key as string}
+                          className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200 ease-out"
+                        >
+                          <div className="flex items-center gap-2 flex-1">
+                            <Icon
+                              name="gripVertical"
+                              className="h-3 w-3 text-gray-400 flex-shrink-0 transition-colors duration-200"
+                            />
+                            <span className="text-sm text-gray-700 flex-1 transition-colors duration-200">
+                              {column.header}
+                            </span>
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={visibleColumns.has(column.key as string)}
+                            onChange={() =>
+                              toggleColumnVisibility(column.key as string)
+                            }
+                            className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 transition-all duration-200"
+                          />
+                        </label>
+                      ))}
                     </div>
                   </div>
-                  <div className="space-y-1 max-h-60 overflow-y-auto">
-                    {initialColumns.map((column) => (
-                      <label
-                        key={column.key}
-                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200 ease-out"
-                      >
-                        <div className="flex items-center gap-2 flex-1">
-                          <Icon
-                            name="gripVertical"
-                            className="h-3 w-3 text-gray-400 flex-shrink-0 transition-colors duration-200"
-                          />
-                          <span className="text-sm text-gray-700 flex-1 transition-colors duration-200">
-                            {column.header}
-                          </span>
-                        </div>
-                        <input
-                          type="checkbox"
-                          checked={visibleColumns.has(column.key)}
-                          onChange={() => toggleColumnVisibility(column.key)}
-                          className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 transition-all duration-200"
-                        />
-                      </label>
-                    ))}
-                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
 
-        <div
-          className={`transition-all duration-500 overflow-hidden ${
-            showFilters ? 'max-h-96 mt-4' : 'max-h-0'
-          }`}
-        >
-          <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-gray-800">
-                Advanced Filters
-              </h3>
-              <button
-                onClick={() => setShowFilters(false)}
-                className="p-1.5 text-gray-400 hover:text-gray-600 rounded-md hover:bg-white transition-all duration-300 border border-transparent hover:border-gray-300 group"
-              >
-                <Icon
-                  name="x"
-                  className="h-4 w-4 transition-transform duration-300 group-hover:scale-110"
-                />
-              </button>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              {columns
-                .filter((col) => col.filterable)
-                .map((column) => (
-                  <div key={column.key}>
-                    <label className="block text-xs font-medium text-gray-700 mb-2">
-                      {column.header}
-                    </label>
-                    <input
-                      type="text"
-                      placeholder={`Filter ${column.header.toLowerCase()}...`}
-                      className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all duration-300 text-sm hover:border-gray-400"
-                    />
-                  </div>
-                ))}
+        {showFilters && (
+          <div className="mt-4">
+            <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-base font-semibold text-gray-800">
+                  Advanced Filters
+                </h3>
+                <button
+                  onClick={() => setShowFilters(false)}
+                  className="p-1.5 text-gray-400 hover:text-gray-600 rounded-md hover:bg-white transition-all duration-300 border border-transparent hover:border-gray-300 group"
+                >
+                  <Icon
+                    name="x"
+                    className="h-4 w-4 transition-transform duration-300 group-hover:scale-110"
+                  />
+                </button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                {columns
+                  .filter((col) => col.filterable)
+                  .map((column) => (
+                    <div key={column.key as string}>
+                      <label className="block text-xs font-medium text-gray-700 mb-2">
+                        {column.header}
+                      </label>
+                      <input
+                        type="text"
+                        placeholder={`Filter ${column.header.toLowerCase()}...`}
+                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all duration-300 text-sm hover:border-gray-400"
+                      />
+                    </div>
+                  ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       <div className="overflow-hidden" ref={tableRef}>
@@ -344,15 +354,15 @@ export function DataTable<T extends Record<string, any>>({
             >
               {columns.map((column) => (
                 <div
-                  key={column.key}
+                  key={column.key as string}
                   className={`flex items-center gap-2 group relative ${
                     sort?.key === column.key
                       ? 'bg-indigo-25 rounded-lg px-2 -mx-2'
                       : ''
                   }`}
                   draggable
-                  onDragStart={(e) => handleDragStart(e, column.key)}
-                  onDragOver={(e) => handleDragOver(e, column.key)}
+                  onDragStart={(e) => handleDragStart(e, column.key as string)}
+                  onDragOver={(e) => handleDragOver(e, column.key as string)}
                   onDragEnd={handleDragEnd}
                 >
                   <Icon
@@ -371,7 +381,7 @@ export function DataTable<T extends Record<string, any>>({
                   </span>
                   {column.sortable && (
                     <button
-                      onClick={() => handleSort(column.key)}
+                      onClick={() => handleSort(column.key as string)}
                       className={`flex flex-col border rounded-md flex-shrink-0 hover:scale-105 transition-all duration-300 p-1 ${
                         sort?.key === column.key
                           ? 'bg-indigo-50 border-indigo-200 shadow-xs opacity-100'
@@ -437,7 +447,7 @@ export function DataTable<T extends Record<string, any>>({
             ) : (
               paginatedData.map((row, rowIndex) => (
                 <div
-                  key={rowIndex}
+                  key={row.id}
                   onMouseEnter={() => setHoveredRow(rowIndex)}
                   onMouseLeave={() => setHoveredRow(null)}
                   onClick={() => onRowClick?.(row)}
@@ -464,9 +474,9 @@ export function DataTable<T extends Record<string, any>>({
                     }`}
                   />
 
-                  {columns.map((column, colIndex) => (
+                  {columns.map((column) => (
                     <div
-                      key={colIndex}
+                      key={column.key as string}
                       className="flex items-center transition-all duration-300 min-w-0"
                     >
                       <div
@@ -478,7 +488,7 @@ export function DataTable<T extends Record<string, any>>({
                       >
                         {column.render
                           ? column.render(row[column.key], row)
-                          : row[column.key] || (
+                          : (row[column.key] as ReactNode) || (
                               <span className="text-gray-400 italic">—</span>
                             )}
                       </div>
@@ -499,7 +509,7 @@ export function DataTable<T extends Record<string, any>>({
                                 key={index}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  action.onClick();
+                                  action.onClick(row);
                                 }}
                                 className="p-1.5 text-gray-400 hover:text-white hover:bg-indigo-500 rounded-md border border-transparent hover:border-indigo-600 transition-all duration-300 group hover:scale-105"
                                 title={action.label}
@@ -547,7 +557,7 @@ export function DataTable<T extends Record<string, any>>({
       {pagination && (
         <div className="px-4 sm:px-6 py-4 border-t border-gray-200">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-            <div className="text-sm text-gray-600 text-center sm:text-left transition-colors duration-300 group-hover:text-gray-700">
+            <div className="text-sm text-gray-600 text-center sm:text-left">
               Showing{' '}
               <span className="font-semibold text-gray-900">
                 {(pagination.page - 1) * pagination.pageSize + 1}
