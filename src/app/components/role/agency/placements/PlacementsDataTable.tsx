@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Icon } from '@/app/components/ui';
 import {
   DataTable,
@@ -9,6 +9,9 @@ import {
   formatCurrency,
   formatDate,
   Column,
+  type BulkAction,
+  type ExportOptions,
+  type AdvancedFilter,
 } from '@/app/components/ui/DataTable';
 import { usePlacements } from '@/hooks/usePlacements';
 
@@ -125,6 +128,90 @@ export function PlacementsDataTable({ authToken }: PlacementsDataTableProps) {
       page: 1,
     }));
   };
+
+  // Enhanced features
+  const handleSelectionChange = useCallback(
+    (selectedPlacements: Placement[]) => {
+      console.log('Selected placements:', selectedPlacements);
+      // You can add bulk action logic here
+    },
+    []
+  );
+
+  const handleBulkExport = useCallback((selectedPlacements: Placement[]) => {
+    console.log('Exporting placements:', selectedPlacements);
+    // Implement bulk export logic
+  }, []);
+
+  const handleBulkArchive = useCallback((selectedPlacements: Placement[]) => {
+    console.log('Archiving placements:', selectedPlacements);
+    // Implement bulk archive logic
+  }, []);
+
+  const handleExport = useCallback(
+    (format: string, data: any[], columns: Column<any>[]) => {
+      console.log(`Exporting as ${format}:`, data);
+      // Implement export logic based on format
+      switch (format) {
+        case 'csv':
+          // CSV export logic
+          break;
+        case 'excel':
+          // Excel export logic
+          break;
+        case 'json':
+          // JSON export logic
+          break;
+      }
+    },
+    []
+  );
+
+  const bulkActions: BulkAction<Placement>[] = [
+    {
+      label: 'Export Selected',
+      icon: <Icon name="download" className="h-4 w-4 mr-2" />,
+      onClick: handleBulkExport,
+      variant: 'secondary',
+    },
+    {
+      label: 'Archive Selected',
+      icon: <Icon name="archive" className="h-4 w-4 mr-2" />,
+      onClick: handleBulkArchive,
+      variant: 'danger',
+    },
+  ];
+
+  const exportOptions: ExportOptions = {
+    formats: ['csv', 'excel', 'json'],
+    onExport: handleExport,
+  };
+
+  const advancedFilters: AdvancedFilter[] = [
+    {
+      key: 'budget_amount',
+      type: 'number',
+      label: 'Budget Amount',
+      placeholder: 'Filter by budget...',
+    },
+    {
+      key: 'experience_level',
+      type: 'select',
+      label: 'Experience Level',
+      options: [
+        { label: 'Entry Level', value: 'entry' },
+        { label: 'Mid Level', value: 'mid' },
+        { label: 'Senior Level', value: 'senior' },
+        { label: 'Executive', value: 'executive' },
+      ],
+    },
+    {
+      key: 'start_date',
+      type: 'date',
+      label: 'Start Date',
+      placeholder: 'Filter by start date...',
+    },
+  ];
 
   const placementColumns: Column<Placement>[] = [
     {
@@ -245,6 +332,18 @@ export function PlacementsDataTable({ authToken }: PlacementsDataTableProps) {
       >
         <Icon name="userPlus" className="h-4 w-4" />
       </button>
+      {placement.status === 'active' && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log('Track responses for placement:', placement.id);
+          }}
+          className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all duration-300"
+          title="Track Responses"
+        >
+          <Icon name="barChart" className="h-4 w-4" />
+        </button>
+      )}
     </div>
   );
 
@@ -254,12 +353,14 @@ export function PlacementsDataTable({ authToken }: PlacementsDataTableProps) {
     { value: 'draft', label: 'Draft' },
     { value: 'filled', label: 'Filled' },
     { value: 'completed', label: 'Completed' },
+    { value: 'cancelled', label: 'Cancelled' },
   ];
 
   const errorMessage = error instanceof Error ? error.message : error;
 
   return (
     <DataTable<Placement>
+      // Core props (existing functionality)
       data={placementsResponse?.data || []}
       columns={placementColumns}
       pagination={{
@@ -283,6 +384,66 @@ export function PlacementsDataTable({ authToken }: PlacementsDataTableProps) {
       statusFilterOptions={statusFilterOptions}
       showSearch={true}
       showColumnSettings={true}
+      // Enhanced features (new functionality)
+      selectable={true}
+      bulkActions={bulkActions}
+      exportOptions={exportOptions}
+      advancedFilters={advancedFilters}
+      virtualScroll={
+        placementsResponse?.data && placementsResponse.data.length > 50
+      }
+      onSelectionChange={handleSelectionChange}
+      // Optional: Add row expansion for detailed view
+      rowExpansion={{
+        render: (placement: Placement) => (
+          <div className="p-4 bg-white border-t border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2">
+                  Placement Details
+                </h4>
+                <div className="space-y-1">
+                  <div>
+                    <span className="text-gray-600">ID:</span> {placement.id}
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Experience Level:</span>{' '}
+                    {placement.experience_level || 'Not specified'}
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Budget Type:</span>{' '}
+                    {placement.budget_type || 'Fixed'}
+                  </div>
+                </div>
+              </div>
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2">
+                  Response Information
+                </h4>
+                <div className="space-y-1">
+                  <div>
+                    <span className="text-gray-600">Responses:</span>{' '}
+                    {placement.agency_responses_count || 0}
+                  </div>
+                  {placement.response_deadline && (
+                    <div>
+                      <span className="text-gray-600">Deadline:</span>{' '}
+                      {formatDate(placement.response_deadline)}
+                    </div>
+                  )}
+                  {placement.location_instructions && (
+                    <div>
+                      <span className="text-gray-600">Location Notes:</span>{' '}
+                      {placement.location_instructions}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        ),
+        expandable: (placement: Placement) => true, // All rows are expandable
+      }}
     />
   );
 }

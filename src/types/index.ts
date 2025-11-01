@@ -30,6 +30,7 @@ export type {
   Payroll,
   Payout,
   Placement,
+  PlacementStats,
   Shift,
   ShiftApproval,
   ShiftOffer,

@@ -6,7 +6,8 @@ export type BadgeVariant =
   | 'error'
   | 'warning'
   | 'info'
-  | 'primary';
+  | 'primary'
+  | 'secondary';
 
 export interface BadgeProps {
   children: React.ReactNode;
@@ -26,6 +27,7 @@ export function Badge({
     warning: 'bg-yellow-100 text-yellow-800 border-yellow-200',
     info: 'bg-blue-100 text-blue-800 border-blue-200',
     primary: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+    secondary: 'bg-purple-100 text-purple-800 border-purple-200',
   };
 
   return (

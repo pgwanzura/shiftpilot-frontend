@@ -253,6 +253,15 @@ export interface AgencyResponse {
   updated_at: string;
 }
 
+export interface PlacementStats {
+  total: number;
+  active: number;
+  draft: number;
+  filled: number;
+  completed: number;
+  responses: number;
+}
+
 export interface Shift {
   id: number;
   placement_id: number;

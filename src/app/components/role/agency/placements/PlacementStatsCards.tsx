@@ -1,95 +1,174 @@
-// app/components/role/agency/placements/PlacementStatsCards.tsx
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { InteractiveStatsCard } from '@/app/components/ui';
 import { Icon } from '@/app/components/ui';
+import { usePlacementStats } from '@/hooks/usePlacements';
 
 interface PlacementStatsCardsProps {
-  stats: {
-    total: number;
-    active: number;
-    draft: number;
-    filled: number;
-    completed: number;
-    responses: number;
-  };
+  authToken: string | null;
 }
 
-export function PlacementStatsCards({ stats }: PlacementStatsCardsProps) {
+interface PlacementStatsData {
+  total: number;
+  active: number;
+  draft: number;
+  filled: number;
+  completed: number;
+  responses: number;
+}
+
+export function PlacementStatsCards({ authToken }: PlacementStatsCardsProps) {
+  const router = useRouter();
+  const {
+    data: statsResponse,
+    isLoading,
+    error,
+  } = usePlacementStats(authToken);
+
   const handleTotalClick = () => {
-    console.log('Navigate to all placements');
-    // You can add navigation logic here
+    router.push('/agency/placements?status=all');
   };
 
   const handleActiveClick = () => {
-    console.log('Navigate to active placements');
+    router.push('/agency/placements?status=active');
   };
 
   const handleDraftClick = () => {
-    console.log('Navigate to draft placements');
+    router.push('/agency/placements?status=draft');
   };
 
   const handleFilledClick = () => {
-    console.log('Navigate to filled placements');
+    router.push('/agency/placements?status=filled');
   };
 
   const handleCompletedClick = () => {
-    console.log('Navigate to completed placements');
+    router.push('/agency/placements?status=completed');
   };
 
   const handleResponsesClick = () => {
-    console.log('Navigate to responses');
+    router.push('/agency/responses');
   };
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <div
+            key={index}
+            className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="h-4 bg-gray-200 rounded w-20"></div>
+              <div className="h-5 w-5 bg-gray-200 rounded"></div>
+            </div>
+            <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
+            <div className="h-3 bg-gray-200 rounded w-24"></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
+        <div className="flex items-center gap-3">
+          <Icon name="alertTriangle" className="h-5 w-5 text-yellow-600" />
+          <div>
+            <div className="text-yellow-800 font-medium text-sm">
+              Unable to load statistics
+            </div>
+            <div className="text-yellow-700 text-sm mt-1">{error.message}</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const statsData: PlacementStatsData = (() => {
+    if (statsResponse?.data) {
+      if (Array.isArray(statsResponse.data)) {
+        return (
+          (statsResponse.data[0] as PlacementStatsData) || {
+            total: 0,
+            active: 0,
+            draft: 0,
+            filled: 0,
+            completed: 0,
+            responses: 0,
+          }
+        );
+      } else if (typeof statsResponse.data === 'object') {
+        return statsResponse.data as PlacementStatsData;
+      }
+    }
+
+    return {
+      total: 0,
+      active: 0,
+      draft: 0,
+      filled: 0,
+      completed: 0,
+      responses: 0,
+    };
+  })();
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
       <InteractiveStatsCard
         title="Total Placements"
-        value={stats.total}
+        value={statsData.total}
         description="All placement opportunities"
         icon={<Icon name="briefcase" className="h-5 w-5" />}
         variant="primary"
         onClick={handleTotalClick}
+        isLoading={isLoading}
       />
       <InteractiveStatsCard
         title="Active"
-        value={stats.active}
+        value={statsData.active}
         description="Currently accepting responses"
         icon={<Icon name="activity" className="h-5 w-5" />}
         variant="success"
         onClick={handleActiveClick}
+        isLoading={isLoading}
       />
       <InteractiveStatsCard
         title="Draft"
-        value={stats.draft}
+        value={statsData.draft}
         description="In preparation"
         icon={<Icon name="fileText" className="h-5 w-5" />}
         variant="warning"
         onClick={handleDraftClick}
+        isLoading={isLoading}
       />
       <InteractiveStatsCard
         title="Filled"
-        value={stats.filled}
+        value={statsData.filled}
         description="Positions filled"
         icon={<Icon name="checkCircle" className="h-5 w-5" />}
         variant="info"
         onClick={handleFilledClick}
+        isLoading={isLoading}
       />
       <InteractiveStatsCard
         title="Completed"
-        value={stats.completed}
+        value={statsData.completed}
         description="Successfully completed"
         icon={<Icon name="award" className="h-5 w-5" />}
         variant="primary"
         onClick={handleCompletedClick}
+        isLoading={isLoading}
       />
       <InteractiveStatsCard
         title="Total Responses"
-        value={stats.responses}
+        value={statsData.responses}
         description="Candidate submissions"
         icon={<Icon name="users" className="h-5 w-5" />}
         variant="info"
         onClick={handleResponsesClick}
+        isLoading={isLoading}
       />
     </div>
   );

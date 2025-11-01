@@ -15,6 +15,7 @@ import {
   Payroll,
   Payout,
   Placement,
+  PlacementStats,
   Shift,
   ShiftApproval,
   ShiftOffer,
@@ -172,6 +173,13 @@ export class ApiClient extends BaseClient {
     per_page?: number;
   }): Promise<PaginatedResponse<Placement>> {
     return this.get<PaginatedResponse<Placement>>('/agency/placements', params);
+  }
+
+  // In your ApiClient class, update the getAgencyPlacementStats method:
+  async getAgencyPlacementStats(): Promise<ApiResponse<PlacementStats>> {
+    return this.get<ApiResponse<PlacementStats>>(
+      '/agency/placements/stats/detailed'
+    );
   }
 
   async getAgencyShifts(params?: {
