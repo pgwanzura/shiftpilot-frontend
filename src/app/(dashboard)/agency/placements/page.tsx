@@ -1,4 +1,3 @@
-// app/agency/placements/page.tsx
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { PageHeader } from '@/app/components/layout';
@@ -6,7 +5,6 @@ import { QuickActions } from '@/app/components/ui';
 import { PlacementsDataTable } from '@/app/components/role/agency/placements/PlacementsDataTable';
 import { PlacementStatsCards } from '@/app/components/role/agency/placements/PlacementStatsCards';
 
-// Types
 interface AuthUser {
   id: string;
   email: string;
@@ -38,11 +36,9 @@ interface PlacementsPageProps {
   searchParams: { [key: string]: string | string[] | undefined };
 }
 
-// Constants
 const ALLOWED_ROLES = ['agency_admin', 'agent'] as const;
 type AllowedRole = (typeof ALLOWED_ROLES)[number];
 
-// API Configuration
 const API_CONFIG = {
   development: {
     baseUrl: 'http://localhost:8000',
@@ -67,7 +63,6 @@ function getApiConfig() {
   );
 }
 
-// Auth functions
 async function getAuthUser(): Promise<AuthResponse> {
   const cookieStore = await cookies();
   const userCookie = cookieStore.get('auth_user');
@@ -92,12 +87,10 @@ async function getAuthUser(): Promise<AuthResponse> {
   }
 }
 
-// API functions with proper error handling
 async function getPlacementStats(token: string): Promise<PlacementStats> {
   const config = getApiConfig();
   const url = `${config.baseUrl}/api/placements/stats/detailed`;
 
-  // Create abort controller for timeout
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), config.timeout);
 
@@ -139,12 +132,10 @@ async function getPlacementStats(token: string): Promise<PlacementStats> {
       });
     }
 
-    // Return fallback stats
     return getFallbackStats();
   }
 }
 
-// Simple fallback stats
 function getFallbackStats(): PlacementStats {
   return {
     total: 0,
@@ -156,15 +147,11 @@ function getFallbackStats(): PlacementStats {
   };
 }
 
-// Role validation
 function isValidRole(role: string): role is AllowedRole {
   return ALLOWED_ROLES.includes(role as AllowedRole);
 }
 
-// Main component
-export default async function PlacementsPage({
-  searchParams,
-}: PlacementsPageProps) {
+export default async function PlacementsPage({}: PlacementsPageProps) {
   const { user, token } = await getAuthUser();
 
   if (!user || !token) {
@@ -175,30 +162,15 @@ export default async function PlacementsPage({
     redirect('/unauthorized');
   }
 
-  // Fetch stats data
   const stats = await getPlacementStats(token);
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Placements Management"
-        description="Manage and track your agency placements"
-        actions={<QuickActions userRole={user.role} />}
-      />
+      <PageHeader actions={<QuickActions userRole={user.role} />} />
 
-      {/* Stats Cards */}
       <PlacementStatsCards stats={stats} />
 
-      {/* Table Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="p-6">
-          <PlacementsDataTable
-            authToken={token}
-            userRole={user.role}
-            searchParams={searchParams}
-          />
-        </div>
-      </div>
+      <PlacementsDataTable authToken={token} />
     </div>
   );
 }

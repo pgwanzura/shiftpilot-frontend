@@ -69,7 +69,7 @@ export interface DataTableProps<T extends TableData> {
 
 interface StatusConfig {
   label: string;
-  variant: BadgeVariant; //'success' | 'warning' | 'info' | 'error' | 'primary';
+  variant: BadgeVariant;
 }
 
 interface StatusBadgeProps {
@@ -194,6 +194,19 @@ export function DataTable<T extends TableData>({
     setVisibleColumns(new Set());
   };
 
+  const getStatusVariant = (statusValue: string): string => {
+    const variants: Record<string, string> = {
+      active: 'bg-green-50 text-green-700 border-green-200',
+      draft: 'bg-amber-50 text-amber-700 border-amber-200',
+      filled: 'bg-blue-50 text-blue-700 border-blue-200',
+      cancelled: 'bg-red-50 text-red-700 border-red-200',
+      completed: 'bg-purple-50 text-purple-700 border-purple-200',
+      all: 'bg-gray-50 text-gray-700 border-gray-200',
+    };
+
+    return variants[statusValue] || 'bg-gray-50 text-gray-700 border-gray-200';
+  };
+
   const processedData = useMemo((): T[] => {
     let result = [...data];
 
@@ -276,7 +289,7 @@ export function DataTable<T extends TableData>({
 
   if (error) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
+      <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
         <div className="text-red-600 mb-4">
           <Icon name="alertCircle" className="h-12 w-12 mx-auto" />
         </div>
@@ -295,416 +308,432 @@ export function DataTable<T extends TableData>({
   }
 
   return (
-    <div className={`space-y-4 ${className}`}>
-      {(title || showSearch || statusFilterOptions) && (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          {(title || description) && (
-            <div>
-              {title && (
-                <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-              )}
-              {description && (
-                <p className="text-sm text-gray-600">
-                  {pagination?.total ?? processedData.length} records found
-                  {localFilters.search && ` for "${localFilters.search}"`}
-                  {localFilters.status &&
-                    localFilters.status !== 'all' &&
-                    ` (${localFilters.status})`}
-                </p>
-              )}
-            </div>
-          )}
-
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            {statusFilterOptions && (
-              <div className="flex rounded-lg border border-gray-200 p-1 bg-white">
-                {statusFilterOptions.map((status) => (
-                  <button
-                    key={status.value}
-                    onClick={() => handleStatusFilter(status.value)}
-                    className={`px-3 py-1 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
-                      localFilters.status === status.value
-                        ? 'bg-blue-500 text-white shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                    }`}
-                  >
-                    {status.label}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {showSearch && (
-              <div className="relative">
-                <Icon
-                  name="search"
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"
-                />
-                <input
-                  type="text"
-                  placeholder="Search across all records..."
-                  value={localFilters.search || ''}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all duration-300 w-full sm:w-64"
-                />
-                {localFilters.search && (
-                  <button
-                    onClick={() => handleSearch('')}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    <Icon name="x" className="h-3 w-3" />
-                  </button>
-                )}
-              </div>
-            )}
-
-            <div className="flex items-center gap-2">
-              {onRetry && (
-                <Button
-                  variant="secondary-outline"
-                  size="sm"
-                  onClick={onRetry}
-                  disabled={loading}
-                  className="whitespace-nowrap"
-                >
-                  <Icon
-                    name="refreshCw"
-                    className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`}
-                  />
-                  Refresh
-                </Button>
-              )}
-
-              {showColumnSettings && (
-                <div className="relative">
-                  <Button
-                    onClick={() =>
-                      setShowColumnSettingsPanel(!showColumnSettingsPanel)
-                    }
-                    variant={
-                      showColumnSettingsPanel ? 'primary' : 'secondary-outline'
-                    }
-                    size="sm"
-                  >
-                    <Icon name="settings" className="h-4 w-4" />
-                    Columns
-                  </Button>
-
-                  {showColumnSettingsPanel && (
-                    <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-20">
-                      <div className="p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <h4 className="text-sm font-semibold text-gray-900">
-                            Columns
-                          </h4>
-                          <div className="flex gap-1">
-                            <button
-                              onClick={selectAllColumns}
-                              className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
-                            >
-                              All
-                            </button>
-                            <span className="text-gray-300">•</span>
-                            <button
-                              onClick={deselectAllColumns}
-                              className="text-xs text-gray-600 hover:text-gray-700 font-medium"
-                            >
-                              None
-                            </button>
-                          </div>
-                        </div>
-                        <div className="space-y-1 max-h-60 overflow-y-auto">
-                          {initialColumns.map((column) => (
-                            <label
-                              key={column.key as string}
-                              className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer"
-                            >
-                              <div className="flex items-center gap-2 flex-1">
-                                <Icon
-                                  name="gripVertical"
-                                  className="h-3 w-3 text-gray-400 flex-shrink-0"
-                                />
-                                <span className="text-sm text-gray-700 flex-1">
-                                  {column.header}
-                                </span>
-                              </div>
-                              <input
-                                type="checkbox"
-                                checked={visibleColumns.has(
-                                  column.key as string
-                                )}
-                                onChange={() =>
-                                  toggleColumnVisibility(column.key as string)
-                                }
-                                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                              />
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
+    <div className="bg-white rounded-lg border border-gray-200">
+      <div className="p-6">
+        <div className={`space-y-4 ${className}`}>
+          {(title || showSearch || statusFilterOptions) && (
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              {(title || description) && (
+                <div>
+                  {title && (
+                    <h2 className="text-lg font-semibold text-gray-900">
+                      {title}
+                    </h2>
+                  )}
+                  {description && (
+                    <p className="text-sm text-gray-600">
+                      {pagination?.total ?? processedData.length} records found
+                      {localFilters.search && ` for "${localFilters.search}"`}
+                      {localFilters.status &&
+                        localFilters.status !== 'all' &&
+                        ` (${localFilters.status})`}
+                    </p>
                   )}
                 </div>
               )}
-            </div>
-          </div>
-        </div>
-      )}
 
-      <div className="bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all duration-300">
-        <div className="overflow-hidden" ref={tableRef}>
-          <div className="max-h-[500px] overflow-auto">
-            <div className="sticky top-0 z-10 bg-gradient-to-b from-white to-gray-50/80 backdrop-blur-sm border-b border-gray-200 min-w-fit">
-              <div
-                className="grid gap-3 sm:gap-4 px-4 sm:px-6 py-3 min-w-fit"
-                style={{
-                  gridTemplateColumns: `repeat(${columns.length + (actions ? 1 : 0)}, minmax(100px, 1fr))`,
-                }}
-              >
-                {columns.map((column) => (
-                  <div
-                    key={column.key as string}
-                    className={`flex items-center gap-2 group relative ${
-                      sort?.key === column.key
-                        ? 'bg-indigo-25 rounded-lg px-2 -mx-2'
-                        : ''
-                    } ${column.align === 'right' ? 'justify-end' : column.align === 'center' ? 'justify-center' : 'justify-start'}`}
-                    draggable
-                    onDragStart={(e) =>
-                      handleDragStart(e, column.key as string)
-                    }
-                    onDragOver={(e) => handleDragOver(e, column.key as string)}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <Icon
-                      name="gripVertical"
-                      className="h-3 w-3 text-gray-400 cursor-grab active:cursor-grabbing flex-shrink-0 opacity-40 group-hover:opacity-100 transition-opacity duration-200"
-                    />
-
-                    <span
-                      className={`text-xs font-semibold tracking-wide truncate flex-1 ${
-                        sort?.key === column.key
-                          ? 'text-indigo-600'
-                          : 'text-gray-700'
-                      }`}
-                    >
-                      {column.header}
-                    </span>
-                    {column.sortable && (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                {statusFilterOptions && (
+                  <div className="flex items-center gap-1">
+                    {statusFilterOptions.map((status) => (
                       <button
-                        onClick={() => handleSort(column.key as string)}
-                        className={`flex flex-col border rounded-md flex-shrink-0 hover:scale-105 transition-all duration-300 p-1 ${
-                          sort?.key === column.key
-                            ? 'bg-indigo-50 border-indigo-200 shadow-xs opacity-100'
-                            : 'border-transparent hover:border-gray-200 opacity-60 hover:opacity-100'
-                        } group/sort`}
+                        key={status.value}
+                        onClick={() => handleStatusFilter(status.value)}
+                        className={`
+                          relative px-4 py-1 text-sm font-medium rounded-full 
+                          transition-all duration-200 ease-in-out
+                          whitespace-nowrap border
+                          ${
+                            localFilters.status === status.value
+                              ? `${getStatusVariant(status.value)} font-semibold`
+                              : 'text-gray-600 hover:text-gray-700 border-gray-200 bg-white hover:bg-gray-50'
+                          }
+                        `}
                       >
-                        <Icon
-                          name="chevronUp"
-                          className={`h-3 w-3 -mb-1 transition-colors duration-300 ${
-                            sort?.key === column.key && sort.direction === 'asc'
-                              ? 'text-indigo-600'
-                              : 'text-gray-500 group-hover/sort:text-gray-700'
-                          }`}
-                        />
-                        <Icon
-                          name="chevronDown"
-                          className={`h-3 w-3 transition-colors duration-300 ${
-                            sort?.key === column.key &&
-                            sort.direction === 'desc'
-                              ? 'text-indigo-600'
-                              : 'text-gray-500 group-hover/sort:text-gray-700'
-                          }`}
-                        />
+                        {status.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {showSearch && (
+                  <div className="relative">
+                    <Icon
+                      name="search"
+                      className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Search across all records..."
+                      value={localFilters.search || ''}
+                      onChange={(e) => handleSearch(e.target.value)}
+                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all duration-300 w-full sm:w-64"
+                    />
+                    {localFilters.search && (
+                      <button
+                        onClick={() => handleSearch('')}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        <Icon name="x" className="h-3 w-3" />
                       </button>
                     )}
+                  </div>
+                )}
 
-                    {draggedColumn === column.key && (
-                      <div className="absolute inset-0 bg-indigo-50 border-2 border-indigo-300 border-dashed rounded-lg" />
-                    )}
+                <div className="flex items-center gap-2">
+                  {onRetry && (
+                    <Button
+                      variant="secondary-outline"
+                      size="sm"
+                      onClick={onRetry}
+                      disabled={loading}
+                      className="whitespace-nowrap"
+                    >
+                      <Icon
+                        name="refreshCw"
+                        className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`}
+                      />
+                      Refresh
+                    </Button>
+                  )}
+
+                  {showColumnSettings && (
+                    <div className="relative">
+                      <Button
+                        onClick={() =>
+                          setShowColumnSettingsPanel(!showColumnSettingsPanel)
+                        }
+                        variant={
+                          showColumnSettingsPanel
+                            ? 'primary'
+                            : 'secondary-outline'
+                        }
+                        size="sm"
+                      >
+                        <Icon name="settings" className="h-4 w-4" />
+                        Columns
+                      </Button>
+
+                      {showColumnSettingsPanel && (
+                        <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-gray-200 rounded-lg z-20">
+                          <div className="p-4">
+                            <div className="flex items-center justify-between mb-3">
+                              <h4 className="text-sm font-semibold text-gray-900">
+                                Columns
+                              </h4>
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={selectAllColumns}
+                                  className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+                                >
+                                  All
+                                </button>
+                                <span className="text-gray-300">•</span>
+                                <button
+                                  onClick={deselectAllColumns}
+                                  className="text-xs text-gray-600 hover:text-gray-700 font-medium"
+                                >
+                                  None
+                                </button>
+                              </div>
+                            </div>
+                            <div className="space-y-1 max-h-60 overflow-y-auto">
+                              {initialColumns.map((column) => (
+                                <label
+                                  key={column.key as string}
+                                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-200"
+                                >
+                                  <div className="flex items-center gap-2 flex-1">
+                                    <Icon
+                                      name="gripVertical"
+                                      className="h-3 w-3 text-gray-400 flex-shrink-0"
+                                    />
+                                    <span className="text-sm text-gray-700 flex-1">
+                                      {column.header}
+                                    </span>
+                                  </div>
+                                  <input
+                                    type="checkbox"
+                                    checked={visibleColumns.has(
+                                      column.key as string
+                                    )}
+                                    onChange={() =>
+                                      toggleColumnVisibility(
+                                        column.key as string
+                                      )
+                                    }
+                                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                  />
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="overflow-hidden" ref={tableRef}>
+            <div className="max-h-[500px] overflow-auto border border-gray-200 rounded-lg">
+              <div className="sticky top-0 z-10 border-b border-gray-200 min-w-fit bg-gray-50 rounded-t-lg">
+                <div
+                  className="grid gap-3 sm:gap-4 px-4 sm:px-6 py-3 min-w-fit"
+                  style={{
+                    gridTemplateColumns: `repeat(${columns.length + (actions ? 1 : 0)}, minmax(100px, 1fr))`,
+                  }}
+                >
+                  {columns.map((column) => (
+                    <div
+                      key={column.key as string}
+                      className={`flex items-center gap-2 group relative ${
+                        sort?.key === column.key
+                          ? 'bg-indigo-50 rounded-lg px-2 -mx-2'
+                          : ''
+                      } ${column.align === 'right' ? 'justify-end' : column.align === 'center' ? 'justify-center' : 'justify-start'}`}
+                      draggable
+                      onDragStart={(e) =>
+                        handleDragStart(e, column.key as string)
+                      }
+                      onDragOver={(e) =>
+                        handleDragOver(e, column.key as string)
+                      }
+                      onDragEnd={handleDragEnd}
+                    >
+                      <Icon
+                        name="gripVertical"
+                        className="h-3 w-3 text-gray-400 cursor-grab active:cursor-grabbing flex-shrink-0 opacity-40 group-hover:opacity-100 transition-opacity duration-200"
+                      />
+
+                      <span
+                        className={`text-xs font-semibold tracking-wide truncate flex-1 ${
+                          sort?.key === column.key
+                            ? 'text-indigo-700'
+                            : 'text-gray-700'
+                        }`}
+                      >
+                        {column.header}
+                      </span>
+                      {column.sortable && (
+                        <button
+                          onClick={() => handleSort(column.key as string)}
+                          className={`flex flex-col border rounded flex-shrink-0 hover:bg-gray-100 transition-all duration-200 p-1 ${
+                            sort?.key === column.key
+                              ? 'bg-indigo-100 border-indigo-200 opacity-100'
+                              : 'border-gray-200 opacity-60 hover:opacity-100'
+                          } group/sort`}
+                        >
+                          <Icon
+                            name="chevronUp"
+                            className={`h-3 w-3 -mb-1 transition-colors duration-200 ${
+                              sort?.key === column.key &&
+                              sort.direction === 'asc'
+                                ? 'text-indigo-600'
+                                : 'text-gray-500 group-hover/sort:text-gray-700'
+                            }`}
+                          />
+                          <Icon
+                            name="chevronDown"
+                            className={`h-3 w-3 transition-colors duration-200 ${
+                              sort?.key === column.key &&
+                              sort.direction === 'desc'
+                                ? 'text-indigo-600'
+                                : 'text-gray-500 group-hover/sort:text-gray-700'
+                            }`}
+                          />
+                        </button>
+                      )}
+
+                      {draggedColumn === column.key && (
+                        <div className="absolute inset-0 bg-indigo-50 border border-indigo-300 rounded-lg" />
+                      )}
+                    </div>
+                  ))}
+                  {actions && (
+                    <div className="text-right">
+                      <span className="text-xs font-semibold text-gray-700 tracking-wide">
+                        Actions
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-white min-w-fit">
+                {loading ? (
+                  <div className="flex justify-center items-center py-16">
+                    <Loader
+                      size="lg"
+                      showText
+                      text="Loading data..."
+                      textPosition="bottom"
+                      color="#0077b6"
+                      thickness={4}
+                    />
                   </div>
-                ))}
-                {actions && (
-                  <div className="text-right">
-                    <span className="text-xs font-semibold text-gray-700 tracking-wide">
-                      Actions
-                    </span>
+                ) : paginatedData.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-12 h-12 bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center mx-auto mb-3 group">
+                      <Icon
+                        name="search"
+                        className="h-5 w-5 text-gray-400 transition-transform duration-300 group-hover:scale-110"
+                      />
+                    </div>
+                    <div className="text-gray-500 text-sm font-medium transition-colors duration-300 group-hover:text-gray-600">
+                      {getEmptyMessage()}
+                    </div>
                   </div>
+                ) : (
+                  paginatedData.map((row, rowIndex) => (
+                    <div
+                      key={row.id}
+                      onMouseEnter={() => setHoveredRow(rowIndex)}
+                      onMouseLeave={() => setHoveredRow(null)}
+                      onClick={() => onRowClick?.(row)}
+                      className={`group relative grid gap-3 sm:gap-4 px-4 sm:px-6 py-3 text-sm transition-all duration-200 border-b border-gray-100 last:border-b-0 min-w-fit ${
+                        onRowClick ? 'cursor-pointer hover:bg-gray-50' : ''
+                      } ${
+                        hoveredRow === rowIndex
+                          ? 'bg-blue-50'
+                          : rowIndex % 2 === 0
+                            ? 'bg-white'
+                            : 'bg-gray-50'
+                      } ${rowClassName?.(row, rowIndex) || ''}`}
+                      style={{
+                        gridTemplateColumns: `repeat(${columns.length + (actions ? 1 : 0)}, minmax(100px, 1fr))`,
+                      }}
+                    >
+                      <div
+                        className={`absolute left-0 top-0 h-full w-0.5 transition-colors duration-200 ${
+                          hoveredRow === rowIndex
+                            ? 'bg-blue-500'
+                            : 'bg-transparent'
+                        }`}
+                      />
+
+                      {columns.map((column) => (
+                        <div
+                          key={column.key as string}
+                          className={`flex items-center transition-all duration-200 min-w-0 ${
+                            column.align === 'right'
+                              ? 'justify-end'
+                              : column.align === 'center'
+                                ? 'justify-center'
+                                : 'justify-start'
+                          }`}
+                        >
+                          <div
+                            className={`truncate font-medium transition-all duration-200 ${
+                              hoveredRow === rowIndex
+                                ? 'text-gray-900'
+                                : 'text-gray-700'
+                            }`}
+                          >
+                            {column.render
+                              ? column.render(row[column.key], row)
+                              : (row[column.key] as ReactNode) || (
+                                  <span className="text-gray-400 italic">
+                                    —
+                                  </span>
+                                )}
+                          </div>
+                        </div>
+                      ))}
+
+                      {actions && (
+                        <div className="flex justify-end">
+                          <div
+                            className={`flex items-center gap-1 transition-all duration-200 ${
+                              hoveredRow === rowIndex
+                                ? 'opacity-100'
+                                : 'opacity-70'
+                            }`}
+                          >
+                            {actions(row)}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))
                 )}
               </div>
             </div>
+          </div>
 
-            <div className="bg-white min-w-fit">
-              {loading ? (
-                <div className="flex justify-center items-center py-16">
-                  <Loader
-                    size="lg"
-                    showText
-                    text="Loading data..."
-                    textPosition="bottom"
-                    color="#0077b6"
-                    thickness={4}
-                  />
+          {pagination && (
+            <div className="px-4 sm:px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                <div className="text-sm text-gray-600 text-center sm:text-left">
+                  {getPaginationDisplayText()}
                 </div>
-              ) : paginatedData.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="w-12 h-12 bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center mx-auto mb-3 group">
-                    <Icon
-                      name="search"
-                      className="h-5 w-5 text-gray-400 transition-transform duration-300 group-hover:scale-110"
-                    />
-                  </div>
-                  <div className="text-gray-500 text-sm font-medium transition-colors duration-300 group-hover:text-gray-600">
-                    {getEmptyMessage()}
-                  </div>
-                </div>
-              ) : (
-                paginatedData.map((row, rowIndex) => (
-                  <div
-                    key={row.id}
-                    onMouseEnter={() => setHoveredRow(rowIndex)}
-                    onMouseLeave={() => setHoveredRow(null)}
-                    onClick={() => onRowClick?.(row)}
-                    className={`group relative grid gap-3 sm:gap-4 px-4 sm:px-6 py-3 text-sm transition-all duration-300 border-b border-gray-100 last:border-b-0 min-w-fit ${
-                      onRowClick ? 'cursor-pointer hover:bg-gray-50' : ''
-                    } ${
-                      hoveredRow === rowIndex
-                        ? 'bg-indigo-50'
-                        : rowIndex % 2 === 0
-                          ? 'bg-white'
-                          : 'bg-gray-50/30'
-                    } ${rowClassName?.(row, rowIndex) || ''}`}
-                    style={{
-                      gridTemplateColumns: `repeat(${columns.length + (actions ? 1 : 0)}, minmax(100px, 1fr))`,
-                    }}
+
+                <div className="flex items-center justify-center sm:justify-end space-x-1">
+                  <button
+                    onClick={() =>
+                      onPaginationChange?.({
+                        ...pagination,
+                        page: safePaginationPage - 1,
+                      })
+                    }
+                    disabled={safePaginationPage === 1}
+                    className="p-1.5 bg-white border border-gray-300 rounded disabled:opacity-30 hover:bg-gray-50 transition-all duration-200 group"
                   >
-                    <div
-                      className={`absolute left-0 top-0 h-full w-0.5 transition-colors duration-300 ${
-                        hoveredRow === rowIndex
-                          ? 'bg-indigo-500'
-                          : rowIndex % 2 === 0
-                            ? 'bg-white'
-                            : 'bg-gray-50/30'
-                      }`}
+                    <Icon
+                      name="chevronLeft"
+                      className="h-3 w-3 transition-transform duration-200 group-hover:-translate-x-0.5"
                     />
+                  </button>
 
-                    {columns.map((column) => (
-                      <div
-                        key={column.key as string}
-                        className={`flex items-center transition-all duration-300 min-w-0 ${
-                          column.align === 'right'
-                            ? 'justify-end'
-                            : column.align === 'center'
-                              ? 'justify-center'
-                              : 'justify-start'
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    const pageNum =
+                      totalPages <= 5
+                        ? i + 1
+                        : safePaginationPage <= 3
+                          ? i + 1
+                          : safePaginationPage >= totalPages - 2
+                            ? totalPages - 4 + i
+                            : safePaginationPage - 2 + i;
+
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() =>
+                          onPaginationChange?.({ ...pagination, page: pageNum })
+                        }
+                        className={`px-2.5 py-1 rounded text-sm font-medium border transition-all duration-200 group ${
+                          safePaginationPage === pageNum
+                            ? 'bg-indigo-500 text-white border-indigo-500'
+                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
                         }`}
                       >
-                        <div
-                          className={`truncate font-medium transition-all duration-300 ${
-                            hoveredRow === rowIndex
-                              ? 'text-gray-900'
-                              : 'text-gray-700'
-                          }`}
-                        >
-                          {column.render
-                            ? column.render(row[column.key], row)
-                            : (row[column.key] as ReactNode) || (
-                                <span className="text-gray-400 italic">—</span>
-                              )}
-                        </div>
-                      </div>
-                    ))}
+                        {pageNum}
+                      </button>
+                    );
+                  })}
 
-                    {actions && (
-                      <div className="flex justify-end">
-                        <div
-                          className={`flex items-center gap-1 transition-all duration-300 ${
-                            hoveredRow === rowIndex
-                              ? 'opacity-100'
-                              : 'opacity-70'
-                          }`}
-                        >
-                          {actions(row)}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
+                  <button
+                    onClick={() =>
+                      onPaginationChange?.({
+                        ...pagination,
+                        page: safePaginationPage + 1,
+                      })
+                    }
+                    disabled={safePaginationPage >= totalPages}
+                    className="p-1.5 bg-white border border-gray-300 rounded disabled:opacity-30 hover:bg-gray-50 transition-all duration-200 group"
+                  >
+                    <Icon
+                      name="chevronRight"
+                      className="h-3 w-3 transition-transform duration-200 group-hover:translate-x-0.5"
+                    />
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
-
-        {pagination && (
-          <div className="px-4 sm:px-6 py-4 border-t border-gray-200">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-              <div className="text-sm text-gray-600 text-center sm:text-left">
-                {getPaginationDisplayText()}
-              </div>
-
-              <div className="flex items-center justify-center sm:justify-end space-x-1">
-                <button
-                  onClick={() =>
-                    onPaginationChange?.({
-                      ...pagination,
-                      page: safePaginationPage - 1,
-                    })
-                  }
-                  disabled={safePaginationPage === 1}
-                  className="p-1.5 bg-white border border-gray-300 rounded-lg disabled:opacity-30 hover:bg-gray-50 transition-all duration-300 group hover:scale-105"
-                >
-                  <Icon
-                    name="chevronLeft"
-                    className="h-3 w-3 transition-transform duration-300 group-hover:-translate-x-0.5"
-                  />
-                </button>
-
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  const pageNum =
-                    totalPages <= 5
-                      ? i + 1
-                      : safePaginationPage <= 3
-                        ? i + 1
-                        : safePaginationPage >= totalPages - 2
-                          ? totalPages - 4 + i
-                          : safePaginationPage - 2 + i;
-
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() =>
-                        onPaginationChange?.({ ...pagination, page: pageNum })
-                      }
-                      className={`px-2.5 py-1 rounded-lg text-sm font-medium border transition-all duration-300 group ${
-                        safePaginationPage === pageNum
-                          ? 'bg-indigo-500 text-white border-indigo-500 shadow-xs'
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                })}
-
-                <button
-                  onClick={() =>
-                    onPaginationChange?.({
-                      ...pagination,
-                      page: safePaginationPage + 1,
-                    })
-                  }
-                  disabled={safePaginationPage >= totalPages}
-                  className="p-1.5 bg-white border border-gray-300 rounded-lg disabled:opacity-30 hover:bg-gray-50 transition-all duration-300 group hover:scale-105"
-                >
-                  <Icon
-                    name="chevronRight"
-                    className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-0.5"
-                  />
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -728,13 +757,7 @@ export const formatDate = (dateString: string): string => {
 
 interface StatusBadgeProps {
   status: string;
-  config?: Record<
-    string,
-    {
-      label: string;
-      variant: 'success' | 'warning' | 'info' | 'error' | 'primary';
-    }
-  >;
+  config?: Record<string, StatusConfig>;
 }
 
 export const StatusBadge = ({
