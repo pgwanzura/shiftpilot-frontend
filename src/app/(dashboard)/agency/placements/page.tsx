@@ -3,47 +3,165 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { PageHeader } from '@/app/components/layout';
 import { QuickActions } from '@/app/components/ui';
-import { PlacementsTable } from '@/app/components/role/agency/placements/PlacementsTable';
+import { PlacementsDataTable } from '@/app/components/role/agency/placements/PlacementsDataTable';
 import { PlacementStatsCards } from '@/app/components/role/agency/placements/PlacementStatsCards';
+
+// Types
+interface AuthUser {
+  id: string;
+  email: string;
+  role: string;
+  name: string;
+}
+
+interface AuthResponse {
+  user: AuthUser | null;
+  token: string | null;
+}
+
+interface PlacementStats {
+  total: number;
+  active: number;
+  draft: number;
+  filled: number;
+  completed: number;
+  responses: number;
+}
+
+interface ApiResponse<T> {
+  status: 'success' | 'error';
+  data?: T;
+  message?: string;
+}
 
 interface PlacementsPageProps {
   searchParams: { [key: string]: string | string[] | undefined };
 }
 
-async function getAuthUser(): Promise<{
-  user: any | null;
-  token: string | null;
-}> {
+// Constants
+const ALLOWED_ROLES = ['agency_admin', 'agent'] as const;
+type AllowedRole = (typeof ALLOWED_ROLES)[number];
+
+// API Configuration
+const API_CONFIG = {
+  development: {
+    baseUrl: 'http://localhost:8000',
+    timeout: 5000,
+  },
+  production: {
+    baseUrl:
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      'https://your-production-domain.com',
+    timeout: 10000,
+  },
+  test: {
+    baseUrl: 'http://localhost:3001',
+    timeout: 3000,
+  },
+} as const;
+
+function getApiConfig() {
+  const nodeEnv = process.env.NODE_ENV || 'development';
+  return (
+    API_CONFIG[nodeEnv as keyof typeof API_CONFIG] || API_CONFIG.development
+  );
+}
+
+// Auth functions
+async function getAuthUser(): Promise<AuthResponse> {
   const cookieStore = await cookies();
   const userCookie = cookieStore.get('auth_user');
   const tokenCookie = cookieStore.get('auth_token');
 
-  if (!userCookie || !tokenCookie) {
+  if (!userCookie?.value || !tokenCookie?.value) {
     return { user: null, token: null };
   }
 
   try {
-    const user = JSON.parse(userCookie.value);
-    return { user, token: tokenCookie.value };
+    const userData = JSON.parse(userCookie.value) as AuthUser;
+
+    if (!userData.id || !userData.email || !userData.role) {
+      console.error('Invalid user data structure in cookie');
+      return { user: null, token: null };
+    }
+
+    return { user: userData, token: tokenCookie.value };
   } catch (error) {
     console.error('Failed to parse auth_user cookie:', error);
     return { user: null, token: null };
   }
 }
 
-// Mock stats data - replace with actual API call
-async function getPlacementStats(token: string) {
-  // TODO: Replace with actual API call to get stats
+// API functions with proper error handling
+async function getPlacementStats(token: string): Promise<PlacementStats> {
+  const config = getApiConfig();
+  const url = `${config.baseUrl}/api/placements/stats/detailed`;
+
+  // Create abort controller for timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), config.timeout);
+
+  try {
+    console.log(`Fetching stats from: ${url}`);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      signal: controller.signal,
+      cache: 'no-store',
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const result = (await response.json()) as ApiResponse<PlacementStats>;
+
+    if (result.status === 'success' && result.data) {
+      return result.data;
+    } else {
+      throw new Error(result.message || 'Invalid API response format');
+    }
+  } catch (error) {
+    clearTimeout(timeoutId);
+
+    if (error instanceof Error) {
+      console.error('API Connection Error:', {
+        message: error.message,
+        url,
+        environment: process.env.NODE_ENV,
+      });
+    }
+
+    // Return fallback stats
+    return getFallbackStats();
+  }
+}
+
+// Simple fallback stats
+function getFallbackStats(): PlacementStats {
   return {
-    total: 24,
-    active: 12,
-    draft: 5,
-    filled: 4,
-    completed: 3,
-    responses: 47,
+    total: 0,
+    active: 0,
+    draft: 0,
+    filled: 0,
+    completed: 0,
+    responses: 0,
   };
 }
 
+// Role validation
+function isValidRole(role: string): role is AllowedRole {
+  return ALLOWED_ROLES.includes(role as AllowedRole);
+}
+
+// Main component
 export default async function PlacementsPage({
   searchParams,
 }: PlacementsPageProps) {
@@ -53,8 +171,7 @@ export default async function PlacementsPage({
     redirect('/login');
   }
 
-  const allowedRoles = ['agency_admin', 'agent'];
-  if (!allowedRoles.includes(user.role)) {
+  if (!isValidRole(user.role)) {
     redirect('/unauthorized');
   }
 
@@ -64,18 +181,22 @@ export default async function PlacementsPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Placements"
-        description="Manage and track your placement opportunities"
+        title="Placements Management"
+        description="Manage and track your agency placements"
         actions={<QuickActions userRole={user.role} />}
       />
 
-      {/* Stats Cards - Now using client component */}
+      {/* Stats Cards */}
       <PlacementStatsCards stats={stats} />
 
       {/* Table Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="p-6">
-          <PlacementsTable authToken={token} />
+          <PlacementsDataTable
+            authToken={token}
+            userRole={user.role}
+            searchParams={searchParams}
+          />
         </div>
       </div>
     </div>
