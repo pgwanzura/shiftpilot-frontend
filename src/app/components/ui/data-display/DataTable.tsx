@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode, useState } from 'react';
-import Pagination from '@/app/components/ui/data-display/Pagination';
+import Pagination from '@/app/components/ui/Pagination';
 import { Icon } from '@/app/components/ui';
 import Button from '@/app/components/ui/buttons/Button';
 import { Select, SelectOption } from '@/app/components/ui';
