@@ -19,7 +19,7 @@ interface StatCardProps {
   className?: string;
 }
 
-export function StatCard({
+export default function StatCard({
   title,
   value,
   description,

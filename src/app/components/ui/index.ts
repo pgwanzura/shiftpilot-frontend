@@ -1,4 +1,4 @@
-import { StatCard } from './StatCard';
+export { default as StatCard } from './StatCard';
 
 export * from './forms';
 
@@ -6,7 +6,7 @@ export * from './buttons';
 
 export * from './navigation';
 
-export * from './data-display';
+export * from './table';
 
 export * from './Icons';
 
@@ -33,4 +33,4 @@ export * from './QuickActions';
 export * from './Badge';
 export * from './InteractiveStatsCard';
 export * from './Card';
-export * from './Skeleton';
+// export * from './StatusBadge';

@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { PageHeader } from '@/app/components/layout';
 import { QuickActions, Badge, InteractiveStatsCard } from '@/app/components/ui';
-import { DataTable, Column } from '@/app/components/ui/DataTable';
+import { DataTable, Column } from '@/app/components/ui/table/DataTable';
 import {
   mockTimesheets,
   Timesheet,

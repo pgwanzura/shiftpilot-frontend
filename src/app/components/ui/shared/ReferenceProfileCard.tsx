@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { Icon } from '@/app/components/ui/Icons';
-import Pill from '@/app/components/ui/data-display/Pill';
+import Pill from '@/app/components/ui/Pill';
 
 interface ReferenceProfile {
   id: string;

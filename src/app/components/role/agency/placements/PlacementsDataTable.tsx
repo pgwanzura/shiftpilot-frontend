@@ -8,11 +8,16 @@ import {
   StatusBadge,
   formatCurrency,
   formatDate,
+} from '@/app/components/ui';
+import {
+  BulkAction,
+  ExportOptions,
+  AdvancedFilter,
+  TableData,
   Column,
-  type BulkAction,
-  type ExportOptions,
-  type AdvancedFilter,
-} from '@/app/components/ui/DataTable';
+} from '@/types';
+import type { PaginatedResponse as BackendPaginatedResponse } from '@/types/pagination';
+import type { Placement as BackendPlacement } from '@/types/api';
 import { usePlacements } from '@/hooks/usePlacements';
 
 interface Placement {
@@ -29,6 +34,16 @@ interface Placement {
   location_instructions?: string;
   agency_responses_count?: number;
   response_deadline?: string;
+}
+
+interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    total: string | number | number[];
+    current_page: number;
+    per_page: number;
+    total_pages: number;
+  };
 }
 
 interface PlacementsDataTableProps {
@@ -74,6 +89,31 @@ export function PlacementsDataTable({ authToken }: PlacementsDataTableProps) {
     error,
     refetch,
   } = usePlacements(filters, authToken);
+
+  const getTotalCount = (
+    placementsResponse: BackendPaginatedResponse<BackendPlacement> | undefined
+  ): number => {
+    if (!placementsResponse?.meta) return 0;
+
+    const metaTotal = placementsResponse.meta.total;
+
+    if (Array.isArray(metaTotal) && metaTotal.length > 0) {
+      return metaTotal[0];
+    }
+
+    if (typeof metaTotal === 'number' && !isNaN(metaTotal)) {
+      return metaTotal;
+    }
+
+    if (typeof metaTotal === 'string') {
+      const parsed = parseInt(metaTotal, 10);
+      return isNaN(parsed) ? 0 : parsed;
+    }
+
+    return 0;
+  };
+
+  const totalCount = getTotalCount(placementsResponse);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -129,38 +169,30 @@ export function PlacementsDataTable({ authToken }: PlacementsDataTableProps) {
     }));
   };
 
-  // Enhanced features
   const handleSelectionChange = useCallback(
     (selectedPlacements: Placement[]) => {
       console.log('Selected placements:', selectedPlacements);
-      // You can add bulk action logic here
     },
     []
   );
 
   const handleBulkExport = useCallback((selectedPlacements: Placement[]) => {
     console.log('Exporting placements:', selectedPlacements);
-    // Implement bulk export logic
   }, []);
 
   const handleBulkArchive = useCallback((selectedPlacements: Placement[]) => {
     console.log('Archiving placements:', selectedPlacements);
-    // Implement bulk archive logic
   }, []);
 
   const handleExport = useCallback(
-    (format: string, data: any[], columns: Column<any>[]) => {
+    (format: string, data: TableData[], columns: Column<TableData>[]) => {
       console.log(`Exporting as ${format}:`, data);
-      // Implement export logic based on format
       switch (format) {
         case 'csv':
-          // CSV export logic
           break;
         case 'excel':
-          // Excel export logic
           break;
         case 'json':
-          // JSON export logic
           break;
       }
     },
@@ -317,7 +349,7 @@ export function PlacementsDataTable({ authToken }: PlacementsDataTableProps) {
           e.stopPropagation();
           router.push(`/agency/placements/${placement.id}`);
         }}
-        className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all duration-300"
+        className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all duration-300 cursor-pointer"
         title="View Details"
       >
         <Icon name="eye" className="h-4 w-4" />
@@ -327,7 +359,7 @@ export function PlacementsDataTable({ authToken }: PlacementsDataTableProps) {
           e.stopPropagation();
           console.log('Submit candidate for placement:', placement.id);
         }}
-        className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all duration-300"
+        className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all duration-300 cursor-pointer"
         title="Submit Candidate"
       >
         <Icon name="userPlus" className="h-4 w-4" />
@@ -338,7 +370,7 @@ export function PlacementsDataTable({ authToken }: PlacementsDataTableProps) {
             e.stopPropagation();
             console.log('Track responses for placement:', placement.id);
           }}
-          className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all duration-300"
+          className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all duration-300 cursor-pointer"
           title="Track Responses"
         >
           <Icon name="barChart" className="h-4 w-4" />
@@ -360,31 +392,26 @@ export function PlacementsDataTable({ authToken }: PlacementsDataTableProps) {
 
   return (
     <DataTable<Placement>
-      // Core props (existing functionality)
       data={placementsResponse?.data || []}
       columns={placementColumns}
       pagination={{
         page: filters.page,
         pageSize: filters.per_page,
-        total: placementsResponse?.meta?.total || 0,
+        total: totalCount,
       }}
       filters={filters}
       onFilterChange={handleFilterChange}
       onPaginationChange={handlePaginationChange}
       onSortChange={handleSortChange}
-      onRowClick={(placement) =>
-        router.push(`/agency/placements/${placement.id}`)
-      }
       actions={actions}
       loading={isLoading}
       error={errorMessage}
       onRetry={refetch}
       title="Placements"
-      description={`${placementsResponse?.meta?.total || 0} placement opportunities found`}
+      description={`${totalCount} placement opportunities found`}
       statusFilterOptions={statusFilterOptions}
       showSearch={true}
       showColumnSettings={true}
-      // Enhanced features (new functionality)
       selectable={true}
       bulkActions={bulkActions}
       exportOptions={exportOptions}
@@ -393,7 +420,6 @@ export function PlacementsDataTable({ authToken }: PlacementsDataTableProps) {
         placementsResponse?.data && placementsResponse.data.length > 50
       }
       onSelectionChange={handleSelectionChange}
-      // Optional: Add row expansion for detailed view
       rowExpansion={{
         render: (placement: Placement) => (
           <div className="p-4 bg-white border-t border-gray-200">
@@ -442,7 +468,6 @@ export function PlacementsDataTable({ authToken }: PlacementsDataTableProps) {
             </div>
           </div>
         ),
-        expandable: (placement: Placement) => true, // All rows are expandable
       }}
     />
   );
