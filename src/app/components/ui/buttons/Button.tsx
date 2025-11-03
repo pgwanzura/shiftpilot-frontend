@@ -39,7 +39,7 @@ const Button = ({
   processingText,
   iconPosition = 'left',
   fullWidth = false,
-  rounded = 'lg',
+  rounded = 'md', // Changed default to 'md'
   className = '',
   disabled,
   ...props
@@ -85,8 +85,8 @@ const Button = ({
 
   const roundedStyles = {
     none: 'rounded-none',
-    sm: 'rounded-md',
-    md: 'rounded-lg',
+    sm: 'rounded-sm',
+    md: 'rounded-md', // This is now the default for all sizes
     lg: 'rounded-lg',
     full: 'rounded-full',
   };
@@ -118,7 +118,7 @@ const Button = ({
         baseStyles,
         variantStyles[variant],
         sizeStyles[size],
-        roundedStyles[rounded],
+        roundedStyles[rounded], //
         fullWidth && 'w-full',
         !fullWidth && 'whitespace-nowrap',
         className

@@ -176,41 +176,40 @@ export function PlacementsDataTable({ authToken }: PlacementsDataTableProps) {
     []
   );
 
-  const handleBulkExport = useCallback((selectedPlacements: Placement[]) => {
-    console.log('Exporting placements:', selectedPlacements);
-  }, []);
-
   const handleBulkArchive = useCallback((selectedPlacements: Placement[]) => {
     console.log('Archiving placements:', selectedPlacements);
   }, []);
 
-  const handleExport = useCallback(
-    (format: string, data: TableData[], columns: Column<TableData>[]) => {
-      console.log(`Exporting as ${format}:`, data);
-      switch (format) {
-        case 'csv':
-          break;
-        case 'excel':
-          break;
-        case 'json':
-          break;
-      }
-    },
-    []
-  );
+  const handleBulkContact = useCallback((selectedPlacements: Placement[]) => {
+    console.log('Contacting employers for placements:', selectedPlacements);
+  }, []);
+
+  const handleExport = useCallback((format: string): void => {
+    console.log(`Exporting as ${format}`);
+  }, []);
 
   const bulkActions: BulkAction<Placement>[] = [
     {
-      label: 'Export Selected',
-      icon: <Icon name="download" className="h-4 w-4 mr-2" />,
-      onClick: handleBulkExport,
-      variant: 'secondary',
+      label: 'Archive Selected',
+      icon: (
+        <Icon
+          name="archive"
+          className="h-4 w-4 mr-2 transition-transform duration-300"
+        />
+      ),
+      onClick: handleBulkArchive,
+      variant: 'secondary-outline',
     },
     {
-      label: 'Archive Selected',
-      icon: <Icon name="archive" className="h-4 w-4 mr-2" />,
-      onClick: handleBulkArchive,
-      variant: 'danger',
+      label: 'Contact Employers',
+      icon: (
+        <Icon
+          name="mail"
+          className="h-4 w-4 mr-2 transition-transform duration-300"
+        />
+      ),
+      onClick: handleBulkContact,
+      variant: 'secondary',
     },
   ];
 

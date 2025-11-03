@@ -74,8 +74,32 @@ export function DataTable<T extends TableData>({
     startIndex,
     endIndex,
     handleScroll,
-    scrollVelocity,
   } = useVirtualScroll(virtualScrollData, 53, 5);
+
+  const columnSettingsData = useMemo(() => {
+    return initialColumns.map((col) => ({
+      key: col.key as string,
+      header: col.header,
+      visible: state.visibleColumns.has(col.key as string),
+    }));
+  }, [initialColumns, state.visibleColumns]);
+
+  const handleColumnVisibilityChange = useCallback(
+    (key: string, visible: boolean) => {
+      setLocalLoading(true);
+      const newVisibleColumns = new Set(state.visibleColumns);
+
+      if (visible) {
+        newVisibleColumns.add(key);
+      } else {
+        newVisibleColumns.delete(key);
+      }
+
+      updateState({ visibleColumns: newVisibleColumns });
+      setTimeout(() => setLocalLoading(false), 150);
+    },
+    [state.visibleColumns, updateState]
+  );
 
   const columns = useMemo((): Column<T>[] => {
     return state.columnOrder
@@ -84,17 +108,7 @@ export function DataTable<T extends TableData>({
       .filter((col) => state.visibleColumns.has(col.key as string));
   }, [initialColumns, state.columnOrder, state.visibleColumns]);
 
-  //   const processedData = useMemo((): T[] => {
-  //   // Since we're doing server-side filtering, just return the data as-is
-  //   // Remove all client-side filtering logic
-  //   return data;
-  // }, [data]); // Only depend on data, not filters
-
-  // // OR if you want to be explicit about it:
-  const processedData = useMemo((): T[] => {
-    console.log('📊 DataTable - Using server-side filtered data:', data.length);
-    return data;
-  }, [data]);
+  const processedData = useMemo((): T[] => data, [data]);
 
   const handleSelectionChange = useCallback(
     (newSelectedRows: Set<string | number>) => {
@@ -158,7 +172,7 @@ export function DataTable<T extends TableData>({
                 }
                 updateState({ expandedRows: newExpanded });
               }}
-              className="p-1 hover:bg-gray-100 rounded transition-all duration-200 transform hover:scale-110"
+              className="p-1 hover:bg-gray-100 rounded transition-colors"
             >
               <Icon
                 name={
@@ -166,7 +180,7 @@ export function DataTable<T extends TableData>({
                     ? 'chevronDown'
                     : 'chevronRight'
                 }
-                className="h-4 w-4 text-gray-500 transition-transform duration-200"
+                className="h-4 w-4 text-gray-500"
               />
             </button>
           ),
@@ -264,7 +278,6 @@ export function DataTable<T extends TableData>({
 
   const handleEditSave = useCallback(async () => {
     if (!editingCell || !inlineEdit) return;
-
     const row = processedData.find((r) => r.id === editingCell.rowId);
     if (row && editValue !== undefined) {
       try {
@@ -283,23 +296,17 @@ export function DataTable<T extends TableData>({
   const handleExport = useCallback(
     (format: string) => {
       if (!exportOptions) return;
-
       const exportData = processedData.map((row) => {
-        const exportedRow: TableData & Record<string, unknown> = {
-          id: row.id,
-        };
+        const exportedRow: TableData & Record<string, unknown> = { id: row.id };
         columns.forEach((col) => {
           exportedRow[col.header] = row[col.key];
         });
         return exportedRow;
       });
-
-      // Fix: Properly handle the type conversion
       const exportColumns = columns.map((col) => ({
         ...col,
         key: col.key as string,
       })) as Column<TableData>[];
-
       exportOptions.onExport(format, exportData as TableData[], exportColumns);
     },
     [exportOptions, processedData, columns]
@@ -308,12 +315,10 @@ export function DataTable<T extends TableData>({
   const handleDragStart = (
     e: React.DragEvent<HTMLDivElement>,
     columnKey: string
-    // Remove the unused index parameter
   ): void => {
     setDraggedColumn(columnKey);
     e.dataTransfer.effectAllowed = 'move';
     e.currentTarget.style.opacity = '0.4';
-    e.currentTarget.style.transform = 'scale(0.98)';
   };
 
   const handleDragOver = (
@@ -325,30 +330,22 @@ export function DataTable<T extends TableData>({
 
     const targetIndex = state.columnOrder.indexOf(targetColumnKey);
     setDragOverIndex(targetIndex);
-
     e.currentTarget.style.background = 'rgba(99, 102, 241, 0.08)';
-    e.currentTarget.style.borderRadius = '8px';
-    e.currentTarget.style.transform = 'scale(1.02)';
-    e.currentTarget.style.transition = 'all 0.2s ease';
 
     const newOrder = [...state.columnOrder];
     const draggedIndex = newOrder.indexOf(draggedColumn);
-
     newOrder.splice(draggedIndex, 1);
     newOrder.splice(targetIndex, 0, draggedColumn);
-
     updateState({ columnOrder: newOrder });
   };
 
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>): void => {
     e.currentTarget.style.background = '';
-    e.currentTarget.style.transform = '';
     setDragOverIndex(null);
   };
 
   const handleDragEnd = (e: React.DragEvent<HTMLDivElement>): void => {
     e.currentTarget.style.opacity = '';
-    e.currentTarget.style.transform = '';
     e.currentTarget.style.background = '';
     setDraggedColumn(null);
     setDragOverIndex(null);
@@ -366,7 +363,6 @@ export function DataTable<T extends TableData>({
     updateState({ filters: newFilters });
     setLocalAdvancedFilters({});
     onFilterChange?.(newFilters);
-
     setTimeout(() => {
       setFilterTransition(false);
       setLocalLoading(false);
@@ -375,8 +371,8 @@ export function DataTable<T extends TableData>({
 
   if (error) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-8 text-center animate-fade-in">
-        <div className="text-red-600 mb-4 animate-bounce">
+      <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+        <div className="text-red-600 mb-4">
           <Icon name="alertCircle" className="h-12 w-12 mx-auto" />
         </div>
         <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -384,7 +380,7 @@ export function DataTable<T extends TableData>({
         </h3>
         <p className="text-gray-600 mb-4">{error}</p>
         {onRetry && (
-          <Button onClick={onRetry} variant="primary" className="animate-pulse">
+          <Button onClick={onRetry} variant="primary">
             <Icon name="refreshCw" className="h-4 w-4 mr-2" />
             Try Again
           </Button>
@@ -394,11 +390,9 @@ export function DataTable<T extends TableData>({
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 w-full overflow-x-auto animate-fade-in">
+    <div className="bg-white rounded-lg border border-gray-300 w-full overflow-x-auto">
       <div className="p-4 md:p-6 min-w-[800px]">
-        <div
-          className={`space-y-4 ${className} ${filterTransition ? 'opacity-70 transition-opacity duration-300' : 'opacity-100 transition-opacity duration-300'}`}
-        >
+        <div className={`space-y-4 ${className}`}>
           <TableToolbar
             title={title}
             description={description}
@@ -409,6 +403,7 @@ export function DataTable<T extends TableData>({
             selectedData={processedData.filter((row) =>
               state.selectedRows.has(row.id)
             )}
+            columns={columnSettingsData}
             showSearch={showSearch}
             searchValue={state.filters.search || ''}
             onSearch={handleSearch}
@@ -424,18 +419,17 @@ export function DataTable<T extends TableData>({
             exportOptions={exportOptions}
             onExport={handleExport}
             showColumnSettings={showColumnSettings}
-            onToggleColumnSettings={() => {
-              /* Implement column settings */
-            }}
+            onToggleColumnSettings={() => {}}
             onRetry={onRetry}
+            onColumnVisibilityChange={handleColumnVisibilityChange}
           />
 
           {showAdvancedFilters && advancedFilters.length > 0 && (
-            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 animate-slide-down">
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {advancedFilters.map((filter) => (
                   <div key={filter.key} className="min-w-0">
-                    <label className="block text-sm font-medium text-gray-700 mb-2 truncate">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       {filter.label}
                     </label>
                     {filter.type === 'select' ? (
@@ -447,7 +441,7 @@ export function DataTable<T extends TableData>({
                             [filter.key]: e.target.value,
                           }));
                         }}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all duration-200 transform focus:scale-102"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         disabled={isLoading}
                       >
                         <option value="">All</option>
@@ -468,7 +462,7 @@ export function DataTable<T extends TableData>({
                             [filter.key]: e.target.value,
                           }));
                         }}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all duration-200 transform focus:scale-102"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         disabled={isLoading}
                       />
                     )}
@@ -479,10 +473,7 @@ export function DataTable<T extends TableData>({
                 <Button
                   variant="secondary-outline"
                   size="sm"
-                  onClick={() => {
-                    setLocalAdvancedFilters({});
-                  }}
-                  className="transform hover:scale-105 transition-all duration-200"
+                  onClick={() => setLocalAdvancedFilters({})}
                   disabled={isLoading}
                 >
                   Clear Filters
@@ -496,7 +487,7 @@ export function DataTable<T extends TableData>({
             ref={tableRef}
           >
             <div
-              className={`${virtualScroll ? 'h-[500px]' : 'max-h-[500px]'} overflow-auto scroll-smooth`}
+              className={`${virtualScroll ? 'h-[500px]' : 'max-h-[500px]'} overflow-auto`}
               ref={virtualScroll ? containerRef : undefined}
               onScroll={virtualScroll ? handleScroll : undefined}
             >
@@ -533,7 +524,6 @@ export function DataTable<T extends TableData>({
                     totalHeight={totalHeight}
                     startIndex={startIndex}
                     endIndex={endIndex}
-                    scrollVelocity={scrollVelocity}
                     actions={actions}
                     rowExpansion={rowExpansion}
                     inlineEdit={inlineEdit}
@@ -587,35 +577,11 @@ export const formatDate = (dateString: string): string => {
 
 interface StatusBadgeProps {
   status: string;
-  config?: Record<
-    string,
-    {
-      label: string;
-      variant:
-        | 'primary'
-        | 'secondary'
-        | 'success'
-        | 'warning'
-        | 'error'
-        | 'info';
-    }
-  >;
+  config?: Record<string, { label: string; variant: string }>;
 }
 
 export const StatusBadge = ({ status, config }: StatusBadgeProps) => {
-  const defaultConfig: Record<
-    string,
-    {
-      label: string;
-      variant:
-        | 'primary'
-        | 'secondary'
-        | 'success'
-        | 'warning'
-        | 'error'
-        | 'info';
-    }
-  > = {
+  const defaultConfig = {
     active: { label: 'Active', variant: 'success' },
     draft: { label: 'Draft', variant: 'warning' },
     filled: { label: 'Filled', variant: 'info' },
@@ -623,10 +589,7 @@ export const StatusBadge = ({ status, config }: StatusBadgeProps) => {
     completed: { label: 'Completed', variant: 'primary' },
   };
 
-  const mergedConfig = {
-    ...defaultConfig,
-    ...config,
-  };
+  const mergedConfig = { ...defaultConfig, ...config };
   const currentConfig = mergedConfig[status] || {
     label: status,
     variant: 'primary',

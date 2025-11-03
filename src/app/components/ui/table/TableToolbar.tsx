@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useCallback, useMemo } from 'react';
 import {
   TableData,
   BulkAction,
@@ -32,7 +32,11 @@ interface TableToolbarProps<T extends TableData> {
   showColumnSettings: boolean;
   onToggleColumnSettings: () => void;
   onRetry?: () => void;
+  columns?: Array<{ key: string; header: string; visible: boolean }>;
+  onColumnVisibilityChange?: (key: string, visible: boolean) => void;
 }
+
+type DropdownType = 'status' | 'export' | 'columns';
 
 export function TableToolbar<T extends TableData>({
   title,
@@ -57,269 +61,555 @@ export function TableToolbar<T extends TableData>({
   showColumnSettings,
   onToggleColumnSettings,
   onRetry,
-}: TableToolbarProps<T>) {
-  const [showStatusDropdown, setShowStatusDropdown] = React.useState(false);
-  const [showExportMenu, setShowExportMenu] = React.useState(false);
+  columns = [],
+  onColumnVisibilityChange,
+}: TableToolbarProps<T>): React.JSX.Element {
+  const [openDropdown, setOpenDropdown] = React.useState<DropdownType | null>(
+    null
+  );
+  const [isClosing, setIsClosing] = React.useState<DropdownType | null>(null);
   const statusDropdownRef = useRef<HTMLDivElement>(null);
   const exportMenuRef = useRef<HTMLDivElement>(null);
+  const columnsDropdownRef = useRef<HTMLDivElement>(null);
+
+  const dropdownRefs = useMemo(
+    () => ({
+      status: statusDropdownRef,
+      export: exportMenuRef,
+      columns: columnsDropdownRef,
+    }),
+    []
+  );
 
   React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent): void => {
+      const target = event.target as Node;
       if (
-        statusDropdownRef.current &&
-        !statusDropdownRef.current.contains(event.target as Node)
+        openDropdown &&
+        dropdownRefs[openDropdown].current &&
+        !dropdownRefs[openDropdown].current?.contains(target)
       ) {
-        setShowStatusDropdown(false);
-      }
-      if (
-        exportMenuRef.current &&
-        !exportMenuRef.current.contains(event.target as Node)
-      ) {
-        setShowExportMenu(false);
+        setIsClosing(openDropdown);
+        setTimeout(() => {
+          setOpenDropdown(null);
+          setIsClosing(null);
+        }, 250);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [openDropdown, dropdownRefs]);
 
-  const getCurrentStatusLabel = (): string => {
+  const currentStatusLabel = useMemo((): string => {
     if (!currentStatus) return 'All Status';
     return (
       statusFilterOptions?.find((opt) => opt.value === currentStatus)?.label ||
       'All Status'
     );
+  }, [currentStatus, statusFilterOptions]);
+
+  const descriptionText = useMemo((): React.ReactNode => {
+    if (isLoading) {
+      return <span className="text-gray-500">Loading data...</span>;
+    }
+    return (
+      <>
+        <span className="font-medium text-gray-900">{totalCount}</span>
+        {' records found'}
+        {selectedCount > 0 && (
+          <>
+            {' • '}
+            <span className="font-medium text-indigo-600">
+              {selectedCount} selected
+            </span>
+          </>
+        )}
+      </>
+    );
+  }, [isLoading, totalCount, selectedCount]);
+
+  const handleDropdownToggle = useCallback(
+    (dropdown: DropdownType): void => {
+      if (openDropdown === dropdown) {
+        setIsClosing(dropdown);
+        setTimeout(() => {
+          setOpenDropdown(null);
+          setIsClosing(null);
+        }, 250);
+      } else {
+        if (openDropdown) {
+          setIsClosing(openDropdown);
+          setTimeout(() => {
+            setOpenDropdown(dropdown);
+            setIsClosing(null);
+          }, 150);
+        } else {
+          setOpenDropdown(dropdown);
+        }
+      }
+    },
+    [openDropdown]
+  );
+
+  const handleStatusSelect = useCallback(
+    (status: string): void => {
+      onStatusChange(status);
+      setIsClosing('status');
+      setTimeout(() => {
+        setOpenDropdown(null);
+        setIsClosing(null);
+      }, 200);
+    },
+    [onStatusChange]
+  );
+
+  const handleClearStatus = useCallback((): void => {
+    onClearStatus();
+    setIsClosing('status');
+    setTimeout(() => {
+      setOpenDropdown(null);
+      setIsClosing(null);
+    }, 200);
+  }, [onClearStatus]);
+
+  const handleExport = useCallback(
+    (format: string): void => {
+      onExport(format);
+      setIsClosing('export');
+      setTimeout(() => {
+        setOpenDropdown(null);
+        setIsClosing(null);
+      }, 200);
+    },
+    [onExport]
+  );
+
+  const handleSearchClear = useCallback((): void => {
+    onSearch('');
+  }, [onSearch]);
+
+  const handleColumnVisibilityToggle = useCallback(
+    (key: string, visible: boolean): void => {
+      onColumnVisibilityChange?.(key, visible);
+    },
+    [onColumnVisibilityChange]
+  );
+
+  const handleColumnsButtonClick = useCallback((): void => {
+    handleDropdownToggle('columns');
+  }, [handleDropdownToggle]);
+
+  const getDropdownAnimation = (dropdown: DropdownType) => {
+    const isOpen = openDropdown === dropdown;
+    const isAnimatingClose = isClosing === dropdown;
+
+    if (isOpen && !isAnimatingClose) {
+      return 'animate-scale-in opacity-100 scale-100';
+    } else if (isAnimatingClose) {
+      return 'animate-scale-out opacity-0 scale-95';
+    }
+    return 'opacity-0 scale-95 pointer-events-none';
   };
 
+  const dropdownContainerClasses =
+    'absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl z-50 transition-all duration-300 ease-out transform origin-top-right';
+  const dropdownItemClasses =
+    'w-full text-left px-3 py-2.5 text-sm rounded-md transition-all duration-300 flex items-center gap-2 hover:bg-gray-50 hover:translate-x-1 hover:shadow-sm transform';
+  const dropdownActiveItemClasses =
+    'bg-primary-50 text-primary-700 font-medium';
+
+  const bulkActionsSection = useMemo((): React.ReactNode => {
+    if (isLoading || selectedCount === 0 || bulkActions.length === 0) {
+      return null;
+    }
+    return (
+      <div className="flex flex-wrap items-center gap-2 shrink-0 animate-fade-in">
+        {bulkActions.map((action, index) => (
+          <Button
+            key={`${action.label}-${index}`}
+            variant={action.variant || 'primary'}
+            size="sm"
+            onClick={() => action.onClick(selectedData)}
+            disabled={action.disabled}
+            className="h-[38px] transition-all duration-300 hover:scale-105 active:scale-95"
+          >
+            {action.icon}
+            {action.label}
+          </Button>
+        ))}
+      </div>
+    );
+  }, [isLoading, selectedCount, bulkActions, selectedData]);
+
+  const searchInput = useMemo((): React.ReactNode => {
+    if (!showSearch) return null;
+    return (
+      <div className="relative w-full sm:w-auto sm:min-w-[280px] flex-1 h-[38px] animate-fade-in">
+        <Icon
+          name="search"
+          className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 transition-all duration-300 group-hover:text-gray-600"
+        />
+        <input
+          type="text"
+          placeholder="Search records..."
+          value={searchValue}
+          onChange={(e) => onSearch(e.target.value)}
+          className="w-full h-full pl-10 pr-10 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 bg-white hover:border-gray-400 focus:hover:border-blue-500 group"
+          disabled={isLoading}
+        />
+        {searchValue && (
+          <button
+            onClick={handleSearchClear}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-all duration-300 p-1 rounded hover:bg-gray-100 active:scale-95"
+            disabled={isLoading}
+            type="button"
+            aria-label="Clear search"
+          >
+            <Icon
+              name="x"
+              className="h-3 w-3 transition-transform duration-300 hover:scale-110"
+            />
+          </button>
+        )}
+      </div>
+    );
+  }, [showSearch, searchValue, onSearch, isLoading, handleSearchClear]);
+
+  const statusFilterDropdown = useMemo((): React.ReactNode => {
+    if (!statusFilterOptions) return null;
+    const isOpen = openDropdown === 'status';
+    const isClosingStatus = isClosing === 'status';
+
+    return (
+      <div className="relative" ref={statusDropdownRef}>
+        <Button
+          variant={currentStatus ? 'primary' : 'secondary-outline'}
+          size="sm"
+          onClick={() => handleDropdownToggle('status')}
+          disabled={isLoading}
+          className="transition-all duration-300 hover:scale-105 active:scale-95 h-[38px] group"
+        >
+          <Icon
+            name="filter"
+            className="h-4 w-4 transition-transform duration-300 group-hover:rotate-12"
+          />
+          <span className="ml-2 transition-colors duration-300">
+            {currentStatusLabel}
+          </span>
+          <Icon
+            name={isOpen && !isClosingStatus ? 'chevronUp' : 'chevronDown'}
+            className="h-4 w-4 ml-1 transition-all duration-300 transform"
+          />
+        </Button>
+        <div
+          className={`${dropdownContainerClasses} ${getDropdownAnimation('status')} w-56`}
+        >
+          <div className="p-2 space-y-1">
+            <button
+              onClick={handleClearStatus}
+              className={`${dropdownItemClasses} ${!currentStatus ? dropdownActiveItemClasses : 'text-gray-700'}`}
+              type="button"
+            >
+              <Icon
+                name="layers"
+                className="h-4 w-4 transition-transform duration-300 group-hover:scale-110"
+              />
+              All Status
+            </button>
+            {statusFilterOptions.map((status) => (
+              <button
+                key={status.value}
+                onClick={() => handleStatusSelect(status.value)}
+                className={`${dropdownItemClasses} ${currentStatus === status.value ? dropdownActiveItemClasses : 'text-gray-700'} group`}
+                type="button"
+              >
+                <Icon
+                  name="circle"
+                  className="h-3 w-3 transition-all duration-300 group-hover:scale-125"
+                />
+                {status.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }, [
+    statusFilterOptions,
+    openDropdown,
+    isClosing,
+    currentStatus,
+    currentStatusLabel,
+    isLoading,
+    handleDropdownToggle,
+    handleClearStatus,
+    handleStatusSelect,
+  ]);
+
+  const exportDropdown = useMemo((): React.ReactNode => {
+    if (!exportOptions) return null;
+    const hasSelectedRows = selectedCount > 0;
+
+    return (
+      <div className="relative" ref={exportMenuRef}>
+        <Button
+          variant="secondary-outline"
+          size="sm"
+          onClick={() => handleDropdownToggle('export')}
+          disabled={isLoading}
+          className="transition-all duration-300 hover:scale-105 active:scale-95 h-[38px] group"
+        >
+          <Icon
+            name="download"
+            className="h-4 w-4 transition-transform duration-300 group-hover:-translate-y-0.5"
+          />
+          <span className="ml-2 transition-colors duration-300">
+            Export{hasSelectedRows ? ` (${selectedCount})` : ''}
+          </span>
+        </Button>
+        <div
+          className={`${dropdownContainerClasses} ${getDropdownAnimation('export')} w-56`}
+        >
+          <div className="p-2 space-y-1">
+            <div className="px-2 py-1">
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1 transition-colors duration-300">
+                Export All Data
+              </div>
+              {exportOptions.formats.map((format) => (
+                <button
+                  key={`all-${format}`}
+                  onClick={() => handleExport(format)}
+                  className={`${dropdownItemClasses} text-gray-700 group`}
+                  type="button"
+                >
+                  <Icon
+                    name="file"
+                    className="h-4 w-4 transition-transform duration-300 group-hover:scale-110"
+                  />
+                  <span className="transition-all duration-300">
+                    {format.toUpperCase()} Format
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {hasSelectedRows && (
+              <>
+                <div className="border-t border-gray-100 my-1 transition-colors duration-300"></div>
+                <div className="px-2 py-1">
+                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1 transition-colors duration-300">
+                    Export Selected ({selectedCount})
+                  </div>
+                  {exportOptions.formats.map((format) => (
+                    <button
+                      key={`selected-${format}`}
+                      onClick={() => handleExport(`selected-${format}`)}
+                      className={`${dropdownItemClasses} text-gray-700 group`}
+                      type="button"
+                    >
+                      <Icon
+                        name="checkSquare"
+                        className="h-4 w-4 transition-transform duration-300 group-hover:scale-110"
+                      />
+                      <span className="transition-all duration-300">
+                        {format.toUpperCase()} Format
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }, [
+    exportOptions,
+    openDropdown,
+    isClosing,
+    isLoading,
+    selectedCount,
+    handleDropdownToggle,
+    handleExport,
+  ]);
+
+  const columnSettingsDropdown = useMemo((): React.ReactNode => {
+    if (!showColumnSettings) return null;
+
+    return (
+      <div
+        className={`${dropdownContainerClasses} ${getDropdownAnimation('columns')} w-64`}
+      >
+        <div className="p-3">
+          <h3 className="text-sm font-semibold text-gray-900 mb-3 transition-colors duration-300">
+            Visible Columns
+          </h3>
+          <div className="space-y-2 max-h-60 overflow-y-auto">
+            {columns.map((column) => (
+              <label
+                key={column.key}
+                className="flex items-center gap-3 px-2 py-2 rounded-md transition-all duration-300 cursor-pointer group hover:bg-gray-50 hover:translate-x-1 hover:shadow-sm"
+              >
+                <input
+                  type="checkbox"
+                  checked={column.visible}
+                  onChange={(e) =>
+                    handleColumnVisibilityToggle(column.key, e.target.checked)
+                  }
+                  className="h-4 w-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500 transition-all duration-300 ease-out transform hover:scale-110"
+                />
+                <span className="text-sm text-gray-700 flex-1 transition-all duration-300 group-hover:text-gray-900 group-hover:font-medium">
+                  {column.header}
+                </span>
+                <Icon
+                  name={column.visible ? 'eye' : 'eyeOff'}
+                  className={`h-4 w-4 transition-all duration-300 transform group-hover:scale-110 ${column.visible ? 'text-success-500' : 'text-gray-400'}`}
+                />
+              </label>
+            ))}
+          </div>
+          {columns.length === 0 && (
+            <p className="text-sm text-gray-500 text-center py-4 transition-colors duration-300">
+              No columns available
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }, [
+    showColumnSettings,
+    openDropdown,
+    isClosing,
+    columns,
+    handleColumnVisibilityToggle,
+  ]);
+
+  const utilityButtons = useMemo((): React.ReactNode => {
+    const hasUtilities = onRetry || showColumnSettings;
+    if (!hasUtilities) return null;
+    return (
+      <div className="flex items-center gap-2 border-l border-gray-200 pl-2 ml-1">
+        {onRetry && (
+          <TooltipButton
+            tooltip="Refresh data"
+            variant="secondary-outline"
+            size="sm"
+            onClick={onRetry}
+            disabled={isLoading}
+            icon="refreshCw"
+            iconClassName={isLoading ? 'animate-spin' : ''}
+          />
+        )}
+        {showColumnSettings && (
+          <div className="relative" ref={columnsDropdownRef}>
+            <TooltipButton
+              tooltip="Configure columns"
+              variant={
+                openDropdown === 'columns' ? 'primary' : 'secondary-outline'
+              }
+              size="sm"
+              onClick={handleColumnsButtonClick}
+              disabled={isLoading}
+              icon="columns"
+            />
+            {columnSettingsDropdown}
+          </div>
+        )}
+      </div>
+    );
+  }, [
+    onRetry,
+    showColumnSettings,
+    isLoading,
+    openDropdown,
+    handleColumnsButtonClick,
+    columnSettingsDropdown,
+  ]);
+
   return (
-    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 flex-1 min-w-0">
+    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-1 min-w-0">
         {(title || description) && (
-          <div className="min-w-0 flex-1 space-y-1">
+          <div className="min-w-0 flex-1 animate-fade-in">
             {title && (
-              <h2 className="text-xl font-bold text-gray-900 truncate animate-slide-down">
+              <h2 className="text-xl font-bold text-gray-900 truncate transition-colors duration-300 hover:text-gray-700">
                 {title}
               </h2>
             )}
             {description && (
-              <p className="text-sm text-gray-600 truncate animate-slide-down animation-delay-100">
-                {!isLoading && (
-                  <>
-                    <span className="font-medium text-gray-900">
-                      {totalCount}
-                    </span>
-                    {' records found'}
-                    {!isLoading && selectedCount > 0 && (
-                      <>
-                        {' • '}
-                        <span className="font-medium text-indigo-600">
-                          {selectedCount} selected
-                        </span>
-                      </>
-                    )}
-                  </>
-                )}
-                {isLoading && (
-                  <span className="text-gray-500">Loading data...</span>
-                )}
+              <p className="text-sm text-gray-600 truncate transition-colors duration-300 mt-1">
+                {descriptionText}
               </p>
             )}
           </div>
         )}
 
-        {!isLoading && selectedCount > 0 && bulkActions.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2 animate-slide-up shrink-0">
-            {bulkActions.map((action, index) => (
-              <Button
-                key={index}
-                variant={action.variant || 'primary'}
-                size="sm"
-                onClick={() => action.onClick(selectedData)}
-                className="transform hover:scale-105 transition-all duration-200 shadow-sm"
-                disabled={action.disabled}
-              >
-                {action.icon}
-                {action.label}
-              </Button>
-            ))}
-          </div>
-        )}
+        {showSearch && searchInput}
+
+        {bulkActionsSection}
       </div>
 
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 flex-wrap">
-        {showSearch && (
-          <div className="relative w-full sm:w-auto sm:min-w-[280px] flex-1 sm:flex-none order-first sm:order-none">
+      <div className="flex items-center gap-2 flex-wrap">
+        {statusFilterDropdown}
+        {advancedFilters.length > 0 && (
+          <Button
+            variant={showAdvancedFilters ? 'primary' : 'secondary-outline'}
+            size="sm"
+            onClick={onToggleAdvancedFilters}
+            disabled={isLoading}
+            className="transition-all duration-300 hover:scale-105 active:scale-95 h-[38px] group"
+          >
             <Icon
-              name="search"
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 transition-colors duration-200"
+              name="sliders"
+              className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90"
             />
-            <input
-              type="text"
-              placeholder="Search records..."
-              value={searchValue}
-              onChange={(e) => onSearch(e.target.value)}
-              className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 bg-white shadow-sm"
-              disabled={isLoading}
-            />
-            {searchValue && (
-              <button
-                onClick={() => onSearch('')}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200 p-1 rounded hover:bg-gray-100"
-                disabled={isLoading}
-              >
-                <Icon name="x" className="h-3 w-3" />
-              </button>
-            )}
-          </div>
+            <span className="ml-2 transition-colors duration-300">Filters</span>
+          </Button>
         )}
+        {exportDropdown}
+        {utilityButtons}
+      </div>
+    </div>
+  );
+}
 
-        <div className="flex items-center gap-2 flex-wrap">
-          {statusFilterOptions && (
-            <div className="relative" ref={statusDropdownRef}>
-              <Button
-                variant={currentStatus ? 'primary' : 'secondary-outline'}
-                size="sm"
-                onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-                className="transform hover:scale-105 transition-all duration-200 shadow-sm"
-                disabled={isLoading}
-              >
-                <Icon name="filter" className="h-4 w-4" />
-                <span className="ml-2">{getCurrentStatusLabel()}</span>
-                <Icon
-                  name={showStatusDropdown ? 'chevronUp' : 'chevronDown'}
-                  className="h-4 w-4 ml-1 transition-transform duration-200"
-                />
-              </Button>
+interface TooltipButtonProps {
+  tooltip: string;
+  onClick: () => void;
+  disabled?: boolean;
+  variant: 'primary' | 'secondary' | 'danger' | 'secondary-outline';
+  size: 'sm' | 'md' | 'lg';
+  icon: string;
+  iconClassName?: string;
+}
 
-              {showStatusDropdown && (
-                <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-20 animate-scale-in">
-                  <div className="p-2 space-y-1">
-                    <button
-                      onClick={() => {
-                        onClearStatus();
-                        setShowStatusDropdown(false);
-                      }}
-                      className={`w-full text-left px-3 py-2.5 text-sm rounded-md transition-all duration-200 flex items-center gap-2 ${
-                        !currentStatus
-                          ? 'bg-indigo-50 text-indigo-700 font-medium'
-                          : 'text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      <Icon name="layers" className="h-4 w-4" />
-                      All Status
-                    </button>
-                    {statusFilterOptions.map((status) => (
-                      <button
-                        key={status.value}
-                        onClick={() => {
-                          onStatusChange(status.value);
-                          setShowStatusDropdown(false);
-                        }}
-                        className={`w-full text-left px-3 py-2.5 text-sm rounded-md transition-all duration-200 flex items-center gap-2 ${
-                          currentStatus === status.value
-                            ? 'bg-indigo-50 text-indigo-700 font-medium'
-                            : 'text-gray-700 hover:bg-gray-50'
-                        }`}
-                      >
-                        <Icon name="circle" className="h-3 w-3" />
-                        {status.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {advancedFilters.length > 0 && (
-            <Button
-              variant={showAdvancedFilters ? 'primary' : 'secondary-outline'}
-              size="sm"
-              onClick={onToggleAdvancedFilters}
-              className="transform hover:scale-105 transition-all duration-200 shadow-sm"
-              disabled={isLoading}
-            >
-              <Icon name="sliders" className="h-4 w-4" />
-              <span className="ml-2">Filters</span>
-            </Button>
-          )}
-
-          {exportOptions && (
-            <div className="relative" ref={exportMenuRef}>
-              <Button
-                variant="secondary-outline"
-                size="sm"
-                onClick={() => setShowExportMenu(!showExportMenu)}
-                className="transform hover:scale-105 transition-all duration-200 shadow-sm"
-                disabled={isLoading}
-              >
-                <Icon name="download" className="h-4 w-4" />
-                <span className="ml-2">Export</span>
-              </Button>
-
-              {showExportMenu && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-20 animate-scale-in">
-                  <div className="p-2 space-y-1">
-                    {exportOptions.formats.map((format) => (
-                      <button
-                        key={format}
-                        onClick={() => {
-                          onExport(format);
-                          setShowExportMenu(false);
-                        }}
-                        className="w-full text-left px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-all duration-200 flex items-center gap-2"
-                      >
-                        <Icon name="file" className="h-4 w-4" />
-                        Export as {format.toUpperCase()}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="flex items-center gap-2 border-l border-gray-200 pl-2 ml-1">
-            {onRetry && (
-              <div className="relative group">
-                <Button
-                  variant="secondary-outline"
-                  size="sm"
-                  onClick={onRetry}
-                  disabled={isLoading}
-                  className="transform hover:scale-105 transition-all duration-200 shadow-sm"
-                >
-                  <Icon
-                    name="refreshCw"
-                    className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}
-                  />
-                </Button>
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-30">
-                  Refresh data
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
-                </div>
-              </div>
-            )}
-
-            {showColumnSettings && (
-              <div className="relative group">
-                <Button
-                  onClick={onToggleColumnSettings}
-                  variant="secondary-outline"
-                  size="sm"
-                  className="transform hover:scale-105 transition-all duration-200 shadow-sm"
-                  disabled={isLoading}
-                >
-                  <Icon name="columns" className="h-4 w-4" />
-                </Button>
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-30">
-                  Configure columns
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+function TooltipButton({
+  tooltip,
+  onClick,
+  disabled,
+  variant,
+  size,
+  icon,
+  iconClassName = '',
+}: TooltipButtonProps): React.JSX.Element {
+  return (
+    <div className="relative group">
+      <Button
+        variant={variant}
+        size={size}
+        onClick={onClick}
+        disabled={disabled}
+        className="transition-all duration-300 hover:scale-105 active:scale-95 h-[38px] group"
+      >
+        <Icon
+          name={icon}
+          className={`h-4 w-4 transition-transform duration-300 group-hover:rotate-90 ${iconClassName}`}
+        />
+      </Button>
+      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap z-50 translate-y-2 group-hover:translate-y-0">
+        {tooltip}
+        <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
       </div>
     </div>
   );
