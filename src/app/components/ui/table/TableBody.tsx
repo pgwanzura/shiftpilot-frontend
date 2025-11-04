@@ -173,7 +173,7 @@ function TableRow<T extends TableData>({
   };
 
   const getRowBackgroundColor = () => {
-    if (hoveredRow === rowIndex) return 'bg-indigo-50';
+    if (hoveredRow === rowIndex) return 'bg-indigo-50'; // Keep light indigo background
     if (rowIndex % 2 === 0) return 'bg-white';
     return 'bg-gray-50';
   };
@@ -218,7 +218,7 @@ function TableRow<T extends TableData>({
               />
             ) : (
               <div
-                className={`truncate font-medium transition-all duration-300 transform hover:scale-105 ${
+                className={`truncate font-medium transition-all duration-300 ${
                   hoveredRow === rowIndex ? 'text-gray-900' : 'text-gray-700'
                 } ${
                   inlineEdit?.editable &&
@@ -248,10 +248,8 @@ function TableRow<T extends TableData>({
       {actions && (
         <div className="flex justify-end min-w-0 pr-6 pl-3">
           <div
-            className={`flex items-center gap-2 transition-all duration-300 transform ${
-              hoveredRow === rowIndex
-                ? 'opacity-100 scale-110'
-                : 'opacity-70 scale-100'
+            className={`flex items-center gap-2 transition-all duration-300 ${
+              hoveredRow === rowIndex ? 'opacity-100' : 'opacity-70'
             }`}
           >
             {actions(row)}

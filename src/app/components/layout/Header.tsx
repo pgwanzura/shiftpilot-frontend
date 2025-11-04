@@ -11,17 +11,12 @@ interface HeaderProps {
   user: User | null;
 }
 
-export default function Header({
-  onMenuToggle,
-  sidebarCollapsed,
-  user,
-}: HeaderProps) {
+export default function Header({ onMenuToggle, user }: HeaderProps) {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isMessagesOpen, setIsMessagesOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Using the consolidated usePageMetadata hook
   const { pageTitle, pageDescription } = usePageMetadata();
 
   const notificationsRef = useRef<HTMLDivElement>(null);
@@ -82,7 +77,6 @@ export default function Header({
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
-      {/* Mobile Header */}
       <div className="lg:hidden">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center space-x-3">
@@ -93,7 +87,9 @@ export default function Header({
             >
               <Icon name="menu" className="w-5 h-5 text-gray-600" />
             </button>
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 ml-2.5">
+              {' '}
+              {/* Added ml-2.5 for 10px right shift */}
               <h1 className="text-lg font-semibold text-gray-800 truncate">
                 {pageTitle}
               </h1>
@@ -136,10 +132,11 @@ export default function Header({
         </div>
       </div>
 
-      {/* Desktop Header */}
       <div className="hidden lg:block">
         <div className="flex items-center justify-between p-4">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 ml-2.5">
+            {' '}
+            {/* Added ml-2.5 for 10px right shift */}
             <div className="min-w-0">
               <h1 className="text-2xl font-bold text-gray-800 truncate">
                 {pageTitle}

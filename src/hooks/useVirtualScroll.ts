@@ -10,7 +10,7 @@ export function useVirtualScroll<T extends TableData>(
   const [scrollVelocity, setScrollVelocity] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const lastScrollTop = useRef(0);
-  const scrollTimer = useRef<NodeJS.Timeout>();
+  const scrollTimer = useRef<NodeJS.Timeout>(null);
 
   const containerHeight = containerRef.current?.clientHeight || 500;
   const totalHeight = data.length * itemHeight;

@@ -80,7 +80,7 @@ function LayoutContent({ children }: LayoutProps) {
   const userMenu = user ? getMenuForRole(user.role) : [];
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-white">
       <Sidebar
         isOpen={sidebarState.isOpen}
         isCollapsed={sidebarState.isCollapsed}

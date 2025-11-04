@@ -16,7 +16,6 @@ export default function PageHeader({
 }: PageHeaderProps) {
   const pathname = usePathname();
 
-  // Generate breadcrumbs from current path
   const generateBreadcrumbs = () => {
     if (!pathname) return [];
 
@@ -28,7 +27,6 @@ export default function PageHeader({
       const href = '/' + pathSegments.slice(0, index + 1).join('/');
       const isLast = index === pathSegments.length - 1;
 
-      // Use custom label if provided, otherwise generate from segment
       const label =
         customBreadcrumbs[segment] ||
         customBreadcrumbs[href] ||
@@ -40,7 +38,6 @@ export default function PageHeader({
       };
     });
 
-    // Add home as first breadcrumb
     return [
       {
         label: customBreadcrumbs['/'] || 'Dashboard',
@@ -51,7 +48,6 @@ export default function PageHeader({
   };
 
   const formatSegmentLabel = (segment: string): string => {
-    // Convert kebab-case and snake_case to Title Case
     return segment
       .split(/[-_]/)
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
@@ -62,9 +58,7 @@ export default function PageHeader({
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-      {/* Left Section - Breadcrumbs and Content */}
       <div className="flex-1 min-w-0">
-        {/* Auto-generated Breadcrumbs */}
         {breadcrumbs.length > 0 && (
           <nav className="flex mb-2" aria-label="Breadcrumb">
             <ol className="flex items-center space-x-2 flex-wrap">
@@ -106,11 +100,9 @@ export default function PageHeader({
           </nav>
         )}
 
-        {/* Custom Content */}
         {children}
       </div>
 
-      {/* Right Section - Actions */}
       {actions && <div className="mt-4 sm:mt-0 sm:ml-4">{actions}</div>}
     </div>
   );

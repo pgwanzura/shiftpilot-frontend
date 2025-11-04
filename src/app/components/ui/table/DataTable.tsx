@@ -74,6 +74,7 @@ export function DataTable<T extends TableData>({
     startIndex,
     endIndex,
     handleScroll,
+    scrollVelocity,
   } = useVirtualScroll(virtualScrollData, 53, 5);
 
   const columnSettingsData = useMemo(() => {
@@ -524,6 +525,7 @@ export function DataTable<T extends TableData>({
                     totalHeight={totalHeight}
                     startIndex={startIndex}
                     endIndex={endIndex}
+                    scrollVelocity={scrollVelocity}
                     actions={actions}
                     rowExpansion={rowExpansion}
                     inlineEdit={inlineEdit}
@@ -559,6 +561,8 @@ export function DataTable<T extends TableData>({
   );
 }
 
+type StatusKey = 'active' | 'draft' | 'filled' | 'cancelled' | 'completed';
+
 export const formatCurrency = (
   amount: number,
   currency: string = 'USD'
@@ -590,10 +594,14 @@ export const StatusBadge = ({ status, config }: StatusBadgeProps) => {
   };
 
   const mergedConfig = { ...defaultConfig, ...config };
-  const currentConfig = mergedConfig[status] || {
-    label: status,
-    variant: 'primary',
+
+  const isValidStatus = (s: string): s is StatusKey => {
+    return s in mergedConfig;
   };
+
+  const currentConfig = isValidStatus(status)
+    ? mergedConfig[status]
+    : { label: status, variant: 'primary' };
 
   return (
     <span
