@@ -7,6 +7,7 @@ import { PageTitleProvider } from '@/contexts/PageTitleContext';
 import { usePageMetadata } from '@/hooks/usePageMetadata';
 import { getMenuForRole } from '@/config/menu';
 import { LayoutProps, User, SidebarState, SidebarHandlers } from '@/types';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 
 function LayoutContent({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -95,7 +96,7 @@ function LayoutContent({ children }: LayoutProps) {
           sidebarCollapsed={sidebarState.isCollapsed}
           user={user}
         />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-50 dark:bg-gray-900">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-white dark:bg-gray-900">
           {children}
         </main>
       </div>
@@ -105,8 +106,10 @@ function LayoutContent({ children }: LayoutProps) {
 
 export default function Layout({ children }: LayoutProps) {
   return (
-    <PageTitleProvider>
-      <LayoutContent>{children}</LayoutContent>
-    </PageTitleProvider>
+    <ThemeProvider>
+      <PageTitleProvider>
+        <LayoutContent>{children}</LayoutContent>
+      </PageTitleProvider>
+    </ThemeProvider>
   );
 }

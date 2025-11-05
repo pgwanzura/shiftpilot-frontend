@@ -7,8 +7,9 @@ export * from './buttons';
 export * from './navigation';
 
 export * from './table';
-
 export * from './Icons';
+export * from './client';
+export * from './actions';
 
 export { default as Alert, type AlertProps } from './Alert';
 export { default as AppLink, type AppLinkProps } from './AppLink';
@@ -29,8 +30,9 @@ export {
 export { default as SearchInput, type SearchInputProps } from './SearchInput';
 export * from './MenuItems';
 export * from './StatCard';
-export * from './QuickActions';
+export * from './actions/QuickActions';
 export * from './Badge';
 export * from './InteractiveStatsCard';
 export * from './Card';
+
 // export * from './StatusBadge';

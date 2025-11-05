@@ -14,7 +14,7 @@ import clsx from 'clsx';
 import { MenuItems } from '@/app/components/ui';
 import { MenuItem, getMenuForRole } from '@/config';
 import { User } from '@/types';
-import { useTheme } from '@/contexts/ThemeContext';
+import { useSafeTheme } from '@/hooks/useSafeTheme';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -37,7 +37,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
 
-  const { theme, resolvedTheme, toggleTheme } = useTheme();
+  const { theme, resolvedTheme, toggleTheme } = useSafeTheme();
 
   useEffect(() => {
     if (propMenuItems) {
@@ -91,7 +91,11 @@ const Sidebar: React.FC<SidebarProps> = ({
   const toggleDropdown = useCallback((label: string) => {
     setOpenDropdowns((prev) => {
       const updated = new Set(prev);
-      updated.has(label) ? updated.delete(label) : updated.add(label);
+      if (updated.has(label)) {
+        updated.delete(label);
+      } else {
+        updated.add(label);
+      }
       return updated;
     });
   }, []);
@@ -99,8 +103,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   const sidebarClasses = useMemo(
     () =>
       clsx(
-        'fixed inset-y-0 left-0 z-50 flex flex-col transition-all duration-300 ease-in-out h-full border-r shadow-sm',
-        'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800',
+        'fixed inset-y-0 left-0 z-50 flex flex-col transition-all duration-300 ease-in-out h-full border-r',
+        'bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700',
         {
           'w-80': isMobile,
           'w-20': !isMobile && isCollapsed,
@@ -179,7 +183,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           </button>
         )}
 
-        <div className="flex items-center px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+        <div className="flex items-center px-4 py-3 border-b border-gray-300 dark:border-gray-700">
           <div className="flex items-center gap-3 w-full">
             <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-primary-800 rounded-xl flex items-center justify-center">
               <svg
@@ -210,7 +214,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {user && (
-          <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+          <div className="px-4 py-3 border-b border-gray-300 dark:border-gray-700">
             <div className="flex items-center gap-3">
               <div className="relative">
                 <div className="w-12 h-12 bg-gradient-to-br from-primary-600 to-primary-800 rounded-full flex items-center justify-center">
@@ -251,7 +255,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           </nav>
         </div>
 
-        <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-800 space-y-2">
+        <div className="px-4 py-3 border-t border-gray-300 dark:border-gray-700 space-y-2">
           <button
             className="w-full flex items-center gap-3 p-3 rounded-xl text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
             onClick={toggleTheme}

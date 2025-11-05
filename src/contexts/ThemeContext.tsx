@@ -26,12 +26,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       ? 'dark'
       : 'light';
 
-    if (savedTheme) {
-      setTheme(savedTheme);
-      setResolvedTheme(savedTheme === 'system' ? systemTheme : savedTheme);
+    const initialTheme = savedTheme || 'light';
+    const initialResolved =
+      initialTheme === 'system' ? systemTheme : initialTheme;
+
+    setTheme(initialTheme);
+    setResolvedTheme(initialResolved);
+
+    const root = document.documentElement;
+    if (initialResolved === 'dark') {
+      root.classList.add('dark');
     } else {
-      setTheme('light');
-      setResolvedTheme('light');
+      root.classList.remove('dark');
     }
   }, []);
 
@@ -63,6 +69,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       return 'light';
     });
   };
+
+  if (!mounted) {
+    return <div style={{ visibility: 'hidden' }}>{children}</div>;
+  }
 
   return (
     <ThemeContext.Provider

@@ -207,22 +207,25 @@ export function TableToolbar<T extends TableData>({
     handleDropdownToggle('columns');
   }, [handleDropdownToggle]);
 
-  const getDropdownAnimation = (dropdown: DropdownType) => {
-    const isOpen = openDropdown === dropdown;
-    const isAnimatingClose = isClosing === dropdown;
+  const getDropdownAnimation = useCallback(
+    (dropdown: DropdownType) => {
+      const isOpen = openDropdown === dropdown;
+      const isAnimatingClose = isClosing === dropdown;
 
-    if (isOpen && !isAnimatingClose) {
-      return 'animate-scale-in opacity-100 scale-100';
-    } else if (isAnimatingClose) {
-      return 'animate-scale-out opacity-0 scale-95';
-    }
-    return 'opacity-0 scale-95 pointer-events-none';
-  };
+      if (isOpen && !isAnimatingClose) {
+        return 'animate-scale-in opacity-100 scale-100';
+      } else if (isAnimatingClose) {
+        return 'animate-scale-out opacity-0 scale-95';
+      }
+      return 'opacity-0 scale-95 pointer-events-none';
+    },
+    [openDropdown, isClosing]
+  );
 
   const dropdownContainerClasses =
     'absolute right-0 top-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50 transition-all duration-300 ease-out transform origin-top-right';
   const dropdownItemClasses =
-    'w-full text-left px-3 py-2.5 text-sm rounded-md transition-all duration-300 flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 hover:translate-x-1 hover:shadow-sm transform';
+    'w-full text-left px-3 py-2.5 text-sm rounded-md transition-all duration-300 flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700';
   const dropdownActiveItemClasses =
     'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 font-medium';
 
@@ -352,6 +355,7 @@ export function TableToolbar<T extends TableData>({
     handleDropdownToggle,
     handleClearStatus,
     handleStatusSelect,
+    getDropdownAnimation,
   ]);
 
   const exportDropdown = useMemo((): React.ReactNode => {
@@ -439,6 +443,7 @@ export function TableToolbar<T extends TableData>({
     selectedCount,
     handleDropdownToggle,
     handleExport,
+    getDropdownAnimation,
   ]);
 
   const columnSettingsDropdown = useMemo((): React.ReactNode => {
@@ -456,7 +461,7 @@ export function TableToolbar<T extends TableData>({
             {columns.map((column) => (
               <label
                 key={column.key}
-                className="flex items-center gap-3 px-2 py-2 rounded-md transition-all duration-300 cursor-pointer group hover:bg-gray-50 dark:hover:bg-gray-700 hover:translate-x-1 hover:shadow-sm"
+                className="flex items-center gap-3 px-2 py-2 rounded-md transition-all duration-300 cursor-pointer group hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 <input
                   type="checkbox"
@@ -490,6 +495,7 @@ export function TableToolbar<T extends TableData>({
     isClosing,
     columns,
     handleColumnVisibilityToggle,
+    getDropdownAnimation,
   ]);
 
   const utilityButtons = useMemo((): React.ReactNode => {

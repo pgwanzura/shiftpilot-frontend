@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Icon } from '@/app/components/ui';
 import { User } from '@/types';
 import { usePageMetadata } from '@/hooks/usePageMetadata';
+import { useRouter } from 'next/navigation';
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -12,6 +13,7 @@ interface HeaderProps {
 }
 
 export default function Header({ onMenuToggle, user }: HeaderProps) {
+  const router = useRouter();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isMessagesOpen, setIsMessagesOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -35,13 +37,22 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+      if (
+        notificationsRef.current &&
+        !notificationsRef.current.contains(event.target as Node)
+      ) {
         setIsNotificationsOpen(false);
       }
-      if (messagesRef.current && !messagesRef.current.contains(event.target as Node)) {
+      if (
+        messagesRef.current &&
+        !messagesRef.current.contains(event.target as Node)
+      ) {
         setIsMessagesOpen(false);
       }
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node)
+      ) {
         setIsUserMenuOpen(false);
       }
     };
@@ -66,8 +77,13 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
     return count > 99 ? '99+' : count.toString();
   };
 
+  const handleCalendarClick = () => {
+    // router.push(`/agency/placements/${placement.id}`);
+    router.push('/calendar');
+  };
+
   return (
-    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-30 shadow-sm">
+    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-30">
       <div className="lg:hidden">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center space-x-3">
@@ -76,7 +92,10 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
               aria-label="Toggle menu"
             >
-              <Icon name="menu" className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <Icon
+                name="menu"
+                className="w-5 h-5 text-gray-600 dark:text-gray-400"
+              />
             </button>
             <div className="min-w-0 flex-1 ml-2.5">
               <h1 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
@@ -95,7 +114,10 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
                 className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
                 aria-label="Notifications"
               >
-                <Icon name="bell" className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                <Icon
+                  name="bell"
+                  className="w-5 h-5 text-gray-600 dark:text-gray-400"
+                />
                 {notificationCount > 0 && (
                   <span className="absolute -top-1 -right-1 min-w-[18px] h-4 px-1 bg-error-500 text-white text-[10px] font-medium rounded-full border-2 border-white dark:border-gray-900 flex items-center justify-center">
                     {formatBadgeCount(notificationCount)}
@@ -136,10 +158,14 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
 
           <div className="flex items-center space-x-4">
             <button
+              onClick={handleCalendarClick}
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               aria-label="Calendar"
             >
-              <Icon name="calendar" className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <Icon
+                name="calendar"
+                className="w-5 h-5 text-gray-600 dark:text-gray-400"
+              />
             </button>
 
             <div className="relative" ref={messagesRef}>
@@ -148,7 +174,10 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
                 className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
                 aria-label="Messages"
               >
-                <Icon name="messageCircle" className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                <Icon
+                  name="messageCircle"
+                  className="w-5 h-5 text-gray-600 dark:text-gray-400"
+                />
                 {messageCount > 0 && (
                   <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 bg-primary-500 text-white text-xs font-medium rounded-full border-2 border-white dark:border-gray-900 flex items-center justify-center">
                     {formatBadgeCount(messageCount)}
@@ -163,7 +192,10 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
                 className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
                 aria-label="Notifications"
               >
-                <Icon name="bell" className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                <Icon
+                  name="bell"
+                  className="w-5 h-5 text-gray-600 dark:text-gray-400"
+                />
                 {notificationCount > 0 && (
                   <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 bg-error-500 text-white text-xs font-medium rounded-full border-2 border-white dark:border-gray-900 flex items-center justify-center">
                     {formatBadgeCount(notificationCount)}
@@ -176,7 +208,10 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               aria-label="Create new"
             >
-              <Icon name="plusCircle" className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <Icon
+                name="plusCircle"
+                className="w-5 h-5 text-gray-600 dark:text-gray-400"
+              />
             </button>
 
             <div className="relative" ref={userMenuRef}>
