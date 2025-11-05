@@ -173,7 +173,7 @@ export function DataTable<T extends TableData>({
                 }
                 updateState({ expandedRows: newExpanded });
               }}
-              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
             >
               <Icon
                 name={
@@ -181,7 +181,7 @@ export function DataTable<T extends TableData>({
                     ? 'chevronDown'
                     : 'chevronRight'
                 }
-                className="h-4 w-4 text-gray-500"
+                className="h-4 w-4 text-gray-500 dark:text-gray-400"
               />
             </button>
           ),
@@ -372,14 +372,14 @@ export function DataTable<T extends TableData>({
 
   if (error) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+      <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
         <div className="text-red-600 mb-4">
           <Icon name="alertCircle" className="h-12 w-12 mx-auto" />
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
           Failed to load data
         </h3>
-        <p className="text-gray-600 mb-4">{error}</p>
+        <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
         {onRetry && (
           <Button onClick={onRetry} variant="primary">
             <Icon name="refreshCw" className="h-4 w-4 mr-2" />
@@ -391,7 +391,7 @@ export function DataTable<T extends TableData>({
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-300 w-full overflow-x-auto">
+    <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-300 dark:border-gray-700 w-full overflow-x-auto">
       <div className="p-4 md:p-6 min-w-[800px]">
         <div className={`space-y-4 ${className}`}>
           <TableToolbar
@@ -426,11 +426,11 @@ export function DataTable<T extends TableData>({
           />
 
           {showAdvancedFilters && advancedFilters.length > 0 && (
-            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {advancedFilters.map((filter) => (
                   <div key={filter.key} className="min-w-0">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       {filter.label}
                     </label>
                     {filter.type === 'select' ? (
@@ -442,7 +442,7 @@ export function DataTable<T extends TableData>({
                             [filter.key]: e.target.value,
                           }));
                         }}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         disabled={isLoading}
                       >
                         <option value="">All</option>
@@ -463,7 +463,7 @@ export function DataTable<T extends TableData>({
                             [filter.key]: e.target.value,
                           }));
                         }}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         disabled={isLoading}
                       />
                     )}
@@ -484,7 +484,7 @@ export function DataTable<T extends TableData>({
           )}
 
           <div
-            className="overflow-hidden w-full rounded-lg border border-gray-200"
+            className="overflow-hidden w-full rounded-lg border border-gray-200 dark:border-gray-700"
             ref={tableRef}
           >
             <div
@@ -605,7 +605,7 @@ export const StatusBadge = ({ status, config }: StatusBadgeProps) => {
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-${currentConfig.variant}-100 text-${currentConfig.variant}-800`}
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-${currentConfig.variant}-100 dark:bg-${currentConfig.variant}-900/30 text-${currentConfig.variant}-800 dark:text-${currentConfig.variant}-300`}
     >
       {currentConfig.label}
     </span>

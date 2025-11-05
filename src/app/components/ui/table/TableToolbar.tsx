@@ -8,6 +8,7 @@ import {
   AdvancedFilter,
 } from '@/types/table';
 import { Button, Icon } from '@/app/components/ui';
+import { IconName } from '@/config';
 
 interface TableToolbarProps<T extends TableData> {
   title?: string;
@@ -111,16 +112,22 @@ export function TableToolbar<T extends TableData>({
 
   const descriptionText = useMemo((): React.ReactNode => {
     if (isLoading) {
-      return <span className="text-gray-500">Loading data...</span>;
+      return (
+        <span className="text-gray-500 dark:text-gray-400">
+          Loading data...
+        </span>
+      );
     }
     return (
       <>
-        <span className="font-medium text-gray-900">{totalCount}</span>
+        <span className="font-medium text-gray-900 dark:text-white">
+          {totalCount}
+        </span>
         {' records found'}
         {selectedCount > 0 && (
           <>
             {' • '}
-            <span className="font-medium text-indigo-600">
+            <span className="font-medium text-indigo-600 dark:text-indigo-400">
               {selectedCount} selected
             </span>
           </>
@@ -213,11 +220,11 @@ export function TableToolbar<T extends TableData>({
   };
 
   const dropdownContainerClasses =
-    'absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl z-50 transition-all duration-300 ease-out transform origin-top-right';
+    'absolute right-0 top-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50 transition-all duration-300 ease-out transform origin-top-right';
   const dropdownItemClasses =
-    'w-full text-left px-3 py-2.5 text-sm rounded-md transition-all duration-300 flex items-center gap-2 hover:bg-gray-50 hover:translate-x-1 hover:shadow-sm transform';
+    'w-full text-left px-3 py-2.5 text-sm rounded-md transition-all duration-300 flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 hover:translate-x-1 hover:shadow-sm transform';
   const dropdownActiveItemClasses =
-    'bg-primary-50 text-primary-700 font-medium';
+    'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 font-medium';
 
   const bulkActionsSection = useMemo((): React.ReactNode => {
     if (isLoading || selectedCount === 0 || bulkActions.length === 0) {
@@ -248,20 +255,20 @@ export function TableToolbar<T extends TableData>({
       <div className="relative w-full sm:w-auto sm:min-w-[280px] flex-1 h-[38px] animate-fade-in">
         <Icon
           name="search"
-          className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 transition-all duration-300 group-hover:text-gray-600"
+          className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 transition-all duration-300 group-hover:text-gray-600 dark:group-hover:text-gray-300"
         />
         <input
           type="text"
           placeholder="Search records..."
           value={searchValue}
           onChange={(e) => onSearch(e.target.value)}
-          className="w-full h-full pl-10 pr-10 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 bg-white hover:border-gray-400 focus:hover:border-blue-500 group"
+          className="w-full h-full pl-10 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:border-gray-400 dark:hover:border-gray-500 focus:hover:border-blue-500 group"
           disabled={isLoading}
         />
         {searchValue && (
           <button
             onClick={handleSearchClear}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-all duration-300 p-1 rounded hover:bg-gray-100 active:scale-95"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all duration-300 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95"
             disabled={isLoading}
             type="button"
             aria-label="Clear search"
@@ -308,7 +315,7 @@ export function TableToolbar<T extends TableData>({
           <div className="p-2 space-y-1">
             <button
               onClick={handleClearStatus}
-              className={`${dropdownItemClasses} ${!currentStatus ? dropdownActiveItemClasses : 'text-gray-700'}`}
+              className={`${dropdownItemClasses} ${!currentStatus ? dropdownActiveItemClasses : 'text-gray-700 dark:text-gray-300'}`}
               type="button"
             >
               <Icon
@@ -321,7 +328,7 @@ export function TableToolbar<T extends TableData>({
               <button
                 key={status.value}
                 onClick={() => handleStatusSelect(status.value)}
-                className={`${dropdownItemClasses} ${currentStatus === status.value ? dropdownActiveItemClasses : 'text-gray-700'} group`}
+                className={`${dropdownItemClasses} ${currentStatus === status.value ? dropdownActiveItemClasses : 'text-gray-700 dark:text-gray-300'} group`}
                 type="button"
               >
                 <Icon
@@ -373,14 +380,14 @@ export function TableToolbar<T extends TableData>({
         >
           <div className="p-2 space-y-1">
             <div className="px-2 py-1">
-              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1 transition-colors duration-300">
+              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1 transition-colors duration-300">
                 Export All Data
               </div>
               {exportOptions.formats.map((format) => (
                 <button
                   key={`all-${format}`}
                   onClick={() => handleExport(format)}
-                  className={`${dropdownItemClasses} text-gray-700 group`}
+                  className={`${dropdownItemClasses} text-gray-700 dark:text-gray-300 group`}
                   type="button"
                 >
                   <Icon
@@ -396,16 +403,16 @@ export function TableToolbar<T extends TableData>({
 
             {hasSelectedRows && (
               <>
-                <div className="border-t border-gray-100 my-1 transition-colors duration-300"></div>
+                <div className="border-t border-gray-100 dark:border-gray-600 my-1 transition-colors duration-300"></div>
                 <div className="px-2 py-1">
-                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1 transition-colors duration-300">
+                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1 transition-colors duration-300">
                     Export Selected ({selectedCount})
                   </div>
                   {exportOptions.formats.map((format) => (
                     <button
                       key={`selected-${format}`}
                       onClick={() => handleExport(`selected-${format}`)}
-                      className={`${dropdownItemClasses} text-gray-700 group`}
+                      className={`${dropdownItemClasses} text-gray-700 dark:text-gray-300 group`}
                       type="button"
                     >
                       <Icon
@@ -442,14 +449,14 @@ export function TableToolbar<T extends TableData>({
         className={`${dropdownContainerClasses} ${getDropdownAnimation('columns')} w-64`}
       >
         <div className="p-3">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3 transition-colors duration-300">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 transition-colors duration-300">
             Visible Columns
           </h3>
           <div className="space-y-2 max-h-60 overflow-y-auto">
             {columns.map((column) => (
               <label
                 key={column.key}
-                className="flex items-center gap-3 px-2 py-2 rounded-md transition-all duration-300 cursor-pointer group hover:bg-gray-50 hover:translate-x-1 hover:shadow-sm"
+                className="flex items-center gap-3 px-2 py-2 rounded-md transition-all duration-300 cursor-pointer group hover:bg-gray-50 dark:hover:bg-gray-700 hover:translate-x-1 hover:shadow-sm"
               >
                 <input
                   type="checkbox"
@@ -457,20 +464,20 @@ export function TableToolbar<T extends TableData>({
                   onChange={(e) =>
                     handleColumnVisibilityToggle(column.key, e.target.checked)
                   }
-                  className="h-4 w-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500 transition-all duration-300 ease-out transform hover:scale-110"
+                  className="h-4 w-4 text-primary-600 rounded border-gray-300 dark:border-gray-600 focus:ring-primary-500 transition-all duration-300 ease-out transform hover:scale-110"
                 />
-                <span className="text-sm text-gray-700 flex-1 transition-all duration-300 group-hover:text-gray-900 group-hover:font-medium">
+                <span className="text-sm text-gray-700 dark:text-gray-300 flex-1 transition-all duration-300 group-hover:text-gray-900 dark:group-hover:text-white group-hover:font-medium">
                   {column.header}
                 </span>
                 <Icon
                   name={column.visible ? 'eye' : 'eyeOff'}
-                  className={`h-4 w-4 transition-all duration-300 transform group-hover:scale-110 ${column.visible ? 'text-success-500' : 'text-gray-400'}`}
+                  className={`h-4 w-4 transition-all duration-300 transform group-hover:scale-110 ${column.visible ? 'text-success-500' : 'text-gray-400 dark:text-gray-500'}`}
                 />
               </label>
             ))}
           </div>
           {columns.length === 0 && (
-            <p className="text-sm text-gray-500 text-center py-4 transition-colors duration-300">
+            <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4 transition-colors duration-300">
               No columns available
             </p>
           )}
@@ -489,7 +496,7 @@ export function TableToolbar<T extends TableData>({
     const hasUtilities = onRetry || showColumnSettings;
     if (!hasUtilities) return null;
     return (
-      <div className="flex items-center gap-2 border-l border-gray-200 pl-2 ml-1">
+      <div className="flex items-center gap-2 border-l border-gray-200 dark:border-gray-700 pl-2 ml-1">
         {onRetry && (
           <TooltipButton
             tooltip="Refresh data"
@@ -533,12 +540,12 @@ export function TableToolbar<T extends TableData>({
         {(title || description) && (
           <div className="min-w-0 flex-1 animate-fade-in">
             {title && (
-              <h2 className="text-xl font-bold text-gray-900 truncate transition-colors duration-300 hover:text-gray-700">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white truncate transition-colors duration-300 hover:text-gray-700 dark:hover:text-gray-300">
                 {title}
               </h2>
             )}
             {description && (
-              <p className="text-sm text-gray-600 truncate transition-colors duration-300 mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-400 truncate transition-colors duration-300 mt-1">
                 {descriptionText}
               </p>
             )}
@@ -580,7 +587,7 @@ interface TooltipButtonProps {
   disabled?: boolean;
   variant: 'primary' | 'secondary' | 'danger' | 'secondary-outline';
   size: 'sm' | 'md' | 'lg';
-  icon: string;
+  icon: IconName;
   iconClassName?: string;
 }
 
@@ -607,9 +614,9 @@ function TooltipButton({
           className={`h-4 w-4 transition-transform duration-300 group-hover:rotate-90 ${iconClassName}`}
         />
       </Button>
-      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap z-50 translate-y-2 group-hover:translate-y-0">
+      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap z-50 translate-y-2 group-hover:translate-y-0">
         {tooltip}
-        <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+        <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-gray-700"></div>
       </div>
     </div>
   );

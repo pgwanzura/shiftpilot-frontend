@@ -26,6 +26,12 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+* {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
 .glass-effect {
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
@@ -44,7 +50,6 @@ body {
   }
 }
 
-/* Enhanced active nav item styles */
 .active-nav-item {
   background: linear-gradient(
     90deg,
@@ -66,12 +71,10 @@ body {
   border-radius: 3px 0 0 3px;
 }
 
-/* For child items */
 .active-nav-item-child::after {
   height: 70%;
 }
 
-/* Ensure sidebar doesn't clip the active border */
 .sidebar-container nav {
   overflow-x: visible !important;
 }

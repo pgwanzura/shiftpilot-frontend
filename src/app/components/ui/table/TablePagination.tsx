@@ -22,16 +22,16 @@ export function TablePagination({
   const endRecord = Math.min(safePage * safePageSize, safeTotal);
 
   return (
-    <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+    <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-4 flex-wrap">
-          <div className="text-sm text-gray-600 whitespace-nowrap">
+          <div className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
             {safeTotal === 0
               ? 'No records'
               : `Showing ${startRecord} to ${endRecord} of ${safeTotal} records`}
           </div>
           {selectedCount > 0 && (
-            <div className="text-sm text-indigo-600 font-medium whitespace-nowrap animate-pulse">
+            <div className="text-sm text-indigo-600 dark:text-indigo-400 font-medium whitespace-nowrap animate-pulse">
               {selectedCount} selected
             </div>
           )}
@@ -47,7 +47,7 @@ export function TablePagination({
                 })
               }
               disabled={safePage === 1}
-              className="p-1.5 bg-white border border-gray-300 rounded disabled:opacity-30 hover:bg-gray-50 transition-all duration-200 group transform hover:scale-110"
+              className="p-1.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded disabled:opacity-30 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-200 group transform hover:scale-110"
             >
               <Icon
                 name="chevronLeft"
@@ -74,7 +74,7 @@ export function TablePagination({
                   className={`px-2.5 py-1 rounded text-sm font-medium border transition-all duration-200 group whitespace-nowrap transform hover:scale-110 ${
                     safePage === pageNum
                       ? 'bg-indigo-500 text-white border-indigo-500'
-                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                      : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
                   }`}
                 >
                   {pageNum}
@@ -90,7 +90,7 @@ export function TablePagination({
                 })
               }
               disabled={safePage >= totalPages}
-              className="p-1.5 bg-white border border-gray-300 rounded disabled:opacity-30 hover:bg-gray-50 transition-all duration-200 group transform hover:scale-110"
+              className="p-1.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded disabled:opacity-30 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-200 group transform hover:scale-110"
             >
               <Icon
                 name="chevronRight"

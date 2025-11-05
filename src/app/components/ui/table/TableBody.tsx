@@ -64,16 +64,16 @@ export function TableBody<T extends TableData>({
   if (data.length === 0) {
     return (
       <div className="text-center py-12 animate-fade-in">
-        <div className="w-12 h-12 bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center mx-auto mb-3">
+        <div className="w-12 h-12 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center mx-auto mb-3">
           <Icon name="search" className="h-5 w-5 text-gray-400" />
         </div>
-        <div className="text-gray-500 text-sm font-medium mb-4 px-4">
+        <div className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-4 px-4">
           {emptyMessage}
         </div>
         {hasActiveFilters && (
           <button
             onClick={onClearFilters}
-            className="text-indigo-600 hover:text-indigo-700 text-sm font-medium transition-colors duration-200"
+            className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 text-sm font-medium transition-colors duration-200"
           >
             Clear all filters
           </button>
@@ -84,7 +84,7 @@ export function TableBody<T extends TableData>({
 
   return (
     <div
-      className="bg-white min-w-full transition-all duration-300"
+      className="bg-white dark:bg-gray-900 min-w-full transition-all duration-300"
       style={
         virtualScroll
           ? {
@@ -115,7 +115,7 @@ export function TableBody<T extends TableData>({
             clickedRow={clickedRow}
           />
           {rowExpansion && state.expandedRows.has(row.id) && (
-            <div className="border-b border-gray-100 bg-gray-50 min-w-full animate-slide-down">
+            <div className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 min-w-full animate-slide-down">
               <div className="px-6 py-4 min-w-0">
                 {rowExpansion.render(row)}
               </div>
@@ -168,22 +168,24 @@ function TableRow<T extends TableData>({
 
   const getRowBorderColor = () => {
     if (hoveredRow === rowIndex) return 'border-l-indigo-500';
-    if (rowIndex % 2 === 0) return 'border-l-gray-50';
-    return 'border-l-gray-100';
+    if (rowIndex % 2 === 0) return 'border-l-gray-50 dark:border-l-gray-800';
+    return 'border-l-gray-100 dark:border-l-gray-700';
   };
 
   const getRowBackgroundColor = () => {
-    if (hoveredRow === rowIndex) return 'bg-indigo-50'; // Keep light indigo background
-    if (rowIndex % 2 === 0) return 'bg-white';
-    return 'bg-gray-50';
+    if (hoveredRow === rowIndex) return 'bg-indigo-50 dark:bg-indigo-900/20';
+    if (rowIndex % 2 === 0) return 'bg-white dark:bg-gray-900';
+    return 'bg-gray-50 dark:bg-gray-800';
   };
 
   return (
     <div
       onMouseEnter={() => onHover(rowIndex)}
       onMouseLeave={() => onHover(null)}
-      className={`group relative grid min-w-full py-4 text-sm transition-all duration-300 border-b border-gray-100 last:border-b-0 min-w-fit border-l-4 ${getRowBorderColor()} ${getRowBackgroundColor()} ${
-        clickedRow === rowIndex ? 'animate-pulse bg-indigo-100' : ''
+      className={`group relative grid min-w-full py-4 text-sm transition-all duration-300 border-b border-gray-100 dark:border-gray-700 last:border-b-0 min-w-fit border-l-4 ${getRowBorderColor()} ${getRowBackgroundColor()} ${
+        clickedRow === rowIndex
+          ? 'animate-pulse bg-indigo-100 dark:bg-indigo-900/30'
+          : ''
       }`}
       style={{
         gridTemplateColumns: `repeat(${columns.length + (actions ? 1 : 0)}, minmax(80px, 1fr))`,
@@ -219,12 +221,14 @@ function TableRow<T extends TableData>({
             ) : (
               <div
                 className={`truncate font-medium transition-all duration-300 ${
-                  hoveredRow === rowIndex ? 'text-gray-900' : 'text-gray-700'
+                  hoveredRow === rowIndex
+                    ? 'text-gray-900 dark:text-white'
+                    : 'text-gray-700 dark:text-gray-300'
                 } ${
                   inlineEdit?.editable &&
                   column.key !== 'selection' &&
                   column.key !== 'expansion'
-                    ? 'cursor-text hover:bg-gray-100 rounded px-1'
+                    ? 'cursor-text hover:bg-gray-100 dark:hover:bg-gray-700 rounded px-1'
                     : ''
                 }`}
                 onDoubleClick={() =>
@@ -237,7 +241,9 @@ function TableRow<T extends TableData>({
                 {column.render
                   ? column.render(row[column.key], row)
                   : (row[column.key] as React.ReactNode) || (
-                      <span className="text-gray-400 italic">—</span>
+                      <span className="text-gray-400 dark:text-gray-500 italic">
+                        —
+                      </span>
                     )}
               </div>
             )}
@@ -300,13 +306,13 @@ function InlineEditor<T extends TableData>({
         {renderEditor(value as T[keyof T], row, columnKey)}
         <button
           onClick={onSave}
-          className="p-1 text-green-600 hover:bg-green-50 rounded transition-all duration-200 transform hover:scale-110"
+          className="p-1 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-all duration-200 transform hover:scale-110"
         >
           <Icon name="check" className="h-3 w-3" />
         </button>
         <button
           onClick={onCancel}
-          className="p-1 text-red-600 hover:bg-red-50 rounded transition-all duration-200 transform hover:scale-110"
+          className="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-all duration-200 transform hover:scale-110"
         >
           <Icon name="x" className="h-3 w-3" />
         </button>
@@ -322,17 +328,17 @@ function InlineEditor<T extends TableData>({
         value={value as string}
         onChange={(e) => handleChange(e.target.value)}
         onKeyDown={handleKeyDown}
-        className="border border-gray-300 rounded px-2 py-1 text-sm w-full min-w-0 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all duration-200 transform focus:scale-105"
+        className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm w-full min-w-0 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 focus:border-blue-500 outline-none transition-all duration-200 transform focus:scale-105 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
       />
       <button
         onClick={onSave}
-        className="p-1 text-green-600 hover:bg-green-50 rounded transition-all duration-200 transform hover:scale-110"
+        className="p-1 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-all duration-200 transform hover:scale-110"
       >
         <Icon name="check" className="h-3 w-3" />
       </button>
       <button
         onClick={onCancel}
-        className="p-1 text-red-600 hover:bg-red-50 rounded transition-all duration-200 transform hover:scale-110"
+        className="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-all duration-200 transform hover:scale-110"
       >
         <Icon name="x" className="h-3 w-3" />
       </button>

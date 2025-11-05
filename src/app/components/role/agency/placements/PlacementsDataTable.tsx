@@ -13,7 +13,6 @@ import {
   BulkAction,
   ExportOptions,
   AdvancedFilter,
-  TableData,
   Column,
 } from '@/types';
 import type { PaginatedResponse as BackendPaginatedResponse } from '@/types/pagination';
@@ -36,15 +35,6 @@ interface Placement {
   response_deadline?: string;
 }
 
-interface PaginatedResponse<T> {
-  data: T[];
-  meta: {
-    total: string | number | number[];
-    current_page: number;
-    per_page: number;
-    total_pages: number;
-  };
-}
 
 interface PlacementsDataTableProps {
   authToken: string | null;
@@ -253,14 +243,14 @@ export function PlacementsDataTable({ authToken }: PlacementsDataTableProps) {
       width: 'col-span-3',
       render: (value: unknown, row: Placement) => (
         <div className="min-w-0">
-          <div className="font-semibold text-gray-900 truncate">
+          <div className="font-semibold text-gray-900 dark:text-white truncate">
             {row.title || 'Untitled Position'}
           </div>
-          <div className="text-sm text-gray-500 truncate">
+          <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
             {row.employer?.name || 'Employer not specified'}
           </div>
           {row.experience_level && (
-            <div className="text-xs text-gray-400 capitalize mt-1">
+            <div className="text-xs text-gray-400 dark:text-gray-500 capitalize mt-1">
               {row.experience_level} level
             </div>
           )}
@@ -274,10 +264,10 @@ export function PlacementsDataTable({ authToken }: PlacementsDataTableProps) {
       filterable: true,
       width: 'col-span-2',
       render: (value: unknown, row: Placement) => (
-        <div className="text-sm text-gray-700">
+        <div className="text-sm text-gray-700 dark:text-gray-300">
           {row.location?.name || 'Location not specified'}
           {row.location_instructions && (
-            <div className="text-xs text-gray-500 mt-1 truncate">
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
               {row.location_instructions}
             </div>
           )}
@@ -290,7 +280,7 @@ export function PlacementsDataTable({ authToken }: PlacementsDataTableProps) {
       sortable: true,
       width: 'col-span-2',
       render: (value: unknown) => (
-        <div className="text-sm text-gray-700">
+        <div className="text-sm text-gray-700 dark:text-gray-300">
           {value ? formatDate(value as string) : 'Flexible'}
         </div>
       ),
@@ -302,12 +292,12 @@ export function PlacementsDataTable({ authToken }: PlacementsDataTableProps) {
       width: 'col-span-2',
       render: (value: unknown, row: Placement) => (
         <div>
-          <div className="font-semibold text-gray-900">
+          <div className="font-semibold text-gray-900 dark:text-white">
             {row.budget_amount
               ? formatCurrency(row.budget_amount, row.currency)
               : 'Not specified'}
           </div>
-          <div className="text-xs text-gray-500 capitalize">
+          <div className="text-xs text-gray-500 dark:text-gray-400 capitalize">
             {row.budget_type || 'fixed'}
           </div>
         </div>
@@ -330,11 +320,10 @@ export function PlacementsDataTable({ authToken }: PlacementsDataTableProps) {
         return (
           <div>
             <div
-              className={`font-semibold ${responseCount > 0 ? 'text-blue-600' : 'text-gray-500'}`}
+              className={`font-semibold ${responseCount > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`}
             >
               {responseCount}
             </div>
-            <div className="text-xs text-gray-500">responses</div>
           </div>
         );
       },
@@ -348,7 +337,7 @@ export function PlacementsDataTable({ authToken }: PlacementsDataTableProps) {
           e.stopPropagation();
           router.push(`/agency/placements/${placement.id}`);
         }}
-        className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all duration-300 cursor-pointer"
+        className="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-md transition-all duration-300 cursor-pointer"
         title="View Details"
       >
         <Icon name="eye" className="h-4 w-4" />
@@ -358,7 +347,7 @@ export function PlacementsDataTable({ authToken }: PlacementsDataTableProps) {
           e.stopPropagation();
           console.log('Submit candidate for placement:', placement.id);
         }}
-        className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all duration-300 cursor-pointer"
+        className="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-md transition-all duration-300 cursor-pointer"
         title="Submit Candidate"
       >
         <Icon name="userPlus" className="h-4 w-4" />
@@ -369,7 +358,7 @@ export function PlacementsDataTable({ authToken }: PlacementsDataTableProps) {
             e.stopPropagation();
             console.log('Track responses for placement:', placement.id);
           }}
-          className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all duration-300 cursor-pointer"
+          className="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-md transition-all duration-300 cursor-pointer"
           title="Track Responses"
         >
           <Icon name="barChart" className="h-4 w-4" />
@@ -421,44 +410,57 @@ export function PlacementsDataTable({ authToken }: PlacementsDataTableProps) {
       onSelectionChange={handleSelectionChange}
       rowExpansion={{
         render: (placement: Placement) => (
-          <div className="p-4 bg-white border-t border-gray-200">
+          <div className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
-                <h4 className="font-semibold text-gray-900 mb-2">
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
                   Placement Details
                 </h4>
                 <div className="space-y-1">
-                  <div>
-                    <span className="text-gray-600">ID:</span> {placement.id}
+                  <div className="text-gray-700 dark:text-gray-300">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      ID:
+                    </span>{' '}
+                    {placement.id}
                   </div>
-                  <div>
-                    <span className="text-gray-600">Experience Level:</span>{' '}
+                  <div className="text-gray-700 dark:text-gray-300">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Experience Level:
+                    </span>{' '}
                     {placement.experience_level || 'Not specified'}
                   </div>
-                  <div>
-                    <span className="text-gray-600">Budget Type:</span>{' '}
+                  <div className="text-gray-700 dark:text-gray-300">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Budget Type:
+                    </span>{' '}
                     {placement.budget_type || 'Fixed'}
                   </div>
                 </div>
               </div>
               <div>
-                <h4 className="font-semibold text-gray-900 mb-2">
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
                   Response Information
                 </h4>
                 <div className="space-y-1">
-                  <div>
-                    <span className="text-gray-600">Responses:</span>{' '}
+                  <div className="text-gray-700 dark:text-gray-300">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Responses:
+                    </span>{' '}
                     {placement.agency_responses_count || 0}
                   </div>
                   {placement.response_deadline && (
-                    <div>
-                      <span className="text-gray-600">Deadline:</span>{' '}
+                    <div className="text-gray-700 dark:text-gray-300">
+                      <span className="text-gray-600 dark:text-gray-400">
+                        Deadline:
+                      </span>{' '}
                       {formatDate(placement.response_deadline)}
                     </div>
                   )}
                   {placement.location_instructions && (
-                    <div>
-                      <span className="text-gray-600">Location Notes:</span>{' '}
+                    <div className="text-gray-700 dark:text-gray-300">
+                      <span className="text-gray-600 dark:text-gray-400">
+                        Location Notes:
+                      </span>{' '}
                       {placement.location_instructions}
                     </div>
                   )}

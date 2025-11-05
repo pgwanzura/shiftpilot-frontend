@@ -35,22 +35,13 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        notificationsRef.current &&
-        !notificationsRef.current.contains(event.target as Node)
-      ) {
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
         setIsNotificationsOpen(false);
       }
-      if (
-        messagesRef.current &&
-        !messagesRef.current.contains(event.target as Node)
-      ) {
+      if (messagesRef.current && !messagesRef.current.contains(event.target as Node)) {
         setIsMessagesOpen(false);
       }
-      if (
-        userMenuRef.current &&
-        !userMenuRef.current.contains(event.target as Node)
-      ) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setIsUserMenuOpen(false);
       }
     };
@@ -76,24 +67,22 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
+    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-30 shadow-sm">
       <div className="lg:hidden">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center space-x-3">
             <button
               onClick={onMenuToggle}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-all duration-200"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
               aria-label="Toggle menu"
             >
-              <Icon name="menu" className="w-5 h-5 text-gray-600" />
+              <Icon name="menu" className="w-5 h-5 text-gray-600 dark:text-gray-400" />
             </button>
             <div className="min-w-0 flex-1 ml-2.5">
-              {' '}
-              {/* Added ml-2.5 for 10px right shift */}
-              <h1 className="text-lg font-semibold text-gray-800 truncate">
+              <h1 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
                 {pageTitle}
               </h1>
-              <p className="text-xs text-gray-500 line-clamp-2">
+              <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
                 {pageDescription}
               </p>
             </div>
@@ -103,12 +92,12 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
             <div className="relative" ref={notificationsRef}>
               <button
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                className="relative p-2 rounded-lg hover:bg-gray-100 transition-all duration-200"
+                className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
                 aria-label="Notifications"
               >
-                <Icon name="bell" className="w-5 h-5 text-gray-600" />
+                <Icon name="bell" className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 {notificationCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[18px] h-4 px-1 bg-red-500 text-white text-[10px] font-medium rounded-full border-2 border-white flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-4 px-1 bg-error-500 text-white text-[10px] font-medium rounded-full border-2 border-white dark:border-gray-900 flex items-center justify-center">
                     {formatBadgeCount(notificationCount)}
                   </span>
                 )}
@@ -121,7 +110,7 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
                 className="flex items-center"
                 aria-label="User menu"
               >
-                <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center">
+                <div className="w-8 h-8 bg-gradient-to-br from-primary-600 to-primary-800 rounded-full flex items-center justify-center">
                   <span className="text-white font-semibold text-xs">
                     {getUserInitials(user?.name || 'User')}
                   </span>
@@ -135,13 +124,11 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
       <div className="hidden lg:block">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center space-x-4 ml-2.5">
-            {' '}
-            {/* Added ml-2.5 for 10px right shift */}
             <div className="min-w-0">
-              <h1 className="text-2xl font-bold text-gray-800 truncate">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate">
                 {pageTitle}
               </h1>
-              <p className="text-sm text-gray-500 max-w-2xl truncate">
+              <p className="text-sm text-gray-500 dark:text-gray-400 max-w-2xl truncate">
                 {pageDescription}
               </p>
             </div>
@@ -149,21 +136,21 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
 
           <div className="flex items-center space-x-4">
             <button
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               aria-label="Calendar"
             >
-              <Icon name="calendar" className="w-5 h-5 text-gray-600" />
+              <Icon name="calendar" className="w-5 h-5 text-gray-600 dark:text-gray-400" />
             </button>
 
             <div className="relative" ref={messagesRef}>
               <button
                 onClick={() => setIsMessagesOpen(!isMessagesOpen)}
-                className="relative p-2 rounded-lg hover:bg-gray-100 transition-all duration-200"
+                className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
                 aria-label="Messages"
               >
-                <Icon name="messageCircle" className="w-5 h-5 text-gray-600" />
+                <Icon name="messageCircle" className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 {messageCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 bg-blue-500 text-white text-xs font-medium rounded-full border-2 border-white flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 bg-primary-500 text-white text-xs font-medium rounded-full border-2 border-white dark:border-gray-900 flex items-center justify-center">
                     {formatBadgeCount(messageCount)}
                   </span>
                 )}
@@ -173,12 +160,12 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
             <div className="relative" ref={notificationsRef}>
               <button
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                className="relative p-2 rounded-lg hover:bg-gray-100 transition-all duration-200"
+                className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
                 aria-label="Notifications"
               >
-                <Icon name="bell" className="w-5 h-5 text-gray-600" />
+                <Icon name="bell" className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 {notificationCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 bg-red-500 text-white text-xs font-medium rounded-full border-2 border-white flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 bg-error-500 text-white text-xs font-medium rounded-full border-2 border-white dark:border-gray-900 flex items-center justify-center">
                     {formatBadgeCount(notificationCount)}
                   </span>
                 )}
@@ -186,27 +173,27 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
             </div>
 
             <button
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               aria-label="Create new"
             >
-              <Icon name="plusCircle" className="w-5 h-5 text-gray-600" />
+              <Icon name="plusCircle" className="w-5 h-5 text-gray-600 dark:text-gray-400" />
             </button>
 
             <div className="relative" ref={userMenuRef}>
               <button
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="flex items-center space-x-3 pl-3 border-l border-gray-200"
+                className="flex items-center space-x-3 pl-3 border-l border-gray-200 dark:border-gray-700"
                 aria-label="User menu"
               >
                 <div className="text-right min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                     {user?.name || 'User'}
                   </p>
-                  <p className="text-xs text-gray-500 capitalize truncate">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 capitalize truncate">
                     {user?.role?.replace('_', ' ') || 'Unknown Role'}
                   </p>
                 </div>
-                <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-primary-800 rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="text-white font-semibold text-sm">
                     {getUserInitials(user?.name || 'User')}
                   </span>

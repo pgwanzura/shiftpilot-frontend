@@ -49,7 +49,6 @@ function LayoutContent({ children }: LayoutProps) {
     getUserFromCookie();
   }, []);
 
-  // Use the route metadata hook
   useRouteMetadata(user?.role);
 
   const handleMenuToggle = (): void => {
@@ -80,7 +79,7 @@ function LayoutContent({ children }: LayoutProps) {
   const userMenu = user ? getMenuForRole(user.role) : [];
 
   return (
-    <div className="flex h-screen bg-white">
+    <div className="flex h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
       <Sidebar
         isOpen={sidebarState.isOpen}
         isCollapsed={sidebarState.isCollapsed}
@@ -96,7 +95,9 @@ function LayoutContent({ children }: LayoutProps) {
           sidebarCollapsed={sidebarState.isCollapsed}
           user={user}
         />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-50 dark:bg-gray-900">
+          {children}
+        </main>
       </div>
     </div>
   );

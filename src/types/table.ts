@@ -2,7 +2,14 @@ import { ReactNode } from 'react';
 
 export interface TableData {
   id: string | number;
-  [key: string]: any;
+  [key: string]:
+    | string
+    | number
+    | boolean
+    | null
+    | undefined
+    | Record<string, unknown>
+    | Array<unknown>;
 }
 
 export interface Column<T extends TableData> {
@@ -29,7 +36,7 @@ export interface SortState {
 }
 
 export interface FilterState {
-  [key: string]: any;
+  [key: string]: string | number | boolean | null | undefined;
 }
 
 export interface TableState {
@@ -45,7 +52,7 @@ export interface BulkAction<T extends TableData> {
   label: string;
   icon: ReactNode;
   onClick: (selectedRows: T[]) => void;
-  variant?: 'primary' | 'secondary' | 'danger';
+  variant?: 'primary' | 'secondary' | 'danger' | 'secondary-outline';
   disabled?: boolean;
 }
 

@@ -52,25 +52,27 @@ export function TableHeader<T extends TableData>({
 
   const getSortButtonClasses = (column: Column<T>): string => {
     const baseClasses =
-      'flex flex-col rounded-lg flex-shrink-0 hover:bg-gray-50 transition-all duration-200 p-1.5 group/sort';
+      'flex flex-col rounded-lg flex-shrink-0 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 p-1.5 group/sort';
     const isActive = state.sort?.key === column.key;
 
     if (isLoading) {
-      return `${baseClasses} opacity-40 cursor-not-allowed hover:bg-transparent`;
+      return `${baseClasses} opacity-40 cursor-not-allowed hover:bg-transparent dark:hover:bg-transparent`;
     }
 
     if (isActive) {
-      return `${baseClasses} bg-primary-50 text-primary-600 shadow-xs`;
+      return `${baseClasses} bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 shadow-xs`;
     }
 
-    return `${baseClasses} text-gray-400 hover:text-gray-600 hover:shadow-xs`;
+    return `${baseClasses} text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:shadow-xs`;
   };
 
   const getHeaderTextClasses = (column: Column<T>): string => {
     const baseClasses =
       'text-sm font-semibold flex-1 transition-colors duration-200';
     const isSorted = state.sort?.key === column.key;
-    const colorClass = isSorted ? 'text-primary-700' : 'text-gray-900';
+    const colorClass = isSorted
+      ? 'text-primary-700 dark:text-primary-400'
+      : 'text-gray-900 dark:text-white';
     const wrapClass =
       column.wrapHeader !== false
         ? 'break-words whitespace-normal line-clamp-2 min-h-[2.5rem] flex items-center'
@@ -87,17 +89,20 @@ export function TableHeader<T extends TableData>({
       index === 0 ? 'pl-6' : 'pl-4',
       index === columns.length - 1 && !hasActions ? 'pr-6' : 'pr-4',
       'py-3',
-      'border-r border-gray-100 last:border-r-0',
+      'border-r border-gray-100 dark:border-gray-700 last:border-r-0',
     ].join(' ');
 
-    const sortedClass = state.sort?.key === column.key ? 'bg-primary-25' : '';
+    const sortedClass =
+      state.sort?.key === column.key
+        ? 'bg-primary-25 dark:bg-primary-900/10'
+        : '';
 
     return `${baseClasses} ${sortedClass}`;
   };
 
   const getGripIconClasses = (): string => {
     const baseClasses =
-      'h-3.5 w-3.5 text-gray-300 cursor-grab active:cursor-grabbing flex-shrink-0 transition-all duration-200 hover:text-gray-500';
+      'h-3.5 w-3.5 text-gray-300 dark:text-gray-600 cursor-grab active:cursor-grabbing flex-shrink-0 transition-all duration-200 hover:text-gray-500 dark:hover:text-gray-400';
     return isLoading
       ? `${baseClasses} opacity-30 cursor-not-allowed`
       : baseClasses;
@@ -130,7 +135,7 @@ export function TableHeader<T extends TableData>({
   };
 
   return (
-    <div className="sticky top-0 z-20 border-b border-gray-100 min-w-full bg-white shadow-xs">
+    <div className="sticky top-0 z-20 border-b border-gray-100 dark:border-gray-700 min-w-full bg-white dark:bg-gray-900 shadow-xs">
       <div
         className="grid min-w-full"
         style={{
@@ -169,18 +174,18 @@ export function TableHeader<T extends TableData>({
                   <Icon
                     name="chevronUp"
                     className={`h-3 w-3 -mb-0.5 transition-colors duration-200 ${
-                      state.sort?.key === column.key &&
+                      state.sort?.key === columnKey &&
                       state.sort.direction === 'asc'
-                        ? 'text-primary-600'
+                        ? 'text-primary-600 dark:text-primary-400'
                         : 'text-current opacity-60 group-hover/sort:opacity-100'
                     }`}
                   />
                   <Icon
                     name="chevronDown"
                     className={`h-3 w-3 transition-colors duration-200 ${
-                      state.sort?.key === column.key &&
+                      state.sort?.key === columnKey &&
                       state.sort.direction === 'desc'
-                        ? 'text-primary-600'
+                        ? 'text-primary-600 dark:text-primary-400'
                         : 'text-current opacity-60 group-hover/sort:opacity-100'
                     }`}
                   />
@@ -189,13 +194,13 @@ export function TableHeader<T extends TableData>({
 
               {draggedColumn === columnKey && (
                 <div
-                  className="absolute inset-0 bg-primary-50 border-2 border-primary-200 rounded-md animate-pulse"
+                  className="absolute inset-0 bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-200 dark:border-primary-700 rounded-md animate-pulse"
                   aria-hidden="true"
                 />
               )}
               {dragOverIndex === index && draggedColumn !== columnKey && (
                 <div
-                  className="absolute inset-0 bg-primary-25 border-2 border-dashed border-primary-300 rounded-md animate-pulse"
+                  className="absolute inset-0 bg-primary-25 dark:bg-primary-900/10 border-2 border-dashed border-primary-300 dark:border-primary-600 rounded-md animate-pulse"
                   aria-hidden="true"
                 />
               )}
@@ -204,8 +209,8 @@ export function TableHeader<T extends TableData>({
         })}
 
         {hasActions && (
-          <div className="flex items-center justify-end min-w-0 pr-6 pl-4 py-3 border-gray-100">
-            <span className="text-sm font-semibold text-gray-900 truncate whitespace-nowrap">
+          <div className="flex items-center justify-end min-w-0 pr-6 pl-4 py-3 border-gray-100 dark:border-gray-700">
+            <span className="text-sm font-semibold text-gray-900 dark:text-white truncate whitespace-nowrap">
               Actions
             </span>
           </div>
