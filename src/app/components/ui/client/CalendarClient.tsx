@@ -117,7 +117,7 @@ export function CalendarClient({
 
   // Save to localStorage whenever internalView changes (only in uncontrolled mode)
   useEffect(() => {
-    if (!isInitialized) return;
+    // if (!isInitialized) return;
 
     if (externalView === undefined) {
       setStoredView(internalView);
@@ -981,9 +981,6 @@ export function CalendarClient({
       <div className="xl:col-span-3 space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-6">
-            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-              {getViewTitle()}
-            </h2>
             <div className="flex space-x-1">
               <button
                 onClick={() => navigateDate('prev')}
@@ -1013,6 +1010,9 @@ export function CalendarClient({
                 />
               </button>
             </div>
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+              {getViewTitle()}
+            </h2>
           </div>
 
           <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
