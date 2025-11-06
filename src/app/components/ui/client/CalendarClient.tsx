@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, JSX, useEffect } from 'react';
 import { Icon } from '@/app/components/ui';
+import { IconName } from '@/config';
 
 interface CalendarEvent {
   id: string;
@@ -34,6 +35,15 @@ interface CalendarClientProps {
     name?: string;
     id?: string;
   };
+  currentView?: 'month' | 'week' | 'day';
+  onViewChange?: (view: 'month' | 'week' | 'day') => void;
+}
+
+interface FilterOption {
+  key: EventFilter;
+  label: string;
+  icon: IconName;
+  permissions: string[];
 }
 
 type CalendarView = 'month' | 'week' | 'day';
@@ -47,16 +57,99 @@ type EventFilter =
   | 'training'
   | 'availabilities';
 
-export function CalendarClient({ user }: CalendarClientProps) {
+const CALENDAR_VIEW_STORAGE_KEY = 'calendar-view-preference';
+
+const getStoredView = (): CalendarView | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const stored = localStorage.getItem(CALENDAR_VIEW_STORAGE_KEY);
+    return stored as CalendarView;
+  } catch (error) {
+    console.warn('Failed to access localStorage:', error);
+    return null;
+  }
+};
+
+const setStoredView = (view: CalendarView): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(CALENDAR_VIEW_STORAGE_KEY, view);
+  } catch (error) {
+    console.warn('Failed to save to localStorage:', error);
+  }
+};
+
+export function CalendarClient({
+  user,
+  currentView: externalView,
+  onViewChange,
+}: CalendarClientProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
-  const [view, setView] = useState<CalendarView>('month');
+  const [internalView, setInternalView] = useState<CalendarView>('month');
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
     null
   );
   const [filter, setFilter] = useState<EventFilter>('all');
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  const today = new Date();
+  // Initialize view on component mount
+  useEffect(() => {
+    if (isInitialized) return;
+
+    let initialView: CalendarView = 'month';
+
+    // Priority 1: Use externalView if provided (controlled component)
+    if (externalView !== undefined) {
+      initialView = externalView;
+    }
+    // Priority 2: Use stored view from localStorage
+    else {
+      const storedView = getStoredView();
+      if (storedView && ['month', 'week', 'day'].includes(storedView)) {
+        initialView = storedView;
+      }
+    }
+
+    setInternalView(initialView);
+    setIsInitialized(true);
+  }, [externalView, isInitialized]);
+
+  // Save to localStorage whenever internalView changes (only in uncontrolled mode)
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    if (externalView === undefined) {
+      setStoredView(internalView);
+      console.log('Saved view to localStorage:', internalView);
+    }
+  }, [internalView, externalView, isInitialized]);
+
+  // Sync with externalView changes
+  useEffect(() => {
+    if (
+      externalView !== undefined &&
+      externalView !== internalView &&
+      isInitialized
+    ) {
+      setInternalView(externalView);
+    }
+  }, [externalView, internalView, isInitialized]);
+
+  // Determine which view to use
+  const view = externalView !== undefined ? externalView : internalView;
+
+  const handleViewChange = (newView: CalendarView) => {
+    console.log('View changed to:', newView);
+
+    if (onViewChange) {
+      onViewChange(newView);
+    }
+    // Always update internal state
+    setInternalView(newView);
+  };
+
+  const today = useMemo(() => new Date(), []);
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
 
@@ -245,17 +338,23 @@ export function CalendarClient({ user }: CalendarClientProps) {
     setCurrentDate((prev) => {
       const newDate = new Date(prev);
       if (view === 'month') {
-        direction === 'prev'
-          ? newDate.setMonth(newDate.getMonth() - 1)
-          : newDate.setMonth(newDate.getMonth() + 1);
+        if (direction === 'prev') {
+          newDate.setMonth(newDate.getMonth() - 1);
+        } else {
+          newDate.setMonth(newDate.getMonth() + 1);
+        }
       } else if (view === 'week') {
-        direction === 'prev'
-          ? newDate.setDate(newDate.getDate() - 7)
-          : newDate.setDate(newDate.getDate() + 7);
+        if (direction === 'prev') {
+          newDate.setDate(newDate.getDate() - 7);
+        } else {
+          newDate.setDate(newDate.getDate() + 7);
+        }
       } else {
-        direction === 'prev'
-          ? newDate.setDate(newDate.getDate() - 1)
-          : newDate.setDate(newDate.getDate() + 1);
+        if (direction === 'prev') {
+          newDate.setDate(newDate.getDate() - 1);
+        } else {
+          newDate.setDate(newDate.getDate() + 1);
+        }
       }
       return newDate;
     });
@@ -357,8 +456,8 @@ export function CalendarClient({ user }: CalendarClientProps) {
     );
   };
 
-  const getEventIcon = (type: string): string => {
-    const icons: Record<string, string> = {
+  const getEventIcon = (type: string): IconName => {
+    const icons: Record<string, IconName> = {
       shift: 'clock',
       placement: 'briefcase',
       interview: 'userCheck',
@@ -417,17 +516,18 @@ export function CalendarClient({ user }: CalendarClientProps) {
   }, [filteredEvents, today]);
 
   const eventStats = useMemo(() => {
+    const nextWeek = new Date();
+    nextWeek.setDate(nextWeek.getDate() + 7);
+
     const stats = {
       total: filteredEvents.length,
       shifts: filteredEvents.filter((e) => e.type === 'shift').length,
       placements: filteredEvents.filter((e) => e.type === 'placement').length,
       interviews: filteredEvents.filter((e) => e.type === 'interview').length,
       timeOff: filteredEvents.filter((e) => e.type === 'time_off').length,
-      thisWeek: filteredEvents.filter((e) => {
-        const nextWeek = new Date();
-        nextWeek.setDate(nextWeek.getDate() + 7);
-        return e.date >= today && e.date <= nextWeek;
-      }).length,
+      thisWeek: filteredEvents.filter(
+        (e) => e.date >= today && e.date <= nextWeek
+      ).length,
     };
     return stats;
   }, [filteredEvents, today]);
@@ -440,15 +540,6 @@ export function CalendarClient({ user }: CalendarClientProps) {
 
   const handleEventClick = (event: CalendarEvent): void => {
     setSelectedEvent(event);
-  };
-
-  const handleViewChange = (newView: CalendarView): void => {
-    setView(newView);
-  };
-
-  const handleTodayClick = (): void => {
-    setCurrentDate(new Date());
-    setSelectedDate(new Date());
   };
 
   const handleNewShiftClick = (): void => {
@@ -815,7 +906,7 @@ export function CalendarClient({ user }: CalendarClientProps) {
     }
   };
 
-  const filterOptions = [
+  const filterOptions: FilterOption[] = [
     {
       key: 'all' as EventFilter,
       label: 'All',
@@ -900,6 +991,15 @@ export function CalendarClient({ user }: CalendarClientProps) {
               >
                 <Icon
                   name="chevronLeft"
+                  className="w-5 h-5 text-gray-600 dark:text-gray-400"
+                />
+              </button>
+              <button
+                onClick={goToToday}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                <Icon
+                  name="calendar"
                   className="w-5 h-5 text-gray-600 dark:text-gray-400"
                 />
               </button>

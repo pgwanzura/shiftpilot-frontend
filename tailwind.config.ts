@@ -9,26 +9,27 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // 💼 Professional recruitment palette
         primary: {
-          25: '#f5f8ff',
-          50: '#eef2ff',
-          100: '#e0e7ff',
-          200: '#c7d2fe',
-          300: '#a5b4fc',
-          400: '#818cf8',
-          500: '#6366f1',
-          600: '#4f46e5',
-          700: '#4338ca',
-          800: '#3730a3',
-          900: '#312e81',
-          950: '#1e1b4b',
+          25: '#f5f9ff',
+          50: '#eef5ff',
+          100: '#dce9ff',
+          200: '#b9d4ff',
+          300: '#8cbcff',
+          400: '#539bff',
+          500: '#0077b6', // main blue tone (trusted, clean)
+          600: '#03649a',
+          700: '#054d79',
+          800: '#073b5b',
+          900: '#0a2a3f',
+          950: '#071d2b',
         },
         success: {
           50: '#f0fdf4',
           100: '#dcfce7',
-          500: '#22c55e',
-          600: '#16a34a',
-          700: '#15803d',
+          500: '#16a34a',
+          600: '#15803d',
+          700: '#166534',
         },
         warning: {
           50: '#fffbeb',
@@ -65,7 +66,12 @@ module.exports = {
           900: '#101828',
           950: '#0c111d',
         },
+        accent: {
+          teal: '#00bfa6', // refreshing secondary accent for buttons or highlights
+          light: '#e6f7f4',
+        },
       },
+
       fontSize: {
         xs: ['0.75rem', { lineHeight: '1rem' }],
         sm: ['0.875rem', { lineHeight: '1.25rem' }],
@@ -76,20 +82,24 @@ module.exports = {
         '3xl': ['1.875rem', { lineHeight: '2.25rem' }],
         '4xl': ['2.25rem', { lineHeight: '2.5rem' }],
       },
+
       spacing: {
         '4.5': '1.125rem',
         '18': '4.5rem',
       },
+
       borderRadius: {
         '4xl': '2rem',
       },
+
       boxShadow: {
         xs: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
         sm: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
-        md: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-        lg: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
-        xl: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
+        md: '0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.08)',
+        lg: '0 8px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+        xl: '0 16px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.08)',
       },
+
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
         'slide-down': 'slideDown 0.3s ease-out',
@@ -97,6 +107,7 @@ module.exports = {
         'scale-in': 'scaleIn 0.2s ease-out',
         'pulse-slow': 'pulse 3s infinite',
       },
+
       keyframes: {
         fadeIn: {
           '0%': { opacity: '0' },
@@ -115,10 +126,12 @@ module.exports = {
           '100%': { transform: 'scale(1)', opacity: '1' },
         },
       },
+
       backgroundImage: {
-        'gradient-primary': 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-        'gradient-subtle': 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+        'gradient-primary': 'linear-gradient(135deg, #0077b6 0%, #00bfa6 100%)',
+        'gradient-subtle': 'linear-gradient(135deg, #f9fafb 0%, #f2f4f7 100%)',
       },
+
       zIndex: {
         '60': '60',
         '70': '70',

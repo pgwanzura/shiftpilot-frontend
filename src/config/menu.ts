@@ -57,6 +57,13 @@ export const menuConfig: MenuConfig = {
       path: '/admin',
     },
     {
+      label: 'Calendar',
+      description:
+        'Manage platform-wide schedules, events, and resource allocation',
+      icon: Calendar,
+      path: '/calendar',
+    },
+    {
       label: 'Platform Management',
       description:
         'Manage agencies, employers, users, and system configuration',
@@ -274,6 +281,13 @@ export const menuConfig: MenuConfig = {
       description: 'Agency overview with performance metrics and quick actions',
       icon: LayoutDashboard,
       path: '/agency',
+    },
+    {
+      label: 'Calendar',
+      description:
+        'Manage agency schedules, shift assignments, and resource planning',
+      icon: Calendar,
+      path: '/calendar',
     },
     {
       label: 'Placements',
@@ -591,6 +605,13 @@ export const menuConfig: MenuConfig = {
       path: '/agency',
     },
     {
+      label: 'Calendar',
+      description:
+        'View and manage shift schedules, assignments, and availability',
+      icon: Calendar,
+      path: '/calendar',
+    },
+    {
       label: 'Placements',
       description: 'Find and manage placement opportunities for your team',
       icon: Search,
@@ -746,6 +767,13 @@ export const menuConfig: MenuConfig = {
       description: 'Employer overview with staffing metrics and quick actions',
       icon: LayoutDashboard,
       path: '/employer',
+    },
+    {
+      label: 'Calendar',
+      description:
+        'Manage company schedules, shift planning, and resource allocation',
+      icon: Calendar,
+      path: '/calendar',
     },
     {
       label: 'Placement Management',
@@ -980,6 +1008,13 @@ export const menuConfig: MenuConfig = {
       path: '/employer',
     },
     {
+      label: 'Calendar',
+      description:
+        'View and manage daily schedules, shift assignments, and approvals',
+      icon: Calendar,
+      path: '/calendar',
+    },
+    {
       label: 'Shifts',
       description: "View and manage today's shifts and upcoming schedules",
       icon: Calendar,
@@ -1065,6 +1100,13 @@ export const menuConfig: MenuConfig = {
       description: 'Personal overview with upcoming shifts and quick actions',
       icon: LayoutDashboard,
       path: '/employee',
+    },
+    {
+      label: 'Calendar',
+      description:
+        'View personal schedule, shift assignments, and availability planning',
+      icon: Calendar,
+      path: '/calendar',
     },
     {
       label: 'My Shifts',

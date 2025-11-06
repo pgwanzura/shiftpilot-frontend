@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Icon } from '@/app/components/ui';
 import { User } from '@/types';
 import { usePageMetadata } from '@/hooks/usePageMetadata';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -14,6 +14,7 @@ interface HeaderProps {
 
 export default function Header({ onMenuToggle, user }: HeaderProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isMessagesOpen, setIsMessagesOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -70,6 +71,29 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
       .slice(0, 2);
   };
 
+  const getCalendarDescription = (): string => {
+    if (pathname !== '/calendar') return pageDescription;
+
+    const roleDescriptions = {
+      super_admin:
+        'Manage platform-wide schedules, events, and resource allocation',
+      agency_admin:
+        'Manage agency schedules, shift assignments, and resource planning',
+      agent: 'View and manage shift schedules, assignments, and availability',
+      employer_admin:
+        'Manage company schedules, shift planning, and resource allocation',
+      contact:
+        'View and manage daily schedules, shift assignments, and approvals',
+      employee:
+        'View personal schedule, shift assignments, and availability planning',
+    };
+
+    return (
+      roleDescriptions[user?.role as keyof typeof roleDescriptions] ||
+      'Manage your schedules and calendar events'
+    );
+  };
+
   const messageCount = 5;
   const notificationCount = 125;
 
@@ -78,9 +102,10 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
   };
 
   const handleCalendarClick = () => {
-    // router.push(`/agency/placements/${placement.id}`);
     router.push('/calendar');
   };
+
+  const currentDescription = getCalendarDescription();
 
   return (
     <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-30">
@@ -102,7 +127,7 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
                 {pageTitle}
               </h1>
               <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
-                {pageDescription}
+                {currentDescription}
               </p>
             </div>
           </div>
@@ -151,7 +176,7 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
                 {pageTitle}
               </h1>
               <p className="text-sm text-gray-500 dark:text-gray-400 max-w-2xl truncate">
-                {pageDescription}
+                {currentDescription}
               </p>
             </div>
           </div>

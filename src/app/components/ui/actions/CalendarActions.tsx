@@ -5,8 +5,8 @@ import { Button, Icon } from '@/app/components/ui';
 
 interface CalendarActionsProps {
   userRole: string;
-  currentView: 'month' | 'week' | 'day';
-  onNewShiftClick: () => void;
+  currentView: 'month' | 'week' | 'day'; // Keep as required
+  onNewShiftClick?: () => void; // Keep optional
   onNewPlacementClick?: () => void;
   onManageAvailabilityClick?: () => void;
   onTimeOffRequestClick?: () => void;
@@ -25,7 +25,10 @@ interface ActionItem {
 
 export function CalendarActions({
   userRole,
-  onNewShiftClick,
+  currentView, // Required prop
+  onNewShiftClick = () => {
+    console.log('Create new shift');
+  },
   onNewPlacementClick,
   onManageAvailabilityClick,
   onTimeOffRequestClick,
@@ -75,7 +78,7 @@ export function CalendarActions({
       onClick:
         onManageAvailabilityClick || (() => router.push('/availability')),
       variant: 'secondary-outline',
-      permissions: ['employee'], // ONLY employees set their own availability
+      permissions: ['employee'],
       group: 'availability',
     },
     {
@@ -84,7 +87,7 @@ export function CalendarActions({
       onClick:
         onTimeOffRequestClick || (() => router.push('/time-off/request')),
       variant: 'secondary-outline',
-      permissions: ['employee'], // ONLY employees request their own time off
+      permissions: ['employee'],
       group: 'availability',
     },
     {
@@ -92,7 +95,7 @@ export function CalendarActions({
       icon: <Icon name="users" className="w-4 h-4" />,
       onClick: () => router.push('/time-off'),
       variant: 'secondary-outline',
-      permissions: ['super_admin', 'agency_admin'], // Admins manage employee time off requests
+      permissions: ['super_admin', 'agency_admin'],
       group: 'management',
     },
 
@@ -138,7 +141,6 @@ export function CalendarActions({
         const date = selectedDate || new Date();
         const filename = `schedule-${date.toISOString().split('T')[0]}.csv`;
         console.log('Exporting schedule as:', filename);
-        // Implement export functionality
       },
       variant: 'primary-outline',
       permissions: ['super_admin', 'agency_admin', 'employer_admin'],
@@ -182,7 +184,6 @@ export function CalendarActions({
       icon: <Icon name="refreshCw" className="w-4 h-4" />,
       onClick: () => {
         console.log('Syncing with external calendars');
-        // Implement calendar sync
       },
       variant: 'ghost',
       permissions: ['super_admin', 'agency_admin', 'employer_admin'],
@@ -192,19 +193,6 @@ export function CalendarActions({
 
   const filteredActions = actions.filter((action) =>
     action.permissions.includes(userRole)
-  );
-
-  // Group actions by category for better organization
-  const groupedActions = filteredActions.reduce(
-    (groups, action) => {
-      const group = action.group || 'other';
-      if (!groups[group]) {
-        groups[group] = [];
-      }
-      groups[group].push(action);
-      return groups;
-    },
-    {} as Record<string, ActionItem[]>
   );
 
   const getButtonVariant = (
@@ -221,98 +209,23 @@ export function CalendarActions({
   };
 
   return (
-    <div className="space-y-4">
-      {groupedActions.view && (
-        <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
-          {groupedActions.view.map((action) => (
-            <Button
-              key={action.label}
-              variant={getButtonVariant(action.variant)}
-              onClick={action.onClick}
-              size="sm"
-              className={`
-                flex items-center space-x-2 whitespace-nowrap
-                ${action.isActive ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : ''}
-              `}
-            >
-              {action.icon}
-              <span>{action.label}</span>
-            </Button>
-          ))}
-        </div>
-      )}
-
-      {/* Quick Actions - Primary scheduling actions */}
-      {groupedActions.scheduling && (
-        <div className="flex flex-wrap gap-2">
-          {groupedActions.scheduling?.map((action) => (
-            <Button
-              key={action.label}
-              variant={getButtonVariant(action.variant)}
-              onClick={action.onClick}
-              size="sm"
-              className={`
-                flex items-center space-x-2 whitespace-nowrap
-                ${action.isActive ? 'bg-blue-500 text-white border-blue-500' : ''}
-                ${action.variant === 'primary' ? 'bg-blue-500 hover:bg-blue-600 text-white' : ''}
-              `}
-            >
-              {action.icon}
-              <span>{action.label}</span>
-            </Button>
-          ))}
-        </div>
-      )}
-
-      {/* Availability Actions (Employee only) */}
-      {groupedActions.availability && (
-        <div className="flex flex-wrap gap-2">
-          {groupedActions.availability?.map((action) => (
-            <Button
-              key={action.label}
-              variant={getButtonVariant(action.variant)}
-              onClick={action.onClick}
-              size="sm"
-              className={`
-                flex items-center space-x-2 whitespace-nowrap
-                ${action.isActive ? 'bg-blue-500 text-white border-blue-500' : ''}
-              `}
-            >
-              {action.icon}
-              <span>{action.label}</span>
-            </Button>
-          ))}
-        </div>
-      )}
-
-      {/* Management & Export Actions */}
-      <div className="flex flex-wrap gap-2">
-        {groupedActions.management?.map((action) => (
-          <Button
-            key={action.label}
-            variant={getButtonVariant(action.variant)}
-            onClick={action.onClick}
-            size="sm"
-            className="flex items-center space-x-2 whitespace-nowrap"
-          >
-            {action.icon}
-            <span>{action.label}</span>
-          </Button>
-        ))}
-
-        {groupedActions.export?.map((action) => (
-          <Button
-            key={action.label}
-            variant={getButtonVariant(action.variant)}
-            onClick={action.onClick}
-            size="sm"
-            className="flex items-center space-x-2 whitespace-nowrap"
-          >
-            {action.icon}
-            <span>{action.label}</span>
-          </Button>
-        ))}
-      </div>
+    <div className="flex flex-wrap items-center gap-2">
+      {filteredActions.map((action) => (
+        <Button
+          key={action.label}
+          variant={getButtonVariant(action.variant)}
+          onClick={action.onClick}
+          size="sm"
+          className={`
+            flex items-center space-x-2 whitespace-nowrap
+            ${action.isActive ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : ''}
+            ${action.variant === 'primary' ? 'bg-blue-500 hover:bg-blue-600 text-white' : ''}
+          `}
+        >
+          {action.icon}
+          <span>{action.label}</span>
+        </Button>
+      ))}
     </div>
   );
 }
