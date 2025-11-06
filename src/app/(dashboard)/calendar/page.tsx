@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
-import { CalendarPageClient } from '@/app/components/ui/calendar/CalendarPageClient';
+import CalendarPageClient from '@/app/components/ui/calendar-v2/CalendarPageClient';
 
 export default async function CalendarPage() {
   const cookieStore = await cookies();
