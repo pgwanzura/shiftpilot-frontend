@@ -2,8 +2,8 @@ import { PageHeader } from '@/app/components/layout';
 import { QuickActions } from '@/app/components/ui';
 import { PlacementsDataTable } from '@/app/components/role/agency/placements/PlacementsDataTable';
 import { PlacementStatsCards } from '@/app/components/role/agency/placements/PlacementStatsCards';
-import { requireAuth} from '@/lib/auth/utils/auth';
-import { ALLOWED_ROLES } from '@/lib/auth/utils/constants';
+import { requireAuth} from '@/lib/auth/utils/server';
+import { ALLOWED_ROLES } from '@/lib/auth/roles';
 
 interface PlacementsPageProps {
   searchParams: { [key: string]: string | string[] | undefined };

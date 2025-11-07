@@ -1,6 +1,7 @@
 'use client';
 
-import { AuthUser, UserRole } from '../types';
+import { AuthUser } from '../../types/auth';
+import { UserRole } from '../roles';
 
 export function getUserFromCookie(): AuthUser | null {
   if (typeof window === 'undefined') return null;

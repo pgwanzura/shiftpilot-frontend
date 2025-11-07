@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { ApiClient } from '@/lib/api/apiClient';
+import { apiClient } from '@/lib/api';
 
 export interface PlacementFilters {
   status?: string;
@@ -19,12 +19,13 @@ export function usePlacements(
   filters: PlacementFilters,
   authToken: string | null
 ) {
-  const apiClient = new ApiClient(undefined, authToken);
-
   return useQuery({
     queryKey: ['placements', filters],
-    queryFn: () => apiClient.getAgencyPlacements(filters),
-    staleTime: 1000 * 60 * 5, 
+    queryFn: async () => {
+      apiClient.setAuthToken(authToken);
+      return apiClient.getAgencyPlacements(filters);
+    },
+    staleTime: 1000 * 60 * 5,
     placeholderData: (previousData) => previousData,
     retry: 2,
     retryDelay: 1000,
@@ -33,11 +34,12 @@ export function usePlacements(
 }
 
 export function usePlacementStats(authToken: string | null) {
-  const apiClient = new ApiClient(undefined, authToken);
-
   return useQuery({
     queryKey: ['placement-stats'],
-    queryFn: () => apiClient.getAgencyPlacementStats(),
+    queryFn: async () => {
+      apiClient.setAuthToken(authToken);
+      return apiClient.getAgencyPlacementStats();
+    },
     staleTime: 1000 * 60 * 2,
     placeholderData: (previousData) => previousData,
     retry: 1,

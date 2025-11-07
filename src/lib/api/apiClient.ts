@@ -32,14 +32,11 @@ import {
 } from '@/types';
 
 export class ApiClient extends BaseClient {
-  protected baseURL: string;
   public auth: AuthClient;
 
-  constructor(baseURL?: string, authToken: string | null = null) {
-    super(authToken);
-    this.baseURL =
-      baseURL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-    this.auth = new AuthClient(this.baseURL);
+  constructor(authClient: AuthClient, baseURL?: string, authToken: string | null = null) {
+    super(authToken, baseURL);
+    this.auth = authClient;
   }
 
   async getCalendarEvents(

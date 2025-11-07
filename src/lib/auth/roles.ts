@@ -1,4 +1,4 @@
-// @/lib/auth/constants.ts
+
 export const AUTH_COOKIES = {
   USER: 'auth_user',
   TOKEN: 'auth_token',
@@ -45,3 +45,14 @@ export type UserRole =
   | AdminRole
   | EmployeeRole
   | SystemRole;
+
+export function isValidRole<T extends readonly string[]>(
+  role: string,
+  allowedRoles: T
+): role is T[number] {
+  return allowedRoles.includes(role as T[number]);
+}
+
+export function getRoleRedirectPath(role: string): string {
+  return ROLE_REDIRECTS[role] || ROUTES.DASHBOARD;
+}

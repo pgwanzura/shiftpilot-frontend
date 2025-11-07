@@ -1,11 +1,12 @@
 import { ApiError, QueryParams, HTTPMethod, JsonObject } from '@/types';
 
 export abstract class BaseClient {
-  protected abstract baseURL: string;
+  protected baseURL: string;
   protected authToken: string | null;
 
-  constructor(authToken: string | null = null) {
+  constructor(authToken: string | null = null, baseURL?: string) {
     this.authToken = authToken;
+    this.baseURL = baseURL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
   }
 
   public setAuthToken(token: string | null): void {

@@ -8,7 +8,7 @@ import {
   EmployerRegistrationData,
 } from '../schemas';
 import { AuthActionResult } from '../types';
-import { getRoleRedirectPath } from '../utils/server';
+import { getRoleRedirectPath } from '../roles';
 
 function getApiUrl(): string {
   const isDocker = process.env.DOCKER_ENV === 'true';

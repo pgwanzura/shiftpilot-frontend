@@ -8,7 +8,7 @@ export type {
 } from './types';
 
 // Schemas
-export { 
+export {
   loginSchema,
   loginCredentialsSchema,
   agencyRegistrationSchema,
@@ -43,19 +43,7 @@ export {
 export { AuthProvider, useAuth } from './providers';
 
 // Utils
-export {
-  getUserFromCookie,
-  isAuthenticated,
-  getUserRole,
-  clientHasRole,
-} from './utils';
-
-export {
-  getRoleBasedRedirect,
-  hasRole,
-  isAgencyAdmin,
-  isEmployerAdmin,
-  isSuperAdmin,
-  canManageShifts,
-  canApproveTimesheets,
-} from './utils';
+export * from './roles';
+export * from './utils/client-auth';
+// Export server-side utilities from a specific file if needed elsewhere in server components
+// export * from './utils/server'; // Removed to prevent client-side import issues

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getRoleRedirectPath } from '@/lib/auth/utils/server';
+import { getRoleRedirectPath } from '@/lib/auth';
 
 const rolePermissions: Record<string, string[]> = {
   super_admin: ['/admin', '/agency', '/employer', '/employee', '/system'],

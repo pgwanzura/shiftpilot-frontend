@@ -51,8 +51,9 @@ export function formatString(template: string, ...args: unknown[]): string {
   });
 }
 
-export * from './auth';
-export * from './error-handling';
-export * from './fetch';
+export { ApiError, parseErrorResponse, extractFirstErrorMessage } from '../api/utils/error';
+export * from './api-utils';
+export * from '../auth/utils/client-auth';
 export * from './date-formatter';
 export * from './icon-preload';
+export { queryClient } from './query-client';

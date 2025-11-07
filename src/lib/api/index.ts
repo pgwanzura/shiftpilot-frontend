@@ -2,8 +2,13 @@
 export * from '../auth';
 
 // API Client
-export { apiClient } from './apiClient';
-export { authClient } from './authClient';
+import { AuthClient } from './authClient';
+import { ApiClient } from './apiClient';
+
+const authClient = new AuthClient();
+const apiClient = new ApiClient(authClient);
+
+export { apiClient, authClient };
 
 // Types
 export type {
@@ -14,4 +19,4 @@ export type { ApiResponse } from '../../types';
 
 // Utilities
 export { ApiError } from './utils/error';
-export { logger } from './utils/logger';
+export { logger } from '../utils/logger';
