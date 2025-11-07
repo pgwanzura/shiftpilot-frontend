@@ -15,36 +15,20 @@ export type {
 } from './auth';
 export type { PaginatedResponse, PaginationParams } from './pagination';
 
-export type {
-  Agency,
-  Agent,
-  Contact,
-  DashboardStats,
-  Employee,
-  EmployeeAvailability,
-  Employer,
-  EmployerAgencyLink,
-  Invoice,
-  Location,
-  Payment,
-  Payroll,
-  Payout,
-  Placement,
-  PlacementStats,
-  Shift,
-  ShiftApproval,
-  ShiftOffer,
-  ShiftTemplate,
-  Subscription,
-  TimeOffRequest,
-  Timesheet,
-  // CreateJobRequest,
-  // SubmitCandidateRequest,
-  UserStatusUpdate,
-  UsersQueryParams,
-} from './api';
+export * from './api';
 
 export * from './layout';
 export * from './user';
 export * from './status';
 export * from './table';
+export * from './calendar-events';
+
+export type RolePermissions = {
+  canViewAgencyDashboard: boolean;
+  canViewEmployerDashboard: boolean;
+  canViewAdminDashboard: boolean;
+  canManagePlacements: boolean;
+  canViewPlacements: boolean;
+  canManageShifts: boolean;
+  canApproveTimesheets: boolean;
+};

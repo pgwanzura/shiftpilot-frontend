@@ -584,7 +584,7 @@ interface StatusBadgeProps {
   config?: Record<string, { label: string; variant: string }>;
 }
 
-export const StatusBadge = ({ status, config }: StatusBadgeProps) => {
+export const DataTableStatusBadge = ({ status, config }: StatusBadgeProps) => {
   const defaultConfig = {
     active: { label: 'Active', variant: 'success' },
     draft: { label: 'Draft', variant: 'warning' },

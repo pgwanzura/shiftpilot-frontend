@@ -7,7 +7,8 @@ const CALENDAR_VIEW_STORAGE_KEY = 'calendar-view-preference';
 const getStoredView = (): CalendarView | null => {
   if (typeof window === 'undefined') return null;
   try {
-    return localStorage.getItem(CALENDAR_VIEW_STORAGE_KEY) as CalendarView;
+    const stored = localStorage.getItem(CALENDAR_VIEW_STORAGE_KEY);
+    return stored as CalendarView;
   } catch {
     return null;
   }
@@ -17,7 +18,9 @@ const setStoredView = (view: CalendarView): void => {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(CALENDAR_VIEW_STORAGE_KEY, view);
-  } catch {}
+  } catch (error) {
+    console.warn('Failed to save calendar view to localStorage:', error);
+  }
 };
 
 export function useCalendarView(
@@ -26,37 +29,41 @@ export function useCalendarView(
 ) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
-  const [internalView, setInternalView] = useState<CalendarView>('month');
+  const [internalView, setInternalView] = useState<CalendarView>(() => {
+    const storedView = getStoredView();
+    return storedView && ['month', 'week', 'day'].includes(storedView)
+      ? storedView
+      : 'month';
+  });
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     if (isInitialized) return;
 
-    let initialView: CalendarView = 'month';
+    let initialView: CalendarView = internalView;
+
     if (externalView !== undefined) {
       initialView = externalView;
-    } else {
-      const storedView = getStoredView();
-      if (storedView && ['month', 'week', 'day'].includes(storedView)) {
-        initialView = storedView;
-      }
     }
 
-    setInternalView(initialView);
+    if (initialView !== internalView) {
+      setInternalView(initialView);
+    }
+
     setIsInitialized(true);
-  }, [externalView, isInitialized]);
+  }, [externalView, internalView, isInitialized]);
 
   useEffect(() => {
-    if (externalView === undefined) {
+    if (isInitialized && externalView === undefined) {
       setStoredView(internalView);
     }
   }, [internalView, externalView, isInitialized]);
 
   useEffect(() => {
     if (
+      isInitialized &&
       externalView !== undefined &&
-      externalView !== internalView &&
-      isInitialized
+      externalView !== internalView
     ) {
       setInternalView(externalView);
     }
@@ -68,7 +75,10 @@ export function useCalendarView(
     if (onViewChange) {
       onViewChange(newView);
     }
-    setInternalView(newView);
+
+    if (externalView === undefined) {
+      setInternalView(newView);
+    }
   };
 
   const navigateDate = (direction: 'prev' | 'next'): void => {
@@ -96,6 +106,7 @@ export function useCalendarView(
     selectedDate,
     setSelectedDate,
     view,
+    internalView,
     handleViewChange,
     navigateDate,
     goToToday,

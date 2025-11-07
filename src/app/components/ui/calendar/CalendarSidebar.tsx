@@ -2,9 +2,10 @@ import { CalendarEvent } from './utils/types';
 import {
   getEventColor,
   getEventIcon,
-  getStatusBadge,
+  getStatusBadgeConfig,
 } from './utils/calendarHelpers';
 import { Icon } from '@/app/components/ui';
+import { StatusBadge } from '@/app/components/ui/StatusBadge';
 
 interface CalendarSidebarProps {
   upcomingEvents: CalendarEvent[];
@@ -69,11 +70,11 @@ export function CalendarSidebar({
                     </p>
                   )}
                   <div className="mt-2">
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full ${getStatusBadge(event.status).color}`}
-                    >
-                      {getStatusBadge(event.status).label}
-                    </span>
+                    <StatusBadge
+                      status={event.status}
+                      config={getStatusBadgeConfig(event.status)}
+                      size="sm"
+                    />
                   </div>
                 </div>
               </div>

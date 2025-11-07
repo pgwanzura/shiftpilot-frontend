@@ -10,7 +10,7 @@ import { CalendarWeekView } from './CalendarWeekView';
 import { CalendarDayView } from './CalendarDayView';
 import { CalendarSidebar } from './CalendarSidebar';
 import { SelectedDateEvents } from './SelectedDateEvents';
-import { CalendarEvent, CalendarClientProps } from './utils/types';
+import { CalendarEvent, CalendarClientProps, EventFilter } from './utils/types';
 
 export function CalendarClient({
   user,
@@ -32,7 +32,7 @@ export function CalendarClient({
     goToToday,
   } = useCalendarView(currentView, onViewChange);
 
-  const today = new Date();
+  const today = useMemo(() => new Date(), []);
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth();
 
@@ -44,9 +44,9 @@ export function CalendarClient({
         date: new Date(currentYear, currentMonth, 7),
         startTime: '07:00',
         endTime: '15:00',
-        type: 'shift' as const,
-        status: 'assigned' as const,
-        entityType: 'shift' as const,
+        type: 'shift',
+        status: 'assigned',
+        entityType: 'shift',
         location: 'St. Thomas Hospital',
         role: 'Healthcare Assistant',
         employer: 'NHS Trust',
@@ -60,9 +60,9 @@ export function CalendarClient({
         date: new Date(currentYear, currentMonth, 7),
         startTime: '14:00',
         endTime: '22:00',
-        type: 'shift' as const,
-        status: 'scheduled' as const,
-        entityType: 'shift' as const,
+        type: 'shift',
+        status: 'scheduled',
+        entityType: 'shift',
         location: 'Amazon Fulfillment Center',
         role: 'Warehouse Operative',
         employer: 'Amazon UK',
@@ -75,9 +75,9 @@ export function CalendarClient({
         date: new Date(currentYear, currentMonth, 12),
         startTime: '09:00',
         endTime: '17:00',
-        type: 'shift' as const,
-        status: 'completed' as const,
-        entityType: 'shift' as const,
+        type: 'shift',
+        status: 'completed',
+        entityType: 'shift',
         location: 'Corporate Office',
         role: 'Receptionist',
         employer: 'Tech Solutions Ltd',
@@ -91,9 +91,9 @@ export function CalendarClient({
         date: new Date(currentYear, currentMonth, 15),
         startTime: '22:00',
         endTime: '06:00',
-        type: 'shift' as const,
-        status: 'assigned' as const,
-        entityType: 'shift' as const,
+        type: 'shift',
+        status: 'assigned',
+        entityType: 'shift',
         location: 'City Center Mall',
         role: 'Security Guard',
         employer: 'SecureGuard Ltd',
@@ -107,9 +107,9 @@ export function CalendarClient({
         date: new Date(currentYear, currentMonth, 8),
         startTime: '08:00',
         endTime: '16:00',
-        type: 'shift' as const,
-        status: 'assigned' as const,
-        entityType: 'shift' as const,
+        type: 'shift',
+        status: 'assigned',
+        entityType: 'shift',
         location: 'General Hospital',
         role: 'Registered Nurse',
         employer: 'NHS Trust',
@@ -123,9 +123,9 @@ export function CalendarClient({
         date: new Date(currentYear, currentMonth, 1),
         startTime: '09:00',
         endTime: '17:00',
-        type: 'placement' as const,
-        status: 'scheduled' as const,
-        entityType: 'placement' as const,
+        type: 'placement',
+        status: 'scheduled',
+        entityType: 'placement',
         location: 'Royal Infirmary',
         role: 'Registered Nurse',
         employer: 'NHS Scotland',
@@ -139,9 +139,9 @@ export function CalendarClient({
         date: new Date(currentYear, currentMonth, 15),
         startTime: '11:00',
         endTime: '12:00',
-        type: 'interview' as const,
-        status: 'scheduled' as const,
-        entityType: 'shift' as const,
+        type: 'interview',
+        status: 'scheduled',
+        entityType: 'shift',
         location: 'Interview Room B',
         role: 'Senior Care Assistant',
         employer: 'CarePlus Homes',
@@ -152,9 +152,9 @@ export function CalendarClient({
         date: new Date(currentYear, currentMonth, 18),
         startTime: '14:00',
         endTime: '15:30',
-        type: 'interview' as const,
-        status: 'scheduled' as const,
-        entityType: 'placement' as const,
+        type: 'interview',
+        status: 'scheduled',
+        entityType: 'placement',
         location: 'Zoom Meeting',
         role: 'DevOps Engineer',
         employer: 'FinTech Solutions',
@@ -165,9 +165,9 @@ export function CalendarClient({
         date: new Date(currentYear, currentMonth, 20),
         startTime: '10:00',
         endTime: '11:30',
-        type: 'meeting' as const,
-        status: 'scheduled' as const,
-        entityType: 'shift' as const,
+        type: 'meeting',
+        status: 'scheduled',
+        entityType: 'shift',
         location: 'Board Room',
         employer: 'NHS Trust',
       },
@@ -177,9 +177,9 @@ export function CalendarClient({
         date: new Date(currentYear, currentMonth, 22),
         startTime: '13:00',
         endTime: '17:00',
-        type: 'training' as const,
-        status: 'scheduled' as const,
-        entityType: 'shift' as const,
+        type: 'training',
+        status: 'scheduled',
+        entityType: 'shift',
         location: 'Training Center',
         role: 'Mandatory Training',
       },
@@ -189,9 +189,9 @@ export function CalendarClient({
         date: new Date(currentYear, currentMonth, 25),
         startTime: '00:00',
         endTime: '23:59',
-        type: 'time_off' as const,
-        status: 'scheduled' as const,
-        entityType: 'time_off' as const,
+        type: 'time_off',
+        status: 'scheduled',
+        entityType: 'time_off',
         employee: 'Sarah Johnson',
       },
       {
@@ -200,9 +200,9 @@ export function CalendarClient({
         date: new Date(currentYear, currentMonth, 28),
         startTime: '00:00',
         endTime: '23:59',
-        type: 'time_off' as const,
-        status: 'scheduled' as const,
-        entityType: 'time_off' as const,
+        type: 'time_off',
+        status: 'scheduled',
+        entityType: 'time_off',
         employee: 'Mike Chen',
       },
     ],
@@ -316,7 +316,6 @@ export function CalendarClient({
           />
         )}
 
-        {/* Selected Date Events Panel - Only shown in month view */}
         {view === 'month' && (
           <SelectedDateEvents
             selectedDate={selectedDate}

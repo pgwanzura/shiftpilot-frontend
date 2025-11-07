@@ -1,4 +1,4 @@
-import {JSX } from 'react';
+import { JSX } from 'react';
 import { CalendarEvent } from './utils/types';
 import {
   getDaysInMonth,
@@ -9,6 +9,8 @@ import {
   shortDayNames,
 } from './utils/calendarHelpers';
 import { Icon } from '@/app/components/ui';
+import { StatusBadge } from '@/app/components/ui/StatusBadge';
+import { getStatusBadgeConfig } from './utils/calendarHelpers';
 
 interface CalendarMonthViewProps {
   currentDate: Date;

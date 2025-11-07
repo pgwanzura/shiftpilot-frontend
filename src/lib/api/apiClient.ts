@@ -2,6 +2,8 @@ import { AuthClient } from './authClient';
 import { BaseClient } from './baseClient';
 import {
   ApiResponse,
+  CalendarEventsParams,
+  CalendarEvent,
   Contact,
   // CreateJobRequest,
   DashboardStats,
@@ -27,7 +29,7 @@ import {
   User,
   UserStatusUpdate,
   UsersQueryParams,
-} from '../../types';
+} from '@/types';
 
 export class ApiClient extends BaseClient {
   protected baseURL: string;
@@ -38,6 +40,12 @@ export class ApiClient extends BaseClient {
     this.baseURL =
       baseURL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
     this.auth = new AuthClient(this.baseURL);
+  }
+
+  async getCalendarEvents(
+    params: CalendarEventsParams
+  ): Promise<ApiResponse<CalendarEvent[]>> {
+    return this.get<ApiResponse<CalendarEvent[]>>('/calendar/events', params);
   }
 
   // =============================================

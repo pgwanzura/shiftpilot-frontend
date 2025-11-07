@@ -8,7 +8,7 @@ import {
   EmployerRegistrationData,
 } from '../schemas';
 import { AuthActionResult } from '../types';
-import { getRoleRedirectPath } from '../utils';
+import { getRoleRedirectPath } from '../utils/server';
 
 function getApiUrl(): string {
   const isDocker = process.env.DOCKER_ENV === 'true';
@@ -157,7 +157,6 @@ export async function loginAction(
     const redirectTo = getRoleRedirectPath(response.user.role);
     return { success: true, redirectTo };
   } catch (error: any) {
-
     if (error.errors) {
       const errorEntries = Object.entries(error.errors);
       const firstError = errorEntries[0]?.[1];
@@ -192,7 +191,6 @@ export async function registerAgencyAction(
     const redirectTo = getRoleRedirectPath(response.user.role);
     return { success: true, redirectTo };
   } catch (error: any) {
-
     if (error.errors) {
       const errorEntries = Object.entries(error.errors);
       const firstError = errorEntries[0]?.[1];
@@ -229,7 +227,6 @@ export async function registerEmployerAction(
     const redirectTo = getRoleRedirectPath(response.user.role);
     return { success: true, redirectTo };
   } catch (error: any) {
-
     if (error.errors) {
       const errorEntries = Object.entries(error.errors);
       const firstError = errorEntries[0]?.[1];

@@ -8,7 +8,6 @@ export * from './navigation';
 
 export * from './table';
 export * from './Icons';
-export * from './client';
 export * from './actions';
 
 export { default as Alert, type AlertProps } from './Alert';
@@ -35,4 +34,4 @@ export * from './Badge';
 export * from './InteractiveStatsCard';
 export * from './Card';
 
-// export * from './StatusBadge';
+export * from './StatusBadge';

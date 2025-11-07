@@ -2,9 +2,10 @@ import { CalendarEvent } from './utils/types';
 import {
   getEventColor,
   getEventIcon,
-  getStatusBadge,
+  getStatusBadgeConfig,
 } from './utils/calendarHelpers';
 import { Icon } from '@/app/components/ui';
+import { StatusBadge } from '@/app/components/ui/StatusBadge';
 
 interface SelectedDateEventsProps {
   selectedDate: Date | null;
@@ -62,7 +63,11 @@ export function SelectedDateEvents({
                           <h4 className="font-semibold text-gray-900 dark:text-white">
                             {event.title}
                           </h4>
-                          {getStatusBadge(event.status)}
+                          <StatusBadge
+                            status={event.status}
+                            config={getStatusBadgeConfig(event.status)}
+                            size="sm"
+                          />
                         </div>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
                           {event.startTime} - {event.endTime} • {event.location}

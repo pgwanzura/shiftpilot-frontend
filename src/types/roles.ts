@@ -1,4 +1,4 @@
-import { UserRole } from '../types';
+import { UserRole } from "@/types/auth";
 
 export function getRoleBasedRedirect(role: UserRole): string {
   switch (role) {

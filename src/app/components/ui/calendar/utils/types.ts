@@ -31,6 +31,7 @@ export interface CalendarClientProps {
     name?: string;
     id?: string;
   };
+  events: CalendarEvent[];
   currentView?: 'month' | 'week' | 'day';
   onViewChange?: (view: 'month' | 'week' | 'day') => void;
 }
@@ -45,10 +46,10 @@ export interface FilterOption {
 export type CalendarView = 'month' | 'week' | 'day';
 export type EventFilter =
   | 'all'
-  | 'shifts'
-  | 'placements'
-  | 'interviews'
+  | 'shift'
+  | 'placement'
+  | 'interview'
   | 'time_off'
-  | 'meetings'
+  | 'meeting'
   | 'training'
-  | 'availabilities';
+  | 'availability';

@@ -1,9 +1,12 @@
+'use client';
+
+import React from 'react';
 import { Icon } from '@/app/components/ui';
-import { FilterOption } from './utils/types';
+import { EventFilter, FilterOption } from './utils/types';
 
 interface CalendarFiltersProps {
-  filter: string;
-  onFilterChange: (filter: string) => void;
+  filter: EventFilter;
+  onFilterChange: (filter: EventFilter) => void;
   userRole: string;
 }
 
@@ -22,7 +25,7 @@ const filterOptions: FilterOption[] = [
     ],
   },
   {
-    key: 'shifts',
+    key: 'shift',
     label: 'Shifts',
     icon: 'clock',
     permissions: [
@@ -35,13 +38,13 @@ const filterOptions: FilterOption[] = [
     ],
   },
   {
-    key: 'placements',
+    key: 'placement',
     label: 'Placements',
     icon: 'briefcase',
     permissions: ['super_admin', 'agency_admin', 'employer_admin'],
   },
   {
-    key: 'interviews',
+    key: 'interview',
     label: 'Interviews',
     icon: 'userCheck',
     permissions: ['super_admin', 'agency_admin', 'agent', 'employer_admin'],
@@ -53,7 +56,7 @@ const filterOptions: FilterOption[] = [
     permissions: ['super_admin', 'agency_admin', 'agent', 'employee'],
   },
   {
-    key: 'meetings',
+    key: 'meeting',
     label: 'Meetings',
     icon: 'users',
     permissions: ['super_admin', 'agency_admin', 'employer_admin'],
@@ -65,7 +68,7 @@ const filterOptions: FilterOption[] = [
     permissions: ['super_admin', 'agency_admin', 'employer_admin', 'employee'],
   },
   {
-    key: 'availabilities',
+    key: 'availability',
     label: 'Availabilities',
     icon: 'calendar',
     permissions: ['super_admin', 'agency_admin', 'agent'],
@@ -77,22 +80,33 @@ export function CalendarFilters({
   onFilterChange,
   userRole,
 }: CalendarFiltersProps) {
+  const handleFilterChange = (filterKey: EventFilter) => {
+    onFilterChange(filterKey);
+  };
+
   return (
-    <div className="flex items-center space-x-2">
+    <div className="flex flex-wrap gap-3 bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
       {filterOptions
-        .filter((filterOption) => filterOption.permissions.includes(userRole))
-        .map((filterOption) => (
+        .filter((option) => option.permissions.includes(userRole))
+        .map((option) => (
           <button
-            key={filterOption.key}
-            onClick={() => onFilterChange(filterOption.key)}
-            className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-              filter === filterOption.key
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+            key={option.key}
+            onClick={() => handleFilterChange(option.key)}
+            className={`flex items-center space-x-2 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 border ${
+              filter === option.key
+                ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700'
+                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400'
             }`}
           >
-            <Icon name={filterOption.icon} className="w-4 h-4" />
-            <span>{filterOption.label}</span>
+            <Icon
+              name={option.icon}
+              className={`w-4 h-4 transition-colors ${
+                filter === option.key
+                  ? 'text-blue-600 dark:text-blue-400'
+                  : 'text-gray-500 dark:text-gray-500'
+              }`}
+            />
+            <span className="font-medium">{option.label}</span>
           </button>
         ))}
     </div>

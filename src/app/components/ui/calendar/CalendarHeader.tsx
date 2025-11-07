@@ -1,4 +1,4 @@
-import { Icon } from '@/app/components/ui';
+import { Button, Icon } from '@/app/components/ui';
 import { getViewTitle } from './utils/calendarHelpers';
 
 interface CalendarHeaderProps {
@@ -22,7 +22,8 @@ export function CalendarHeader({
     <div className="flex items-center justify-between">
       <div className="flex items-center space-x-6">
         <div className="flex space-x-1">
-          <button
+          <Button
+            variant="ghost"
             onClick={() => onNavigate('prev')}
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
           >
@@ -30,7 +31,7 @@ export function CalendarHeader({
               name="chevronLeft"
               className="w-5 h-5 text-gray-600 dark:text-gray-400"
             />
-          </button>
+          </Button>
           <button
             onClick={onToday}
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
@@ -40,7 +41,8 @@ export function CalendarHeader({
               className="w-5 h-5 text-gray-600 dark:text-gray-400"
             />
           </button>
-          <button
+          <Button
+            variant="ghost"
             onClick={() => onNavigate('next')}
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
           >
@@ -48,26 +50,23 @@ export function CalendarHeader({
               name="chevronRight"
               className="w-5 h-5 text-gray-600 dark:text-gray-400"
             />
-          </button>
+          </Button>
         </div>
         <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
           {getViewTitle(view, currentDate, selectedDate)}
         </h2>
       </div>
 
-      <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+      <div className="flex bg-gray-100 dark:bg-gray-800 rounded-md p-1">
         {(['month', 'week', 'day'] as const).map((viewType) => (
-          <button
+          <Button
             key={viewType}
             onClick={() => onViewChange(viewType)}
-            className={`px-4 py-2 text-sm font-medium rounded-md capitalize transition-colors ${
-              view === viewType
-                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            }`}
+            variant={view === viewType ? 'secondary-outline' : 'ghost'}
+            className={`px-4 py-2 text-sm font-medium rounded-md capitalize transition-colors`}
           >
             {viewType}
-          </button>
+          </Button>
         ))}
       </div>
     </div>

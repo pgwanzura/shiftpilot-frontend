@@ -24,11 +24,11 @@ export function usePlacements(
   return useQuery({
     queryKey: ['placements', filters],
     queryFn: () => apiClient.getAgencyPlacements(filters),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5, 
     placeholderData: (previousData) => previousData,
     retry: 2,
     retryDelay: 1000,
-    enabled: !!authToken, // Only fetch if we have an auth token
+    enabled: !!authToken,
   });
 }
 
@@ -38,7 +38,7 @@ export function usePlacementStats(authToken: string | null) {
   return useQuery({
     queryKey: ['placement-stats'],
     queryFn: () => apiClient.getAgencyPlacementStats(),
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: 1000 * 60 * 2,
     placeholderData: (previousData) => previousData,
     retry: 1,
     enabled: !!authToken,

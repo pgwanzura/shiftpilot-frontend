@@ -1,4 +1,4 @@
-import { ApiError, QueryParams } from '../../types';
+import { ApiError, QueryParams, HTTPMethod, JsonObject } from '@/types';
 
 export abstract class BaseClient {
   protected abstract baseURL: string;
@@ -8,15 +8,30 @@ export abstract class BaseClient {
     this.authToken = authToken;
   }
 
+  public setAuthToken(token: string | null): void {
+    this.authToken = token;
+  }
+
+  public clearAuthToken(): void {
+    this.authToken = null;
+  }
+
   protected async ensureCSRF(): Promise<void> {
     try {
-      await fetch(`${this.baseURL}/sanctum/csrf-cookie`, {
+      const response = await fetch(`${this.baseURL}/sanctum/csrf-cookie`, {
         method: 'GET',
         credentials: 'include',
         mode: 'cors',
       });
-    } catch {
-      throw new Error('Failed to get CSRF token');
+
+      if (!response.ok) {
+        throw new Error(`CSRF token request failed: ${response.status}`);
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Failed to get CSRF token: ${error.message}`);
+      }
+      throw new Error('Failed to get CSRF token: Unknown error');
     }
   }
 
@@ -28,10 +43,12 @@ export abstract class BaseClient {
       };
 
       try {
-        const errorData = await response.json();
+        const errorData = (await response.json()) as Partial<ApiError>;
         error.message = errorData.message || response.statusText;
         error.errors = errorData.errors;
-      } catch {}
+      } catch {
+        // Ignore JSON parsing errors for error responses
+      }
 
       throw error;
     }
@@ -41,8 +58,8 @@ export abstract class BaseClient {
     }
 
     const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-      return response.json();
+    if (contentType?.includes('application/json')) {
+      return response.json() as Promise<T>;
     }
 
     return undefined as T;
@@ -52,82 +69,70 @@ export abstract class BaseClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(options.method || '')) {
+    const method = options.method?.toUpperCase() as HTTPMethod | undefined;
+
+    if (method && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
       await this.ensureCSRF();
+    }
+
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+      ...(this.authToken && { Authorization: `Bearer ${this.authToken}` }),
+    };
+
+    if (method !== 'GET' && method !== 'HEAD') {
+      headers['Content-Type'] = 'application/json';
     }
 
     const config: RequestInit = {
       headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        ...(this.authToken && { Authorization: `Bearer ${this.authToken}` }),
+        ...headers,
         ...options.headers,
       },
       credentials: 'include',
-      mode: 'cors', // Explicitly enable CORS mode
+      mode: 'cors',
       ...options,
     };
-
-    // For GET requests, don't include Content-Type header
-    if (options.method === 'GET') {
-      delete (config.headers as any)['Content-Type'];
-    }
 
     try {
       const response = await fetch(`${this.baseURL}${endpoint}`, config);
       return await this.handleResponse<T>(response);
     } catch (error) {
       if (error instanceof Error) {
-        // Handle CORS-specific errors
-        console.log(error.message);
         if (
           error.message.includes('CORS') ||
           error.message.includes('Failed to fetch')
         ) {
           throw new Error(
-            `CORS error: Unable to connect to API. Please check if the server is running and CORS is configured properly.`
+            'CORS error: Unable to connect to API. Please check if the server is running and CORS is configured properly.'
           );
         }
         throw error;
       }
-      throw new Error('Network request failed');
+      throw new Error('Network request failed with unknown error');
     }
   }
 
   async get<T>(endpoint: string, queryParams?: QueryParams): Promise<T> {
-    if (!queryParams) {
-      return this.request<T>(endpoint, { method: 'GET' });
-    }
-
-    const filteredParams: Record<string, string> = {};
-
-    Object.entries(queryParams).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        filteredParams[key] = value.toString();
-      }
-    });
-
-    const queryString = new URLSearchParams(filteredParams).toString();
-    const url = queryString ? `${endpoint}?${queryString}` : endpoint;
-
+    const url = this.buildUrlWithParams(endpoint, queryParams);
     return this.request<T>(url, { method: 'GET' });
   }
 
-  async post<T>(endpoint: string, data?: object): Promise<T> {
+  async post<T>(endpoint: string, data?: JsonObject): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  async put<T>(endpoint: string, data?: object): Promise<T> {
+  async put<T>(endpoint: string, data?: JsonObject): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PUT',
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  async patch<T>(endpoint: string, data?: object): Promise<T> {
+  async patch<T>(endpoint: string, data?: JsonObject): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PATCH',
       body: data ? JSON.stringify(data) : undefined,
@@ -136,5 +141,64 @@ export abstract class BaseClient {
 
   async delete<T>(endpoint: string): Promise<T> {
     return this.request<T>(endpoint, { method: 'DELETE' });
+  }
+
+  async fetchWithAuth<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<T> {
+    if (!this.authToken) {
+      throw new Error('Authentication token is required for fetchWithAuth');
+    }
+
+    const method = options.method?.toUpperCase() || 'GET';
+
+    switch (method) {
+      case 'GET':
+        return this.get<T>(endpoint);
+      case 'POST':
+        const postData = options.body
+          ? (JSON.parse(options.body as string) as JsonObject)
+          : undefined;
+        return this.post<T>(endpoint, postData);
+      case 'PUT':
+        const putData = options.body
+          ? (JSON.parse(options.body as string) as JsonObject)
+          : undefined;
+        return this.put<T>(endpoint, putData);
+      case 'PATCH':
+        const patchData = options.body
+          ? (JSON.parse(options.body as string) as JsonObject)
+          : undefined;
+        return this.patch<T>(endpoint, patchData);
+      case 'DELETE':
+        return this.delete<T>(endpoint);
+      default:
+        throw new Error(`Unsupported HTTP method: ${method}`);
+    }
+  }
+
+  private buildUrlWithParams(
+    endpoint: string,
+    queryParams?: QueryParams
+  ): string {
+    if (!queryParams) {
+      return endpoint;
+    }
+
+    const filteredParams: Record<string, string> = {};
+
+    Object.entries(queryParams).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        filteredParams[key] = value.toString();
+      }
+    });
+
+    if (Object.keys(filteredParams).length === 0) {
+      return endpoint;
+    }
+
+    const queryString = new URLSearchParams(filteredParams).toString();
+    return `${endpoint}?${queryString}`;
   }
 }
