@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useCalendarView } from './hooks/useCalendarView';
 import { CalendarHeader } from './CalendarHeader';
 import { CalendarFilters } from './CalendarFilters';
@@ -10,6 +10,8 @@ import { CalendarDayView } from './CalendarDayView';
 import { CalendarSidebar } from './CalendarSidebar';
 import { SelectedDateEvents } from './SelectedDateEvents';
 import { CalendarEvent, CalendarClientProps, EventFilter } from './utils/types';
+import { useCalendarEvents } from '@/hooks/useCalendarEvents';
+import { CalendarEventsParams } from '@/types';
 
 export function CalendarClient({
   user,
@@ -20,6 +22,7 @@ export function CalendarClient({
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
     null
   );
+  const [useMockData, setUseMockData] = useState(false);
 
   const {
     currentDate,
@@ -35,7 +38,28 @@ export function CalendarClient({
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth();
 
-  const events = useMemo(
+  const calendarParams: CalendarEventsParams = {
+    start_date: currentDate.toISOString().split('T')[0],
+    end_date: new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
+      .toISOString()
+      .split('T')[0],
+    type: filter === 'all' ? undefined : filter,
+  };
+
+  const {
+    data: apiEvents,
+    error,
+    isLoading,
+  } = useCalendarEvents(calendarParams, user.authToken || '');
+
+  useEffect(() => {
+    if (error) {
+      console.log('API error, falling back to mock data:', error);
+      setUseMockData(true);
+    }
+  }, [error]);
+
+  const mockEvents = useMemo(
     (): CalendarEvent[] => [
       {
         id: 'shift-1',
@@ -208,6 +232,9 @@ export function CalendarClient({
     [currentYear, currentMonth]
   );
 
+  const events =
+    useMockData || error ? mockEvents : apiEvents?.data || mockEvents;
+
   const eventCounts = useMemo(() => {
     const counts: Record<string, number> = {
       shift: 0,
@@ -265,6 +292,14 @@ export function CalendarClient({
 
   const selectedDateEvents = selectedDate ? getEventsForDate(selectedDate) : [];
 
+  if (isLoading && !useMockData) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
       <div className="xl:col-span-3 space-y-6">
@@ -276,6 +311,14 @@ export function CalendarClient({
           onToday={goToToday}
           onViewChange={handleViewChange}
         />
+
+        {useMockData && (
+          <div className="bg-warning-50 border border-warning-200 rounded-lg p-4">
+            <p className="text-warning-700 text-sm">
+              Using demo data. Calendar events from API are not available.
+            </p>
+          </div>
+        )}
 
         <CalendarFilters
           filter={filter}

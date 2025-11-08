@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { AuthResponse, AuthUser } from '@/types';
-import { ALLOWED_ROLES, isValidRole, ROUTES, AUTH_COOKIES, getRoleRedirectPath } from '../roles';
+import { isValidRole, ROUTES, AUTH_COOKIES } from '../roles';
 
 export async function getAuthUser(): Promise<AuthResponse> {
   try {

@@ -457,7 +457,7 @@ export class ApiClient extends BaseClient {
   ): Promise<ApiResponse<EmployeeAvailability>> {
     return this.post<ApiResponse<EmployeeAvailability>>(
       '/employee/availability',
-      availabilityData
+      this.toJsonObject(availabilityData)
     );
   }
 
