@@ -4,7 +4,6 @@ import { useState, useMemo } from 'react';
 import { useCalendarView } from './hooks/useCalendarView';
 import { CalendarHeader } from './CalendarHeader';
 import { CalendarFilters } from './CalendarFilters';
-import { CalendarStats } from './CalendarStats';
 import { CalendarMonthView } from './CalendarMonthView';
 import { CalendarWeekView } from './CalendarWeekView';
 import { CalendarDayView } from './CalendarDayView';
@@ -209,6 +208,26 @@ export function CalendarClient({
     [currentYear, currentMonth]
   );
 
+  const eventCounts = useMemo(() => {
+    const counts: Record<string, number> = {
+      shift: 0,
+      placement: 0,
+      interview: 0,
+      time_off: 0,
+      meeting: 0,
+      training: 0,
+      availability: 0,
+    };
+
+    events.forEach((event) => {
+      if (counts.hasOwnProperty(event.type)) {
+        counts[event.type]++;
+      }
+    });
+
+    return counts;
+  }, [events]);
+
   const filteredEvents = useMemo(() => {
     return events.filter((event) => filter === 'all' || event.type === filter);
   }, [events, filter]);
@@ -218,22 +237,6 @@ export function CalendarClient({
       .filter((event) => event.date >= today && event.status !== 'completed')
       .sort((a, b) => a.date.getTime() - b.date.getTime())
       .slice(0, 10);
-  }, [filteredEvents, today]);
-
-  const eventStats = useMemo(() => {
-    const nextWeek = new Date();
-    nextWeek.setDate(nextWeek.getDate() + 7);
-
-    return {
-      total: filteredEvents.length,
-      shifts: filteredEvents.filter((e) => e.type === 'shift').length,
-      placements: filteredEvents.filter((e) => e.type === 'placement').length,
-      interviews: filteredEvents.filter((e) => e.type === 'interview').length,
-      timeOff: filteredEvents.filter((e) => e.type === 'time_off').length,
-      thisWeek: filteredEvents.filter(
-        (e) => e.date >= today && e.date <= nextWeek
-      ).length,
-    };
   }, [filteredEvents, today]);
 
   const handleDateSelect = (date: Date) => {
@@ -278,9 +281,8 @@ export function CalendarClient({
           filter={filter}
           onFilterChange={setFilter}
           userRole={user.role}
+          eventCounts={eventCounts}
         />
-
-        <CalendarStats stats={eventStats} />
 
         {view === 'month' && (
           <CalendarMonthView

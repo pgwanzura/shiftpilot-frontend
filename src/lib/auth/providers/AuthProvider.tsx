@@ -8,7 +8,7 @@ import React, {
   ReactNode,
 } from 'react';
 import { useRouter } from 'next/navigation';
-import { AuthUser, UserRole } from '../types';
+import { AuthUser, UserRole } from '@/types/auth';
 import { getUserFromCookie } from '../utils/client-auth';
 import { logoutAction } from '../actions/auth-actions';
 

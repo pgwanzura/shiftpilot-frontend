@@ -96,12 +96,12 @@ export function CalendarDayView({
 
   const getEventIconColor = (type: string): string => {
     const colorMap: Record<string, string> = {
-      shift: 'bg-blue-500',
-      placement: 'bg-green-500',
-      interview: 'bg-purple-500',
-      meeting: 'bg-orange-500',
-      training: 'bg-indigo-500',
-      time_off: 'bg-red-500',
+      shift: 'bg-primary-500',
+      placement: 'bg-success-500',
+      interview: 'bg-info-500',
+      meeting: 'bg-warning-500',
+      training: 'bg-primary-600',
+      time_off: 'bg-error-500',
       availability: 'bg-gray-500',
     };
     return colorMap[type] || 'bg-gray-500';
@@ -127,36 +127,35 @@ export function CalendarDayView({
   const isToday = new Date().toDateString() === displayDate.toDateString();
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden flex flex-col h-[600px]">
-      {/* Enhanced Header */}
-      <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col h-[600px]">
+      <div className="px-6 py-4 bg-primary-50 dark:bg-primary-900/20 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="flex flex-col">
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                 {dayNames[displayDate.getDay()]}
               </h1>
-              <p className="text-lg text-gray-600 dark:text-gray-400">
+              <p className="text-lg text-primary-500 dark:text-primary-400 font-medium">
                 {monthNames[displayDate.getMonth()]} {displayDate.getDate()},{' '}
                 {displayDate.getFullYear()}
               </p>
             </div>
             {isToday && (
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 border border-blue-200 dark:border-blue-800">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-primary-500 text-white border border-primary-300 dark:border-primary-700">
                 Today
               </span>
             )}
           </div>
 
           <div className="flex items-center space-x-3">
-            <div className="flex items-center space-x-1 bg-white dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-600 p-1">
+            <div className="flex items-center space-x-1 bg-white dark:bg-gray-800 rounded-lg border border-primary-200 dark:border-primary-700 p-1">
               <button
                 onClick={() => onNavigate('prev')}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors duration-200 group"
+                className="p-2 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-md transition-colors duration-200 group"
                 title="Previous day"
               >
                 <svg
-                  className="w-4 h-4 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors"
+                  className="w-4 h-4 text-primary-500 dark:text-primary-400 group-hover:text-primary-600 dark:group-hover:text-primary-300 transition-colors"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -172,7 +171,7 @@ export function CalendarDayView({
 
               <button
                 onClick={onToday}
-                className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md transition-colors duration-200"
+                className="px-3 py-2 text-sm font-bold text-primary-500 dark:text-primary-400 hover:text-primary-600 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-md transition-colors duration-200"
                 title="Go to today"
               >
                 Today
@@ -180,11 +179,11 @@ export function CalendarDayView({
 
               <button
                 onClick={() => onNavigate('next')}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors duration-200 group"
+                className="p-2 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-md transition-colors duration-200 group"
                 title="Next day"
               >
                 <svg
-                  className="w-4 h-4 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors"
+                  className="w-4 h-4 text-primary-500 dark:text-primary-400 group-hover:text-primary-600 dark:group-hover:text-primary-300 transition-colors"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -201,67 +200,61 @@ export function CalendarDayView({
           </div>
         </div>
 
-        {/* Summary Bar */}
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between mt-3 pt-3 border-t border-primary-200 dark:border-primary-700">
           <div className="flex items-center space-x-6 text-sm">
-            <span className="text-gray-600 dark:text-gray-400">
+            <span className="text-primary-500 dark:text-primary-400 font-medium">
               {dayEvents.length} event{dayEvents.length !== 1 ? 's' : ''}
             </span>
             {eventLayouts.length > 0 && (
-              <span className="text-gray-500 dark:text-gray-500">
+              <span className="text-primary-500 dark:text-primary-500 font-medium">
                 {Math.max(...eventLayouts.map((l) => l.totalColumns))}{' '}
                 concurrent
               </span>
             )}
           </div>
-          <div className="text-sm text-gray-500 dark:text-gray-400">
+          <div className="text-sm text-primary-500 dark:text-primary-400">
             All times in local timezone
           </div>
         </div>
       </div>
 
-      {/* Calendar Grid */}
-      <div className="flex-1 overflow-y-auto relative bg-gray-50 dark:bg-gray-900">
-        {/* Time Grid Background */}
+      <div className="flex-1 overflow-y-auto relative bg-primary-50 dark:bg-primary-900/10">
         <div className="absolute inset-0">
           {hours.map((hour) => (
             <div
               key={hour}
-              className="flex border-b border-gray-100 dark:border-gray-800 h-[80px] group hover:bg-white dark:hover:bg-gray-800 transition-colors duration-150"
+              className="flex border-b border-primary-100 dark:border-primary-800 h-[80px] group hover:bg-white dark:hover:bg-gray-800 transition-colors duration-150"
             >
-              <div className="w-24 p-4 border-r border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 text-right font-medium flex items-start justify-end bg-white dark:bg-gray-900">
-                <span className="bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded text-xs font-semibold">
+              <div className="w-24 p-4 border-r border-primary-200 dark:border-primary-700 text-sm text-primary-500 dark:text-primary-400 text-right font-bold flex items-start justify-end bg-white dark:bg-gray-900">
+                <span className="bg-primary-50 dark:bg-primary-900/20 px-2 py-1 rounded text-xs font-bold border border-primary-200 dark:border-primary-700">
                   {formatTimeLabel(hour)}
                 </span>
               </div>
               <div className="flex-1 p-4 relative">
-                {/* Hour indicator dots */}
-                <div className="absolute left-2 top-1/2 transform -translate-y-1/2 w-1 h-1 bg-gray-300 dark:bg-gray-600 rounded-full opacity-60"></div>
+                <div className="absolute left-2 top-1/2 transform -translate-y-1/2 w-1 h-1 bg-primary-400 dark:bg-primary-600 rounded-full opacity-60"></div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Current Time Indicator */}
         {isToday && (
           <div
-            className="absolute left-24 right-0 h-0.5 bg-red-500 z-30 pointer-events-none shadow-sm"
+            className="absolute left-24 right-0 h-0.5 bg-error-500 z-30 pointer-events-none"
             style={{ top: `${currentTimePosition}px` }}
           >
             <div className="absolute -left-2 -top-1.5">
-              <div className="w-3 h-3 bg-red-500 rounded-full shadow-sm border border-white dark:border-gray-900"></div>
+              <div className="w-3 h-3 bg-error-500 rounded-full border-2 border-white dark:border-gray-900"></div>
             </div>
-            <div className="absolute -right-2 -top-1.5 w-2 h-2 bg-red-500 rounded-full opacity-70"></div>
+            <div className="absolute -right-2 -top-1.5 w-2 h-2 bg-error-500 rounded-full opacity-70"></div>
           </div>
         )}
 
-        {/* Empty State */}
         {dayEvents.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="text-center max-w-sm mx-auto p-8">
-              <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-2xl flex items-center justify-center shadow-sm">
+              <div className="w-20 h-20 mx-auto mb-6 bg-primary-100 dark:bg-primary-800 rounded-2xl flex items-center justify-center">
                 <svg
-                  className="w-10 h-10 text-gray-400 dark:text-gray-500"
+                  className="w-10 h-10 text-primary-400 dark:text-primary-500"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -274,10 +267,10 @@ export function CalendarDayView({
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
                 No events scheduled
               </h3>
-              <p className="text-gray-500 dark:text-gray-400 text-sm mb-6 leading-relaxed">
+              <p className="text-primary-500 dark:text-primary-400 text-sm mb-6 leading-relaxed">
                 {displayDate.toLocaleDateString('en-US', {
                   weekday: 'long',
                   month: 'long',
@@ -285,7 +278,7 @@ export function CalendarDayView({
                   year: 'numeric',
                 })}
               </p>
-              <div className="w-16 h-1 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 mx-auto rounded-full"></div>
+              <div className="w-16 h-1 bg-primary-200 dark:bg-primary-700 mx-auto rounded-full"></div>
             </div>
           </div>
         )}
@@ -309,7 +302,7 @@ export function CalendarDayView({
             <button
               key={event.id}
               onClick={() => onEventClick(event)}
-              className={`absolute rounded-xl border-l-4 cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.02] hover:z-20 ${getEventColor(event.type, event.status)} shadow-sm border border-gray-200 dark:border-gray-700`}
+              className={`absolute rounded-xl border-l-4 cursor-pointer transition-all duration-200 hover:opacity-90 ${getEventColor(event.type, event.status)} border border-gray-200 dark:border-gray-700`}
               style={{
                 top: `${topPosition}px`,
                 height: `${height}px`,
@@ -321,20 +314,19 @@ export function CalendarDayView({
               <div
                 className={`h-full flex flex-col ${isCompact ? 'p-3' : 'p-4'} ${isVeryCompact ? 'justify-center' : ''}`}
               >
-                {/* Event Header */}
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center space-x-3 flex-1 min-w-0">
                     <div
-                      className={`${isVeryCompact ? 'w-2 h-2' : 'w-3 h-3'} rounded-full ${getEventIconColor(event.type)} flex-shrink-0 shadow-sm`}
+                      className={`${isVeryCompact ? 'w-2 h-2' : 'w-3 h-3'} rounded-full ${getEventIconColor(event.type)} flex-shrink-0`}
                     />
                     <div className="flex-1 min-w-0">
                       <h4
-                        className={`font-semibold text-gray-900 dark:text-white truncate ${isVeryCompact ? 'text-xs' : 'text-sm'}`}
+                        className={`font-bold text-gray-900 dark:text-white truncate ${isVeryCompact ? 'text-xs' : 'text-sm'}`}
                       >
                         {event.title}
                       </h4>
                       {!isVeryCompact && (
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 truncate">
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 truncate font-medium">
                           {formatCompactTime(event.startTime)} -{' '}
                           {formatCompactTime(event.endTime)}
                         </p>
@@ -350,9 +342,9 @@ export function CalendarDayView({
                 </div>
 
                 {!isVeryCompact && event.location && (
-                  <p className="text-xs text-gray-600 dark:text-gray-400 truncate mb-2 flex items-center">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 truncate mb-2 flex items-center font-medium">
                     <svg
-                      className="w-3 h-3 mr-1.5 text-gray-400"
+                      className="w-3 h-3 mr-1.5 text-primary-400"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -375,9 +367,9 @@ export function CalendarDayView({
                 )}
 
                 {!isCompact && event.role && (
-                  <p className="text-xs text-gray-600 dark:text-gray-400 truncate flex items-center">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 truncate flex items-center font-medium">
                     <svg
-                      className="w-3 h-3 mr-1.5 text-gray-400"
+                      className="w-3 h-3 mr-1.5 text-primary-400"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -393,7 +385,6 @@ export function CalendarDayView({
                   </p>
                 )}
 
-                {/* Status for very compact events */}
                 {isVeryCompact && (
                   <div className="mt-1">
                     <StatusBadge
@@ -408,9 +399,8 @@ export function CalendarDayView({
         })}
       </div>
 
-      {/* Footer with helpful info */}
-      <div className="px-6 py-3 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
-        <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+      <div className="px-6 py-3 bg-primary-50 dark:bg-primary-900/20 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <div className="flex items-center justify-between text-xs text-primary-500 dark:text-primary-400 font-medium">
           <span>Click on events to view details</span>
           <span>Scroll to view all hours</span>
         </div>

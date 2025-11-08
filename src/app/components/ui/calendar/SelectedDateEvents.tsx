@@ -21,9 +21,9 @@ export function SelectedDateEvents({
   onNewShiftClick,
 }: SelectedDateEventsProps) {
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white">
           {selectedDate
             ? selectedDate.toLocaleDateString('en-US', {
                 weekday: 'long',
@@ -33,7 +33,7 @@ export function SelectedDateEvents({
               })
             : 'Select a Date'}
         </h3>
-        <span className="text-sm text-gray-500 dark:text-gray-400">
+        <span className="text-sm text-primary-500 dark:text-primary-400">
           {selectedDateEvents.length} events
         </span>
       </div>
@@ -60,7 +60,7 @@ export function SelectedDateEvents({
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-1">
-                          <h4 className="font-semibold text-gray-900 dark:text-white">
+                          <h4 className="font-bold text-gray-900 dark:text-white">
                             {event.title}
                           </h4>
                           <StatusBadge
@@ -102,7 +102,7 @@ export function SelectedDateEvents({
               </p>
               <button
                 onClick={onNewShiftClick}
-                className="mt-3 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium flex items-center justify-center space-x-2 mx-auto"
+                className="mt-3 text-primary-500 dark:text-primary-400 hover:text-primary-600 dark:hover:text-primary-300 font-bold flex items-center justify-center space-x-2 mx-auto"
               >
                 <Icon name="plus" className="w-4 h-4" />
                 <span>Create Shift</span>

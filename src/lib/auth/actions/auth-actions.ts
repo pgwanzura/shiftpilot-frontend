@@ -7,24 +7,32 @@ import {
   AgencyRegistrationData,
   EmployerRegistrationData,
 } from '../schemas';
-import { AuthActionResult } from '../types';
+import { AuthActionResult } from '@/types/auth';
 import { getRoleRedirectPath } from '../roles';
 
-function getApiUrl(): string {
-  const isDocker = process.env.DOCKER_ENV === 'true';
-  const internalApiUrl = process.env.INTERNAL_API_URL;
-  const publicApiUrl = process.env.NEXT_PUBLIC_API_URL;
+interface ApiError {
+  message: string;
+  status: number;
+  errors?: Record<string, string[]>;
+}
 
-  if (isDocker) {
-    return validateUrl(internalApiUrl, 'http://shiftpilot-api:80');
-  }
+interface AuthUser {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  email_verified_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
-  return validateUrl(publicApiUrl, 'http://localhost:8000');
+interface AuthResponse {
+  access_token: string;
+  user: AuthUser;
 }
 
 function validateUrl(url: string | undefined, fallback: string): string {
   if (!url) return fallback;
-
   try {
     new URL(url);
     return url;
@@ -34,115 +42,112 @@ function validateUrl(url: string | undefined, fallback: string): string {
   }
 }
 
+function getApiUrl(): string {
+  const isDocker = process.env.DOCKER_ENV === 'true';
+  const internalApiUrl = process.env.INTERNAL_API_URL;
+  const publicApiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (isDocker) return validateUrl(internalApiUrl, 'http://shiftpilot-api:80');
+  return validateUrl(publicApiUrl, 'http://localhost:8000');
+}
+
 const API_URL = getApiUrl();
 
-async function storeAuth(token: string, user: any): Promise<void> {
+async function storeAuth(token: string, user: AuthUser): Promise<void> {
   const cookieStore = await cookies();
-  const cookieOptions = {
-    httpOnly: true,
+  const options = {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax' as const,
     maxAge: 60 * 60 * 24 * 7,
     path: '/',
   };
-
-  cookieStore.set('auth_token', token, cookieOptions);
+  cookieStore.set('auth_token', token, { ...options, httpOnly: true });
   cookieStore.set('auth_user', JSON.stringify(user), {
-    ...cookieOptions,
+    ...options,
     httpOnly: false,
   });
 }
 
-interface ApiError {
-  message: string;
-  status: number;
-  errors?: Record<string, string[]>;
-}
-
-async function serverFetch(endpoint: string, options: RequestInit = {}) {
+async function serverFetch<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T> {
   const baseURL = API_URL.replace(/\/$/, '');
   const cleanEndpoint = endpoint.replace(/^\//, '');
+  const cookieStore = await cookies();
+  const existingCookies = cookieStore.toString();
 
-  try {
-    const cookieStore = await cookies();
-    const existingCookies = cookieStore.toString();
-    const csrfUrl = `${baseURL}/sanctum/csrf-cookie`;
+  const csrfUrl = `${baseURL}/sanctum/csrf-cookie`;
+  const csrfResponse = await fetch(csrfUrl, {
+    method: 'GET',
+    credentials: 'include',
+    headers: { Accept: 'application/json', Cookie: existingCookies },
+  });
 
-    const csrfResponse = await fetch(csrfUrl, {
-      method: 'GET',
-      credentials: 'include',
-      headers: {
-        Accept: 'application/json',
-        Cookie: existingCookies,
-      },
-    });
-
-    if (!csrfResponse.ok) {
-      const errorText = await csrfResponse.text();
-      throw new Error(
-        `CSRF request failed: ${csrfResponse.status} ${csrfResponse.statusText}`
-      );
-    }
-
-    const responseCookies = csrfResponse.headers.getSetCookie();
-
-    let xsrfToken = '';
-    for (const cookie of responseCookies) {
-      const match = cookie.match(/XSRF-TOKEN=([^;]+)/);
-      if (match) {
-        xsrfToken = decodeURIComponent(match[1]);
-        break;
-      }
-    }
-
-    const apiUrl = `${baseURL}/api/${cleanEndpoint}`;
-
-    const config: RequestInit = {
-      ...options,
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        ...(xsrfToken && { 'X-XSRF-TOKEN': xsrfToken }),
-        Cookie: csrfResponse.headers.get('set-cookie') || existingCookies,
-        ...options.headers,
-      },
-    };
-
-    const response = await fetch(apiUrl, config);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-
-      let errorData: { message?: string; errors?: Record<string, string[]> } =
-        {};
-      try {
-        errorData = JSON.parse(errorText);
-      } catch {
-        errorData = { message: errorText };
-      }
-
-      const apiError: ApiError = {
-        message: errorData.message || response.statusText,
-        status: response.status,
-        errors: errorData.errors,
-      };
-
-      throw apiError;
-    }
-
-    const responseData = await response.json();
-    return responseData;
-  } catch (error) {
-    throw error;
+  if (!csrfResponse.ok) {
+    const errorText = await csrfResponse.text();
+    throw new Error(
+      `CSRF request failed: ${csrfResponse.status} ${csrfResponse.statusText} — ${errorText}`
+    );
   }
+
+  const setCookieHeader =
+    csrfResponse.headers.get('set-cookie') || existingCookies;
+  const xsrfToken = extractXsrfFromSetCookie(setCookieHeader);
+  const apiUrl = `${baseURL}/api/${cleanEndpoint}`;
+
+  const config: RequestInit = {
+    ...options,
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      ...(xsrfToken ? { 'X-XSRF-TOKEN': xsrfToken } : {}),
+      Cookie: setCookieHeader,
+      ...(options.headers || {}),
+    },
+  };
+
+  const response = await fetch(apiUrl, config);
+
+  if (!response.ok) {
+    const text = await response.text();
+    let parsed: { message?: string; errors?: Record<string, string[]> } = {};
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      parsed = { message: text || response.statusText };
+    }
+    const apiError: ApiError = {
+      message: parsed.message ?? response.statusText,
+      status: response.status,
+      errors: parsed.errors,
+    };
+    throw apiError;
+  }
+
+  const json = (await response.json()) as T;
+  return json;
+}
+
+function extractXsrfFromSetCookie(setCookieHeader: string): string {
+  if (!setCookieHeader) return '';
+  const match = setCookieHeader.match(/XSRF-TOKEN=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : '';
+}
+
+function extractFirstError(apiError: ApiError): string {
+  if (apiError.errors && Object.keys(apiError.errors).length > 0) {
+    const first = Object.values(apiError.errors)[0];
+    return Array.isArray(first) ? first[0] : 'An error occurred';
+  }
+  return apiError.message || 'An unexpected error occurred';
 }
 
 export async function loginAction(
   data: LoginFormData
 ): Promise<AuthActionResult> {
   try {
-    const response = await serverFetch('/auth/login', {
+    const response = await serverFetch<AuthResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({
         email: data.email,
@@ -151,21 +156,16 @@ export async function loginAction(
         device_name: 'shiftpilot-web',
       }),
     });
-
     await storeAuth(response.access_token, response.user);
-
     const redirectTo = getRoleRedirectPath(response.user.role);
     return { success: true, redirectTo };
-  } catch (error: any) {
-    if (error.errors) {
-      const errorEntries = Object.entries(error.errors);
-      const firstError = errorEntries[0]?.[1];
-      return {
-        error: Array.isArray(firstError) ? firstError[0] : 'Login failed',
-      };
-    }
-
-    return { error: error.message || 'An unexpected error occurred' };
+  } catch (error) {
+    if (isApiError(error))
+      return { success: false, error: extractFirstError(error) };
+    return {
+      success: false,
+      error: (error as Error)?.message ?? 'Login failed',
+    };
   }
 }
 
@@ -173,7 +173,7 @@ export async function registerAgencyAction(
   data: AgencyRegistrationData
 ): Promise<AuthActionResult> {
   try {
-    const response = await serverFetch('/auth/register/agency', {
+    const response = await serverFetch<AuthResponse>('/auth/register/agency', {
       method: 'POST',
       body: JSON.stringify({
         name: data.name,
@@ -186,22 +186,16 @@ export async function registerAgencyAction(
         terms: data.terms,
       }),
     });
-
     await storeAuth(response.access_token, response.user);
     const redirectTo = getRoleRedirectPath(response.user.role);
     return { success: true, redirectTo };
-  } catch (error: any) {
-    if (error.errors) {
-      const errorEntries = Object.entries(error.errors);
-      const firstError = errorEntries[0]?.[1];
-      return {
-        error: Array.isArray(firstError)
-          ? firstError[0]
-          : 'Registration failed',
-      };
-    }
-
-    return { error: error.message || 'An unexpected error occurred' };
+  } catch (error) {
+    if (isApiError(error))
+      return { success: false, error: extractFirstError(error) };
+    return {
+      success: false,
+      error: (error as Error)?.message ?? 'Registration failed',
+    };
   }
 }
 
@@ -209,57 +203,59 @@ export async function registerEmployerAction(
   data: EmployerRegistrationData
 ): Promise<AuthActionResult> {
   try {
-    const response = await serverFetch('/auth/register/employer', {
-      method: 'POST',
-      body: JSON.stringify({
-        name: data.name,
-        email: data.email,
-        password: data.password,
-        password_confirmation: data.confirmPassword,
-        phone: data.phone,
-        role: 'employer_admin',
-        company_name: data.company_name,
-        terms: data.terms,
-      }),
-    });
-
+    const response = await serverFetch<AuthResponse>(
+      '/auth/register/employer',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          password: data.password,
+          password_confirmation: data.confirmPassword,
+          phone: data.phone,
+          role: 'employer_admin',
+          company_name: data.company_name,
+          terms: data.terms,
+        }),
+      }
+    );
     await storeAuth(response.access_token, response.user);
     const redirectTo = getRoleRedirectPath(response.user.role);
     return { success: true, redirectTo };
-  } catch (error: any) {
-    if (error.errors) {
-      const errorEntries = Object.entries(error.errors);
-      const firstError = errorEntries[0]?.[1];
-      return {
-        error: Array.isArray(firstError)
-          ? firstError[0]
-          : 'Registration failed',
-      };
-    }
-
-    return { error: error.message || 'An unexpected error occurred' };
+  } catch (error) {
+    if (isApiError(error))
+      return { success: false, error: extractFirstError(error) };
+    return {
+      success: false,
+      error: (error as Error)?.message ?? 'Registration failed',
+    };
   }
 }
 
 export async function logoutAction(): Promise<void> {
   const cookieStore = await cookies();
-
   try {
     const token = cookieStore.get('auth_token')?.value;
-
     if (token) {
-      await serverFetch('/auth/logout', {
+      await serverFetch<null>('/auth/logout', {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
     }
   } catch (error) {
-    console.error('Logout error:', error);
+    console.error('Logout error:', (error as Error)?.message ?? error);
   } finally {
     cookieStore.delete('auth_token');
     cookieStore.delete('auth_user');
     redirect('/login');
   }
+}
+
+function isApiError(error: unknown): error is ApiError {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    'status' in error
+  );
 }

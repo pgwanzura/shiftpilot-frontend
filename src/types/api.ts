@@ -4,6 +4,7 @@ export interface ApiError {
   message: string;
   status: number;
   errors?: Record<string, string[]>;
+  details?: ApiErrorDetails;
 }
 
 export type HTTPMethod =
@@ -30,7 +31,7 @@ export type JsonArray = Array<JsonValue>;
 export interface User extends AuthUser {
   phone?: string;
   status: 'active' | 'inactive' | 'suspended';
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
   email_verified_at?: string;
   last_login_at?: string;
   created_at?: string;
@@ -47,8 +48,6 @@ export interface DashboardStats {
   active_employees?: number;
 }
 
-// ==================== CORE ENTITIES ====================
-
 export interface Agency {
   id: number;
   user_id: number;
@@ -61,7 +60,7 @@ export interface Agency {
   country?: string;
   commission_rate: number;
   subscription_status: 'active' | 'inactive' | 'suspended';
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -87,7 +86,7 @@ export interface Employer {
   city?: string;
   country?: string;
   subscription_status: 'active' | 'inactive' | 'suspended';
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -102,7 +101,7 @@ export interface EmployerAgencyLink {
   contract_end?: string;
   terms?: string;
   commission_rate?: number;
-  service_level_agreement?: Record<string, any>;
+  service_level_agreement?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -117,7 +116,7 @@ export interface Contact {
   role: 'manager' | 'approver' | 'supervisor';
   can_sign_timesheets: boolean;
   permissions?: string[];
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -129,7 +128,7 @@ export interface Location {
   address?: string;
   latitude?: number;
   longitude?: number;
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -138,7 +137,7 @@ export interface Employee {
   id: number;
   user_id: number;
   agency_id?: number;
-  employer_id?: number; // For direct hires
+  employer_id?: number;
   position?: string;
   pay_rate?: number;
   availability?: EmployeeAvailability[];
@@ -146,7 +145,7 @@ export interface Employee {
   employment_type: 'temp' | 'perm' | 'part_time';
   status: 'active' | 'inactive' | 'suspended';
   preferences?: EmployeePreferences;
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -187,7 +186,7 @@ export interface EmployeeAvailability {
   timezone: string;
   status: 'available' | 'unavailable' | 'preferred';
   priority: number;
-  location_preference?: any;
+  location_preference?: Record<string, unknown>;
   max_shift_length_hours?: number;
   min_shift_length_hours?: number;
   notes?: string;
@@ -207,46 +206,33 @@ export interface TimeOffRequest {
   reason?: string;
   approved_by_id?: number;
   approved_at?: string;
-  attachments?: any;
+  attachments?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
-
-// ==================== PLACEMENT & SHIFT SYSTEM ====================
 
 export interface Placement {
   id: number;
   employer_id: number;
   title: string;
   description?: string;
-
-  // Requirements
   role_requirements: string[];
   required_qualifications: string[];
   experience_level: 'entry' | 'intermediate' | 'senior';
   background_check_required: boolean;
-
-  // Location
   location_id: number;
   location_instructions?: string;
-
-  // Timing
   start_date: string;
   end_date?: string;
   shift_pattern: 'one_time' | 'recurring' | 'ongoing';
-  recurrence_rules?: any;
-
-  // Budget
+  recurrence_rules?: Record<string, unknown>;
   budget_type: 'hourly' | 'daily' | 'fixed';
   budget_amount: number;
   currency: string;
-  overtime_rules?: any;
-
-  // Visibility
+  overtime_rules?: Record<string, unknown>;
   target_agencies: 'all' | 'specific';
   specific_agency_ids?: number[];
   response_deadline?: string;
-
   status: 'draft' | 'active' | 'filled' | 'cancelled' | 'completed';
   created_by_id: number;
   created_at: string;
@@ -258,7 +244,6 @@ export interface AgencyResponse {
   placement_id: number;
   agency_id: number;
   status: 'draft' | 'submitted' | 'accepted' | 'rejected' | 'withdrawn';
-
   submitted_employees: {
     employee_id: number;
     proposed_rate: number;
@@ -266,14 +251,12 @@ export interface AgencyResponse {
     qualifications_match: string[];
     availability_confirmed: boolean;
   }[];
-
   employer_feedback?: {
     selected_employee_id?: number;
     rejection_reason?: string;
     notes: string;
     counter_offer_rate?: number;
   };
-
   submitted_at?: string;
   responded_at?: string;
   created_at: string;
@@ -295,26 +278,16 @@ export interface Shift {
   agency_id: number;
   employee_id: number;
   employer_id: number;
-
-  // Assignment details
   agency_response_id: number;
   agreed_rate: number;
-
-  // Timing
   scheduled_start: string;
   scheduled_end: string;
   actual_start?: string;
   actual_end?: string;
   break_minutes: number;
-
-  // Status tracking
   status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled' | 'no_show';
-
-  // Location tracking
   clock_in_location?: { lat: number; lng: number };
   clock_out_location?: { lat: number; lng: number };
-
-  // Approval workflow
   timesheet_status:
     | 'pending'
     | 'submitted'
@@ -323,7 +296,6 @@ export interface Shift {
     | 'disputed';
   employer_approved_at?: string;
   employer_approved_by?: number;
-
   created_at: string;
   updated_at: string;
 }
@@ -346,7 +318,7 @@ export interface ShiftTemplate {
   end_date?: string;
   created_by_type: string;
   created_by_id: number;
-  meta?: any;
+  meta?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -376,8 +348,6 @@ export interface ShiftApproval {
   updated_at: string;
 }
 
-// ==================== TIMESHEET & PAYROLL ====================
-
 export interface Timesheet {
   id: number;
   shift_id: number;
@@ -392,7 +362,7 @@ export interface Timesheet {
   approved_by_contact_id?: number;
   approved_at?: string;
   notes?: string;
-  attachments?: any;
+  attachments?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -422,12 +392,10 @@ export interface Payout {
   total_amount: number;
   status: 'processing' | 'paid' | 'failed';
   provider_payout_id?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
-
-// ==================== FINANCIAL ====================
 
 export interface Invoice {
   id: number;
@@ -449,7 +417,7 @@ export interface Invoice {
   due_date: string;
   paid_at?: string;
   payment_reference?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -475,7 +443,7 @@ export interface Payment {
   status: 'completed' | 'failed' | 'pending' | 'refunded';
   fee_amount: number;
   net_amount: number;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -492,12 +460,10 @@ export interface Subscription {
   started_at: string;
   current_period_start?: string;
   current_period_end?: string;
-  meta?: any;
+  meta?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
-
-// ==================== RATE MANAGEMENT ====================
 
 export interface RateCard {
   id: number;
@@ -515,8 +481,6 @@ export interface RateCard {
   created_at: string;
   updated_at: string;
 }
-
-// ==================== TRACKING & ANALYTICS ====================
 
 export interface PlacementTracking {
   placement_id: number;
@@ -577,8 +541,6 @@ export interface ShiftTracking {
   };
 }
 
-// ==================== REQUEST/QUERY INTERFACES ====================
-
 export interface CreatePlacementRequest {
   title: string;
   description?: string;
@@ -628,7 +590,7 @@ export interface SubmitTimesheetRequest {
   clock_out: string;
   break_minutes: number;
   notes?: string;
-  attachments?: any;
+  attachments?: Record<string, unknown>;
 }
 
 export interface UserStatusUpdate {
@@ -642,8 +604,6 @@ export interface UsersQueryParams {
   per_page?: number;
   [key: string]: string | number | boolean | undefined;
 }
-
-// ==================== API RESPONSES ====================
 
 export interface ApiResponse<T> {
   data: T[];
@@ -668,13 +628,6 @@ export interface ApiErrorDetails {
   retry_after?: number;
   current_page?: number;
   total?: number;
-}
-
-export interface ApiError {
-  message: string;
-  status: number;
-  errors?: Record<string, string[]>;
-  details?: ApiErrorDetails;
 }
 
 export interface ValidationApiError extends ApiError {
@@ -713,17 +666,11 @@ export const isRateLimitError = (
   return !!error.details?.retry_after;
 };
 
-export interface QueryParams {
-  [key: string]: string | number | boolean | undefined;
-}
-
 export interface RequestOptions {
   timeout?: number;
   headers?: Record<string, string>;
   skipCSRF?: boolean;
 }
-
-// ==================== DASHBOARD INTERFACES ====================
 
 export interface AgencyDashboardStats {
   total_employees: number;

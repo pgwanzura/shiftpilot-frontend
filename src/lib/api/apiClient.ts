@@ -5,7 +5,6 @@ import {
   CalendarEventsParams,
   CalendarEvent,
   Contact,
-  // CreateJobRequest,
   DashboardStats,
   Employee,
   EmployeeAvailability,
@@ -22,7 +21,6 @@ import {
   ShiftApproval,
   ShiftOffer,
   ShiftTemplate,
-  // SubmitCandidateRequest,
   Subscription,
   TimeOffRequest,
   Timesheet,
@@ -31,12 +29,26 @@ import {
   UsersQueryParams,
 } from '@/types';
 
+type JsonValue = string | number | boolean | null | JsonObject | JsonArray;
+interface JsonObject {
+  [key: string]: JsonValue;
+}
+type JsonArray = JsonValue[];
+
 export class ApiClient extends BaseClient {
   public auth: AuthClient;
 
-  constructor(authClient: AuthClient, baseURL?: string, authToken: string | null = null) {
+  constructor(
+    authClient: AuthClient,
+    baseURL?: string,
+    authToken: string | null = null
+  ) {
     super(authToken, baseURL);
     this.auth = authClient;
+  }
+
+  private toJsonObject<T>(data: T): JsonObject {
+    return JSON.parse(JSON.stringify(data));
   }
 
   async getCalendarEvents(
@@ -44,10 +56,6 @@ export class ApiClient extends BaseClient {
   ): Promise<ApiResponse<CalendarEvent[]>> {
     return this.get<ApiResponse<CalendarEvent[]>>('/calendar/events', params);
   }
-
-  // =============================================
-  // ADMIN METHODS
-  // =============================================
 
   async getAdminDashboardStats(): Promise<ApiResponse<DashboardStats>> {
     return this.get<ApiResponse<DashboardStats>>('/admin/dashboard/stats');
@@ -79,13 +87,9 @@ export class ApiClient extends BaseClient {
   ): Promise<ApiResponse<undefined>> {
     return this.patch<ApiResponse<undefined>>(
       `/admin/users/${userId}/status`,
-      status
+      this.toJsonObject(status)
     );
   }
-
-  // =============================================
-  // AGENCY METHODS
-  // =============================================
 
   async agencyApproveTimesheet(
     timesheetId: number
@@ -180,7 +184,6 @@ export class ApiClient extends BaseClient {
     return this.get<PaginatedResponse<Placement>>('/agency/placements', params);
   }
 
-  // In your ApiClient class, update the getAgencyPlacementStats method:
   async getAgencyPlacementStats(): Promise<ApiResponse<PlacementStats>> {
     return this.get<ApiResponse<PlacementStats>>(
       '/agency/placements/stats/detailed'
@@ -221,7 +224,7 @@ export class ApiClient extends BaseClient {
   ): Promise<ApiResponse<Employee>> {
     return this.put<ApiResponse<Employee>>(
       `/agency/employees/${employeeId}`,
-      employeeData
+      this.toJsonObject(employeeData)
     );
   }
 
@@ -231,13 +234,9 @@ export class ApiClient extends BaseClient {
   ): Promise<ApiResponse<Placement>> {
     return this.put<ApiResponse<Placement>>(
       `/agency/placements/${placementId}`,
-      placementData
+      this.toJsonObject(placementData)
     );
   }
-
-  // =============================================
-  // EMPLOYER METHODS
-  // =============================================
 
   async approveShiftApproval(
     approvalId: number
@@ -390,13 +389,9 @@ export class ApiClient extends BaseClient {
   ): Promise<ApiResponse<Location>> {
     return this.put<ApiResponse<Location>>(
       `/employer/locations/${locationId}`,
-      locationData
+      this.toJsonObject(locationData)
     );
   }
-
-  // =============================================
-  // EMPLOYEE METHODS
-  // =============================================
 
   async clockIn(shiftId: number): Promise<ApiResponse<Timesheet>> {
     return this.post<ApiResponse<Timesheet>>(
@@ -447,12 +442,10 @@ export class ApiClient extends BaseClient {
     accept: boolean,
     notes?: string
   ): Promise<ApiResponse<ShiftOffer>> {
+    const requestData = { accept, notes: notes || null };
     return this.patch<ApiResponse<ShiftOffer>>(
       `/employee/shift-offers/${offerId}/respond`,
-      {
-        accept,
-        notes,
-      }
+      requestData
     );
   }
 
@@ -488,13 +481,9 @@ export class ApiClient extends BaseClient {
   ): Promise<ApiResponse<EmployeeAvailability>> {
     return this.put<ApiResponse<EmployeeAvailability>>(
       `/employee/availability/${availabilityId}`,
-      availabilityData
+      this.toJsonObject(availabilityData)
     );
   }
-
-  // =============================================
-  // SHIFT & TIMESHEET METHODS (Shared)
-  // =============================================
 
   async cancelShift(shiftId: number): Promise<ApiResponse<Shift>> {
     return this.patch<ApiResponse<Shift>>(`/shifts/${shiftId}/cancel`);
@@ -508,7 +497,10 @@ export class ApiClient extends BaseClient {
     shiftId: number,
     shiftData: Partial<Shift>
   ): Promise<ApiResponse<Shift>> {
-    return this.put<ApiResponse<Shift>>(`/shifts/${shiftId}`, shiftData);
+    return this.put<ApiResponse<Shift>>(
+      `/shifts/${shiftId}`,
+      this.toJsonObject(shiftData)
+    );
   }
 
   async updateTimesheet(
@@ -517,7 +509,7 @@ export class ApiClient extends BaseClient {
   ): Promise<ApiResponse<Timesheet>> {
     return this.put<ApiResponse<Timesheet>>(
       `/timesheets/${timesheetId}`,
-      timesheetData
+      this.toJsonObject(timesheetData)
     );
   }
 }

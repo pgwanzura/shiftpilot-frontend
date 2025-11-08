@@ -38,28 +38,28 @@ export function CalendarWeekView({
     isToday: boolean,
     isSelected: boolean | null
   ): string => {
-    if (isToday) return 'bg-primary-600 text-white';
+    if (isToday) return 'bg-primary-500 text-white';
     if (isSelected)
-      return 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800';
-    return 'hover:bg-gray-50 dark:hover:bg-gray-800/70';
+      return 'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-700';
+    return 'bg-white dark:bg-gray-800 hover:bg-primary-50 dark:hover:bg-primary-900/10';
   };
 
   const getDayNameClass = (isToday: boolean): string => {
     return isToday
       ? 'text-white'
-      : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300';
+      : 'text-primary-500 dark:text-primary-400 group-hover:text-primary-600 dark:group-hover:text-primary-300';
   };
 
   const getDateNumberClass = (isToday: boolean): string => {
-    return isToday ? 'text-white' : 'text-gray-900 dark:text-white';
+    return isToday ? 'text-white' : 'text-gray-900 dark:text-white font-bold';
   };
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col h-[500px]">
       <div className="flex-1 overflow-y-auto relative">
-        <div className="sticky top-0 z-10 grid grid-cols-8 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
-          <div className="p-3 border-r border-gray-100 dark:border-gray-800">
-            <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+        <div className="sticky top-0 z-10 grid grid-cols-8 bg-primary-50 dark:bg-primary-900/20 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <div className="p-3 border-r border-gray-200 dark:border-gray-700">
+            <span className="text-xs font-bold text-primary-500 dark:text-primary-400 uppercase tracking-wide">
               Time
             </span>
           </div>
@@ -73,10 +73,10 @@ export function CalendarWeekView({
               <button
                 key={index}
                 onClick={() => onDateSelect(date)}
-                className={`p-3 border-r border-gray-100 dark:border-gray-800 text-center transition-all duration-200 group ${getHeaderButtonClass(isToday, isSelected)}`}
+                className={`p-3 border-r border-gray-200 dark:border-gray-700 text-center transition-all duration-200 group ${getHeaderButtonClass(isToday, isSelected)}`}
               >
                 <div
-                  className={`text-xs font-semibold ${getDayNameClass(isToday)}`}
+                  className={`text-xs font-bold ${getDayNameClass(isToday)}`}
                 >
                   {shortDayNames[date.getDay()]}
                 </div>
@@ -95,11 +95,11 @@ export function CalendarWeekView({
             {hours.map((hour) => (
               <div
                 key={hour}
-                className="grid grid-cols-8 group hover:bg-gray-50/30 dark:hover:bg-gray-800/20 transition-colors"
+                className="grid grid-cols-8 group hover:bg-primary-50/30 dark:hover:bg-primary-900/10 transition-colors"
                 style={{ height: '48px' }}
               >
-                <div className="p-2 border-r border-gray-100 dark:border-gray-800 text-xs text-gray-400 dark:text-gray-500 text-right pr-3 flex items-center justify-end">
-                  <span className="bg-white dark:bg-gray-900 px-1.5 py-0.5 rounded text-xs font-bold">
+                <div className="p-2 border-r border-gray-200 dark:border-gray-700 text-xs text-primary-500 dark:text-primary-400 text-right pr-3 flex items-center justify-end">
+                  <span className="bg-white dark:bg-gray-900 px-1.5 py-0.5 rounded text-xs font-bold border border-primary-200 dark:border-primary-700">
                     {formatTimeLabel(hour)}
                   </span>
                 </div>
@@ -107,9 +107,9 @@ export function CalendarWeekView({
                 {weekDates.map((date, dayIndex) => (
                   <div
                     key={dayIndex}
-                    className="border-r border-gray-100 dark:border-gray-800 relative p-0.5"
+                    className="border-r border-gray-200 dark:border-gray-700 relative p-0.5"
                   >
-                    <div className="absolute inset-x-0 top-0 h-px bg-gray-100 dark:bg-gray-800 group-hover:bg-gray-200 dark:group-hover:bg-gray-700 transition-colors" />
+                    <div className="absolute inset-x-0 top-0 h-px bg-primary-100 dark:bg-primary-800 group-hover:bg-primary-200 dark:group-hover:bg-primary-700 transition-colors" />
                   </div>
                 ))}
               </div>
@@ -140,7 +140,7 @@ export function CalendarWeekView({
                   }}
                 >
                   <div className="space-y-0.5 h-full flex flex-col justify-center">
-                    <div className="font-semibold text-xs truncate leading-tight text-gray-900 dark:text-white">
+                    <div className="font-bold text-xs truncate leading-tight text-gray-900 dark:text-white">
                       {event.title}
                     </div>
                     <div className="text-xs text-gray-600 dark:text-gray-400 truncate leading-tight">
@@ -149,7 +149,7 @@ export function CalendarWeekView({
                     {eventDuration <= 8 && (
                       <div className="flex items-center gap-1 mt-1">
                         <div className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
-                        <span className="text-xs capitalize text-gray-700 dark:text-gray-300">
+                        <span className="text-xs capitalize text-gray-700 dark:text-gray-300 font-medium">
                           {event.status}
                         </span>
                       </div>
