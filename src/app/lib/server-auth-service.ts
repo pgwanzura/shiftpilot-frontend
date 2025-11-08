@@ -1,3 +1,4 @@
+// app/lib/server-auth-service.ts
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { AuthUser, UserRole } from '@/lib/auth';

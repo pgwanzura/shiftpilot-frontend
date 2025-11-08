@@ -6,12 +6,23 @@ export type {
   RegisterData,
   AuthUserResponse,
   LoginResponse,
+  AuthSession,
+  AuthContextType,
+  ApiErrorResponse,
+  AuthActionResult,
+  AgencyRegistrationData,
+  BaseRegistrationData,
+  PasswordResetData,
+  TwoFactorAuthData,
+  SessionData,
+  AuthState,
+  Permission,
+  RoleWithPermissions,
 } from './auth';
+
 export type { PaginatedResponse, PaginationParams } from './pagination';
 
-// Explicitly export from api to avoid conflicts
 export type {
-  // Core entities
   Agency,
   Agent,
   Employer,
@@ -40,8 +51,6 @@ export type {
   RateCard,
   PlacementTracking,
   ShiftTracking,
-
-  // Request interfaces
   CreatePlacementRequest,
   SubmitAgencyResponseRequest,
   CreateShiftRequest,
@@ -49,35 +58,27 @@ export type {
   SubmitTimesheetRequest,
   UserStatusUpdate,
   UsersQueryParams,
-
-  // API responses and errors
   ApiResponse,
   ApiErrorDetails,
   ValidationApiError,
   BusinessApiError,
   RateLimitApiError,
   RequestOptions,
-
-  // Dashboard stats
   AgencyDashboardStats,
   EmployerDashboardStats,
   EmployeeDashboardStats,
-
-  // Other types
   DashboardStats,
   HTTPMethod,
   JsonValue,
   JsonObject,
   JsonArray,
+  User,
 } from './api';
 
-// Export values (non-types) separately
 export { isValidationError, isBusinessError, isRateLimitError } from './api';
 
-// Explicitly export User from api with a different name to avoid conflict
-export type { User as ApiUser } from './api';
-
 export * from './layout';
+export * from './roles';
 export * from './user';
 export * from './status';
 export * from './table';

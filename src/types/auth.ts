@@ -11,6 +11,13 @@ export type UserRole =
 
 export type UserStatus = 'active' | 'inactive' | 'suspended';
 
+export type RegistrationData =
+  | AgencyRegistrationData
+  | EmployerRegistrationData;
+
+export type AuthUserResponse = AuthResponse;
+export type LoginResponse = AuthResponse;
+
 export interface AuthUser {
   id: string;
   name: string;
@@ -20,6 +27,18 @@ export interface AuthUser {
   last_login_at?: string | null;
   status: UserStatus;
   meta?: Record<string, unknown>;
+}
+
+export interface AuthSession {
+  user: AuthUser | null;
+  isAuthenticated: boolean;
+}
+
+export interface AuthContextType extends AuthSession {
+  token: string | null;
+  isLoading: boolean;
+  refreshAuth: () => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 export interface AuthResponse {
@@ -74,9 +93,7 @@ export interface EmployerRegistrationData extends BaseRegistrationData {
   role: 'employer_admin';
 }
 
-export type RegistrationData =
-  | AgencyRegistrationData
-  | EmployerRegistrationData;
+
 
 export interface RegisterData {
   name: string;
@@ -111,9 +128,6 @@ export interface SessionData {
   user: AuthUser;
   expires: string;
 }
-
-export type AuthUserResponse = AuthResponse;
-export type LoginResponse = AuthResponse;
 
 export interface AuthState {
   user: AuthUser | null;
