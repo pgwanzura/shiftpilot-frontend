@@ -18,21 +18,14 @@ export abstract class BaseClient {
   }
 
   protected async ensureCSRF(): Promise<void> {
-    try {
-      const response = await fetch(`${this.baseURL}/sanctum/csrf-cookie`, {
-        method: 'GET',
-        credentials: 'include',
-        mode: 'cors',
-      });
+    const response = await fetch(`${this.baseURL}/sanctum/csrf-cookie`, {
+      method: 'GET',
+      credentials: 'include',
+      mode: 'cors',
+    });
 
-      if (!response.ok) {
-        throw new Error(`CSRF token request failed: ${response.status}`);
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`Failed to get CSRF token: ${error.message}`);
-      }
-      throw new Error('Failed to get CSRF token: Unknown error');
+    if (!response.ok) {
+      throw new Error(`CSRF token request failed: ${response.status}`);
     }
   }
 
@@ -44,11 +37,10 @@ export abstract class BaseClient {
       };
 
       try {
-        const errorData = (await response.json()) as Partial<ApiError>;
+        const errorData = await response.json() as Partial<ApiError>;
         error.message = errorData.message || response.statusText;
         error.errors = errorData.errors;
       } catch {
-        // Ignore JSON parsing errors for error responses
       }
 
       throw error;
@@ -68,7 +60,8 @@ export abstract class BaseClient {
 
   protected async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    retries = 3
   ): Promise<T> {
     const method = options.method?.toUpperCase() as HTTPMethod | undefined;
 
@@ -85,6 +78,9 @@ export abstract class BaseClient {
       headers['Content-Type'] = 'application/json';
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
     const config: RequestInit = {
       headers: {
         ...headers,
@@ -92,6 +88,7 @@ export abstract class BaseClient {
       },
       credentials: 'include',
       mode: 'cors',
+      signal: controller.signal,
       ...options,
     };
 
@@ -100,18 +97,32 @@ export abstract class BaseClient {
       return await this.handleResponse<T>(response);
     } catch (error) {
       if (error instanceof Error) {
-        if (
-          error.message.includes('CORS') ||
-          error.message.includes('Failed to fetch')
-        ) {
-          throw new Error(
-            'CORS error: Unable to connect to API. Please check if the server is running and CORS is configured properly.'
-          );
+        if (error.name === 'AbortError') {
+          throw new Error('Request timeout: The request took too long to complete');
+        }
+        if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
+          throw new Error('CORS error: Unable to connect to API');
+        }
+        if (retries > 0 && this.isRetryableError(error)) {
+          return this.request<T>(endpoint, options, retries - 1);
         }
         throw error;
       }
       throw new Error('Network request failed with unknown error');
+    } finally {
+      clearTimeout(timeoutId);
     }
+  }
+
+  private isRetryableError(error: Error): boolean {
+    const retryableMessages = [
+      'Network request failed',
+      'Failed to fetch',
+      'Request timeout',
+      'ECONNRESET',
+      'ETIMEDOUT'
+    ];
+    return retryableMessages.some(msg => error.message.includes(msg));
   }
 
   async get<T>(endpoint: string, queryParams?: QueryParams): Promise<T> {
@@ -144,41 +155,6 @@ export abstract class BaseClient {
     return this.request<T>(endpoint, { method: 'DELETE' });
   }
 
-  async fetchWithAuth<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
-    if (!this.authToken) {
-      throw new Error('Authentication token is required for fetchWithAuth');
-    }
-
-    const method = options.method?.toUpperCase() || 'GET';
-
-    switch (method) {
-      case 'GET':
-        return this.get<T>(endpoint);
-      case 'POST':
-        const postData = options.body
-          ? (JSON.parse(options.body as string) as JsonObject)
-          : undefined;
-        return this.post<T>(endpoint, postData);
-      case 'PUT':
-        const putData = options.body
-          ? (JSON.parse(options.body as string) as JsonObject)
-          : undefined;
-        return this.put<T>(endpoint, putData);
-      case 'PATCH':
-        const patchData = options.body
-          ? (JSON.parse(options.body as string) as JsonObject)
-          : undefined;
-        return this.patch<T>(endpoint, patchData);
-      case 'DELETE':
-        return this.delete<T>(endpoint);
-      default:
-        throw new Error(`Unsupported HTTP method: ${method}`);
-    }
-  }
-
   private buildUrlWithParams(
     endpoint: string,
     queryParams?: QueryParams
@@ -187,19 +163,18 @@ export abstract class BaseClient {
       return endpoint;
     }
 
-    const filteredParams: Record<string, string> = {};
-
+    const url = new URL(endpoint, this.baseURL);
+    
     Object.entries(queryParams).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
-        filteredParams[key] = value.toString();
+        if (Array.isArray(value)) {
+          value.forEach(v => url.searchParams.append(key, v.toString()));
+        } else {
+          url.searchParams.append(key, value.toString());
+        }
       }
     });
 
-    if (Object.keys(filteredParams).length === 0) {
-      return endpoint;
-    }
-
-    const queryString = new URLSearchParams(filteredParams).toString();
-    return `${endpoint}?${queryString}`;
+    return url.pathname + url.search;
   }
 }

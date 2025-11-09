@@ -37,6 +37,7 @@ export type {
   Placement,
   AgencyResponse,
   PlacementStats,
+  PlacementFilters,
   Shift,
   ShiftTemplate,
   ShiftOffer,

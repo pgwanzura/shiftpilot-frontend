@@ -239,6 +239,20 @@ export interface Placement {
   updated_at: string;
 }
 
+export interface PlacementFilters {
+  status?: string;
+  search?: string;
+  experience_level?: string;
+  budget_type?: string;
+  location_id?: number;
+  start_date_from?: string;
+  start_date_to?: string;
+  sort_by?: string;
+  sort_direction?: string;
+  page?: number;
+  per_page?: number;
+}
+
 export interface AgencyResponse {
   id: number;
   placement_id: number;
