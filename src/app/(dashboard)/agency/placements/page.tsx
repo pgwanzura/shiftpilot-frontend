@@ -10,5 +10,9 @@ interface PlacementsPageProps {
 export default async function PlacementsPage({}: PlacementsPageProps) {
   const { user } = await requireAuth(ALLOWED_ROLES.AGENCY);
 
+  if (!user) {
+    return <div>Loading...</div>; // Or a more appropriate loading indicator
+  }
+
   return <PlacementsClient user={user} />;
 }

@@ -53,17 +53,27 @@ function getApiUrl(): string {
 const API_URL = getApiUrl();
 
 async function storeAuth(token: string, user: AuthUser): Promise<void> {
-  const cookieStore = await cookies();
-  const options = {
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax' as const,
-    maxAge: 60 * 60 * 24 * 7,
-    path: '/',
-  };
-  cookieStore.set('auth_token', token, { ...options, httpOnly: true });
-  cookieStore.set('auth_user', JSON.stringify(user), {
-    ...options,
+  const cookieStore = await cookies(); 
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  cookieStore.set({
+    name: 'auth_token',
+    value: token,
     httpOnly: false,
+    secure: isProduction,
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 60 * 60 * 24 * 7,
+  });
+
+  cookieStore.set({
+    name: 'auth_user',
+    value: JSON.stringify(user),
+    httpOnly: false,
+    secure: isProduction,
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 60 * 60 * 24 * 7,
   });
 }
 

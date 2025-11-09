@@ -2,12 +2,7 @@
 import { useApiQuery } from './useApiQuery';
 import { useApiMutation } from './useApiMutation';
 import { useQueryClient } from '@tanstack/react-query';
-import {
-  PaginatedResponse,
-  PlacementFilters,
-  Placement,
-  JsonObject,
-} from '@/types';
+import { PaginatedResponse, PlacementFilters, Placement } from '@/types';
 
 export interface PlacementStatsData {
   total: number;
@@ -18,7 +13,7 @@ export interface PlacementStatsData {
   responses: number;
 }
 
-export interface CreatePlacementData extends JsonObject {
+export interface CreatePlacementData {
   title: string;
   description: string;
   employer_id: number;
@@ -33,7 +28,7 @@ export interface CreatePlacementData extends JsonObject {
   location_instructions?: string;
 }
 
-export interface UpdatePlacementData extends JsonObject {
+export interface UpdatePlacementData {
   title?: string;
   description?: string;
   status?: string;

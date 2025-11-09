@@ -34,7 +34,6 @@ export class ApiClient extends BaseClient {
 
   private constructor() {
     super();
-    this.initializeToken();
   }
 
   public static getInstance(): ApiClient {
@@ -44,13 +43,17 @@ export class ApiClient extends BaseClient {
     return ApiClient.instance;
   }
 
-  private initializeToken(): void {
+  public initializeFromCookies(): void {
     if (typeof window !== 'undefined') {
       const cookies = document.cookie.split('; ');
       const tokenCookie = cookies.find((row) => row.startsWith('auth_token='));
       const token = tokenCookie?.split('=')[1] || null;
       this.setAuthToken(token);
     }
+  }
+
+  public getAuthToken(): string | null {
+    return this.authToken;
   }
 
   async getCalendarEvents(

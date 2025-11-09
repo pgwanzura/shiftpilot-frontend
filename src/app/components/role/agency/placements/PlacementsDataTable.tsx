@@ -14,25 +14,16 @@ import type { PaginatedResponse as BackendPaginatedResponse } from '@/types/pagi
 import type { Placement as BackendPlacement } from '@/types/api';
 import { usePlacements } from '@/hooks/usePlacements';
 
-interface Placement {
-  id: string | number;
-  title: string;
-  employer?: { name: string };
-  location?: { name: string };
-  start_date?: string;
-  budget_amount?: number;
-  currency?: string;
-  budget_type?: string;
-  status: 'active' | 'draft' | 'filled' | 'cancelled' | 'completed';
-  experience_level?: string;
-  location_instructions?: string;
-  agency_responses_count?: number;
-  response_deadline?: string;
-}
-
-interface PlacementsDataTableProps {
-  authToken: string | null;
-}
+type Placement = BackendPlacement & {
+  [key: string]:
+    | string
+    | number
+    | boolean
+    | Record<string, unknown>
+    | unknown[]
+    | null
+    | undefined;
+};
 
 interface FiltersState {
   status: string;

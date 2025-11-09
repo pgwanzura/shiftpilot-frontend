@@ -1,7 +1,7 @@
 // hooks/useApiQuery.ts
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { useAuth } from '@/contexts/AuthContext'; 
 import { apiClient } from '@/lib/api/apiClient';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface UseApiQueryOptions<TData, TError = Error>
   extends Omit<UseQueryOptions<TData, TError>, 'queryFn' | 'enabled'> {
@@ -18,18 +18,17 @@ export function useApiQuery<TData, TError = Error>({
   enabled = true,
   ...options
 }: UseApiQueryOptions<TData, TError>) {
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
-
+  const { token } = useAuth(); // Get token from auth context
+  
   return useQuery<TData, TError>({
     queryKey,
     queryFn: async () => {
       const response = await apiClient.get<TData>(endpoint, params);
       return response;
     },
-    enabled: enabled && isAuthenticated,
+    enabled: enabled && !!token, // Use token from context instead of apiClient
     staleTime: 1000 * 60 * 5,
     retry: (failureCount, error: any) => {
-      // Don't retry on auth errors
       if (error?.status === 401 || error?.status === 403) {
         return false;
       }

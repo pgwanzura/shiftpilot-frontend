@@ -52,13 +52,7 @@ export class AuthClient extends BaseClient {
     }
   }
 
-  private storeAuth(token: string, user: AuthUser): void {
-    const isProduction = process.env.NODE_ENV === 'production';
-    const cookieOptions = `path=/; max-age=${60 * 60 * 24 * 7}; ${isProduction ? 'secure;' : ''} samesite=lax`;
 
-    document.cookie = `auth_token=${token}; ${cookieOptions}`;
-    document.cookie = `auth_user=${encodeURIComponent(JSON.stringify(user))}; ${cookieOptions}`;
-  }
 
   private handleApiError(result: ApiError): string {
     if (result.errors) {

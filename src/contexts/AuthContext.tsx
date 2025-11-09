@@ -23,6 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const cookies = document.cookie.split('; ');
+    console.log('All available cookies:', cookies); // Debug line
     const tokenCookie = cookies.find((row) => row.startsWith('auth_token='));
     const userCookie = cookies.find((row) => row.startsWith('auth_user='));
 
