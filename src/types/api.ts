@@ -29,8 +29,10 @@ export interface JsonObject {
 export type JsonArray = JsonValue[];
 
 export interface User extends AuthUser {
+  name: string;
   phone?: string;
   status: 'active' | 'inactive' | 'suspended';
+  role: string;
   meta?: Record<string, unknown>;
   email_verified_at?: string;
   last_login_at?: string;

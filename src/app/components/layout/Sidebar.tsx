@@ -35,9 +35,15 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const [openDropdowns, setOpenDropdowns] = useState<Set<string>>(new Set());
   const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [isClient, setIsClient] = useState(false);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
 
   const { theme, resolvedTheme, toggleTheme } = useSafeTheme();
+
+  // Mark as client-side only - this runs on both server and client
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     if (propMenuItems) {
@@ -48,30 +54,43 @@ const Sidebar: React.FC<SidebarProps> = ({
   }, [propMenuItems, user?.role]);
 
   const checkMobile = useCallback(() => {
+    if (typeof window === 'undefined') return false;
+
     const mobile = window.innerWidth < 1024;
     setIsMobile(mobile);
-    document.body.style.overflow = mobile && isOpen ? 'hidden' : 'unset';
+    if (mobile && isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return mobile;
   }, [isOpen]);
 
   useEffect(() => {
+    if (!isClient) return;
+
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => {
       window.removeEventListener('resize', checkMobile);
       document.body.style.overflow = 'unset';
     };
-  }, [checkMobile]);
+  }, [checkMobile, isClient]);
 
   const handleResize = useCallback(() => {
+    if (!isClient) return;
+
     if (window.innerWidth >= 1024 && isOpen) {
       onClose();
     }
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, isClient]);
 
   useEffect(() => {
+    if (!isClient) return;
+
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [handleResize]);
+  }, [handleResize, isClient]);
 
   const getUserInitials = useCallback((name: string): string => {
     return name
@@ -100,21 +119,22 @@ const Sidebar: React.FC<SidebarProps> = ({
     });
   }, []);
 
+  // Memoized values that work on both server and client
   const sidebarClasses = useMemo(
     () =>
       clsx(
         'fixed inset-y-0 left-0 z-50 flex flex-col transition-all duration-300 ease-in-out h-full border-r',
         'bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700',
         {
-          'w-80': isMobile,
-          'w-20': !isMobile && isCollapsed,
-          'w-64': !isMobile && !isCollapsed,
+          'w-80': isClient && isMobile,
+          'w-20': isClient && !isMobile && isCollapsed,
+          'w-64': isClient && !isMobile && !isCollapsed,
           'translate-x-0': isOpen,
           '-translate-x-full lg:translate-x-0': !isOpen,
-          'lg:static': !isMobile,
+          'lg:static': isClient && !isMobile,
         }
       ),
-    [isMobile, isCollapsed, isOpen]
+    [isMobile, isCollapsed, isOpen, isClient]
   );
 
   const overlayClasses = useMemo(
@@ -122,11 +142,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       clsx(
         'fixed inset-0 z-40 transition-opacity duration-300 lg:hidden bg-black dark:bg-gray-950',
         {
-          'opacity-50': isOpen,
-          'opacity-0 pointer-events-none': !isOpen,
+          'opacity-50': isOpen && isClient && isMobile,
+          'opacity-0 pointer-events-none': !isOpen || !isClient || !isMobile,
         }
       ),
-    [isOpen]
+    [isOpen, isClient, isMobile]
   );
 
   const getThemeIcon = () => {
@@ -155,9 +175,14 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
+  // Show simplified sidebar on server, full sidebar on client
+  const showFullSidebar = isClient;
+  const showCollapsedContent = !isCollapsed || (isClient && isMobile);
+  const showMobileOverlay = isClient && isMobile && isOpen;
+
   return (
     <>
-      {isMobile && (
+      {showMobileOverlay && (
         <div
           className={overlayClasses}
           onClick={handleOverlayClick}
@@ -166,7 +191,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       )}
 
       <aside className={sidebarClasses} aria-label="Main navigation">
-        {!isMobile && (
+        {showFullSidebar && !isMobile && (
           <button
             onClick={handleCollapseToggle}
             className={clsx(
@@ -200,7 +225,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 />
               </svg>
             </div>
-            {(!isCollapsed || isMobile) && (
+            {showCollapsedContent && (
               <div className="flex-1 min-w-0">
                 <span className="text-lg font-bold text-gray-900 dark:text-white block truncate">
                   ShiftPilot
@@ -222,10 +247,12 @@ const Sidebar: React.FC<SidebarProps> = ({
                     {getUserInitials(user.name)}
                   </span>
                 </div>
-                <span className="absolute bottom-0 right-0 w-3 h-3 bg-success-500 rounded-full border-2 border-white dark:border-gray-900" />
+                {showFullSidebar && (
+                  <span className="absolute bottom-0 right-0 w-3 h-3 bg-success-500 rounded-full border-2 border-white dark:border-gray-900" />
+                )}
               </div>
 
-              {(!isCollapsed || isMobile) && (
+              {showCollapsedContent && (
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
                     {user.name}
@@ -233,10 +260,12 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate capitalize">
                     {user.role.replace('_', ' ')}
                   </p>
-                  <div className="flex items-center mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    <span className="w-2 h-2 bg-success-500 rounded-full mr-1 inline-block" />
-                    <span>Online</span>
-                  </div>
+                  {showFullSidebar && (
+                    <div className="flex items-center mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      <span className="w-2 h-2 bg-success-500 rounded-full mr-1 inline-block" />
+                      <span>Online</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -246,7 +275,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex-1 overflow-y-auto">
           <nav className="p-4" aria-label="Primary navigation">
             <MenuItems
-              isCollapsed={isMobile ? false : isCollapsed}
+              isCollapsed={showFullSidebar && isMobile ? false : isCollapsed}
               menuItems={menuItems}
               userRole={user?.role}
               openDropdowns={openDropdowns}
@@ -263,7 +292,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center justify-center">
               {getThemeIcon()}
             </div>
-            {(!isCollapsed || isMobile) && (
+            {showCollapsedContent && (
               <span className="font-medium">{getThemeLabel()}</span>
             )}
           </button>
@@ -275,7 +304,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center justify-center">
               <Settings className="w-5 h-5" />
             </div>
-            {(!isCollapsed || isMobile) && (
+            {showCollapsedContent && (
               <span className="font-medium">Settings</span>
             )}
           </button>
@@ -287,7 +316,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center justify-center">
               <LogOut className="w-5 h-5" />
             </div>
-            {(!isCollapsed || isMobile) && (
+            {showCollapsedContent && (
               <span className="font-medium">Logout</span>
             )}
           </button>
