@@ -2,9 +2,7 @@ import { BaseClient } from './baseClient';
 import {
   LoginCredentials,
   RegisterData,
-  ApiResponse,
-  AuthUserResponse,
-  LoginResponse,
+  
 } from '../../types';
 
 interface AuthUser {
@@ -30,15 +28,10 @@ interface LoginRequestData extends LoginCredentials {
   device_name: string;
 }
 
-interface RegistrationRequestData extends RegisterData {
-  role: string;
-}
 
-interface RecruiterRegistrationRequestData extends RegisterData {
-  role: string;
-}
+type RequestData =
+  | LoginRequestData
 
-type RequestData = LoginRequestData | RegistrationRequestData | RecruiterRegistrationRequestData;
 
 export class AuthClient extends BaseClient {
   protected baseURL: string;
@@ -75,7 +68,10 @@ export class AuthClient extends BaseClient {
     return result.message || 'Request failed';
   }
 
-  protected async handleAuthRequest(url: string, data: RequestData): Promise<AuthResult> {
+  protected async handleAuthRequest(
+    url: string,
+    data: RequestData
+  ): Promise<AuthResult> {
     try {
       await this.getCsrfCookie();
 
@@ -83,7 +79,7 @@ export class AuthClient extends BaseClient {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
         credentials: 'include',
         body: JSON.stringify(data),
@@ -98,98 +94,11 @@ export class AuthClient extends BaseClient {
       this.storeAuth(result.access_token, result.user);
       return { success: true };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Network error - cannot connect to server';
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Network error - cannot connect to server';
       return { error: errorMessage };
-    }
-  }
-
-  async login(
-    credentials: LoginCredentials
-  ): Promise<ApiResponse<LoginResponse>> {
-    const requestData: LoginRequestData = {
-      ...credentials,
-      device_name: 'web-app'
-    };
-    const result = await this.handleAuthRequest('/auth/login', requestData);
-    if (result.success) {
-      return { success: true, data: { message: 'Login successful' } as LoginResponse }; // Placeholder for actual LoginResponse data
-    } else {
-      return { success: false, error: result.error };
-    }
-  }
-
-  async logout(): Promise<ApiResponse<undefined>> {
-    const token = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('auth_token='))
-      ?.split('=')[1];
-
-    try {
-      if (token) {
-        await fetch(`${this.baseURL}/api/auth/logout`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json'
-          },
-          credentials: 'include',
-        });
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-      document.cookie = 'auth_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-    }
-    return { success: true, data: undefined };
-  }
-
-  async getUser(): Promise<ApiResponse<AuthUserResponse>> {
-    // This method needs to be implemented or removed if not used.
-    // For now, returning a placeholder.
-    return { success: false, error: 'Not Implemented' };
-  }
-
-  async register(data: RegisterData): Promise<ApiResponse<AuthUserResponse>> {
-    const requestData: RegistrationRequestData = {
-      ...data,
-      role: 'candidate'
-    };
-    const result = await this.handleAuthRequest('/auth/register', requestData);
-    if (result.success) {
-      return { success: true, data: { message: 'Registration successful' } as AuthUserResponse }; // Placeholder
-    } else {
-      return { success: false, error: result.error };
-    }
-  }
-
-  async registerAgency(
-    data: RegisterData
-  ): Promise<ApiResponse<AuthUserResponse>> {
-    const requestData: RegistrationRequestData = {
-      ...data,
-      role: 'agency'
-    };
-    const result = await this.handleAuthRequest('/auth/register', requestData);
-    if (result.success) {
-      return { success: true, data: { message: 'Registration successful' } as AuthUserResponse }; // Placeholder
-    } else {
-      return { success: false, error: result.error };
-    }
-  }
-
-  async registerEmployer(
-    data: RegisterData
-  ): Promise<ApiResponse<AuthUserResponse>> {
-    const requestData: RegistrationRequestData = {
-      ...data,
-      role: 'employer'
-    };
-    const result = await this.handleAuthRequest('/auth/register', requestData);
-    if (result.success) {
-      return { success: true, data: { message: 'Registration successful' } as AuthUserResponse }; // Placeholder
-    } else {
-      return { success: false, error: result.error };
     }
   }
 }

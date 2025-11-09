@@ -1,4 +1,4 @@
-import { AuthClient } from './authClient';
+// lib/api/apiClient.ts
 import { BaseClient } from './baseClient';
 import {
   ApiResponse,
@@ -29,26 +29,28 @@ import {
   UsersQueryParams,
 } from '@/types';
 
-type JsonValue = string | number | boolean | null | JsonObject | JsonArray;
-interface JsonObject {
-  [key: string]: JsonValue;
-}
-type JsonArray = JsonValue[];
-
 export class ApiClient extends BaseClient {
-  public auth: AuthClient;
+  private static instance: ApiClient;
 
-  constructor(
-    authClient: AuthClient,
-    baseURL?: string,
-    authToken: string | null = null
-  ) {
-    super(authToken, baseURL);
-    this.auth = authClient;
+  private constructor() {
+    super();
+    this.initializeToken();
   }
 
-  private toJsonObject<T>(data: T): JsonObject {
-    return JSON.parse(JSON.stringify(data));
+  public static getInstance(): ApiClient {
+    if (!ApiClient.instance) {
+      ApiClient.instance = new ApiClient();
+    }
+    return ApiClient.instance;
+  }
+
+  private initializeToken(): void {
+    if (typeof window !== 'undefined') {
+      const cookies = document.cookie.split('; ');
+      const tokenCookie = cookies.find((row) => row.startsWith('auth_token='));
+      const token = tokenCookie?.split('=')[1] || null;
+      this.setAuthToken(token);
+    }
   }
 
   async getCalendarEvents(
@@ -87,7 +89,7 @@ export class ApiClient extends BaseClient {
   ): Promise<ApiResponse<undefined>> {
     return this.patch<ApiResponse<undefined>>(
       `/admin/users/${userId}/status`,
-      this.toJsonObject(status)
+      status
     );
   }
 
@@ -224,7 +226,7 @@ export class ApiClient extends BaseClient {
   ): Promise<ApiResponse<Employee>> {
     return this.put<ApiResponse<Employee>>(
       `/agency/employees/${employeeId}`,
-      this.toJsonObject(employeeData)
+      employeeData
     );
   }
 
@@ -234,7 +236,7 @@ export class ApiClient extends BaseClient {
   ): Promise<ApiResponse<Placement>> {
     return this.put<ApiResponse<Placement>>(
       `/agency/placements/${placementId}`,
-      this.toJsonObject(placementData)
+      placementData
     );
   }
 
@@ -389,7 +391,7 @@ export class ApiClient extends BaseClient {
   ): Promise<ApiResponse<Location>> {
     return this.put<ApiResponse<Location>>(
       `/employer/locations/${locationId}`,
-      this.toJsonObject(locationData)
+      locationData
     );
   }
 
@@ -457,7 +459,7 @@ export class ApiClient extends BaseClient {
   ): Promise<ApiResponse<EmployeeAvailability>> {
     return this.post<ApiResponse<EmployeeAvailability>>(
       '/employee/availability',
-      this.toJsonObject(availabilityData)
+      availabilityData
     );
   }
 
@@ -481,7 +483,7 @@ export class ApiClient extends BaseClient {
   ): Promise<ApiResponse<EmployeeAvailability>> {
     return this.put<ApiResponse<EmployeeAvailability>>(
       `/employee/availability/${availabilityId}`,
-      this.toJsonObject(availabilityData)
+      availabilityData
     );
   }
 
@@ -497,10 +499,7 @@ export class ApiClient extends BaseClient {
     shiftId: number,
     shiftData: Partial<Shift>
   ): Promise<ApiResponse<Shift>> {
-    return this.put<ApiResponse<Shift>>(
-      `/shifts/${shiftId}`,
-      this.toJsonObject(shiftData)
-    );
+    return this.put<ApiResponse<Shift>>(`/shifts/${shiftId}`, shiftData);
   }
 
   async updateTimesheet(
@@ -509,7 +508,9 @@ export class ApiClient extends BaseClient {
   ): Promise<ApiResponse<Timesheet>> {
     return this.put<ApiResponse<Timesheet>>(
       `/timesheets/${timesheetId}`,
-      this.toJsonObject(timesheetData)
+      timesheetData
     );
   }
 }
+
+export const apiClient = ApiClient.getInstance();

@@ -9,12 +9,7 @@ import {
   formatCurrency,
   formatDate,
 } from '@/app/components/ui';
-import {
-  BulkAction,
-  ExportOptions,
-  AdvancedFilter,
-  Column,
-} from '@/types';
+import { BulkAction, ExportOptions, AdvancedFilter, Column } from '@/types';
 import type { PaginatedResponse as BackendPaginatedResponse } from '@/types/pagination';
 import type { Placement as BackendPlacement } from '@/types/api';
 import { usePlacements } from '@/hooks/usePlacements';
@@ -34,7 +29,6 @@ interface Placement {
   agency_responses_count?: number;
   response_deadline?: string;
 }
-
 
 interface PlacementsDataTableProps {
   authToken: string | null;
@@ -60,7 +54,7 @@ interface SortState {
   direction: 'asc' | 'desc';
 }
 
-export function PlacementsDataTable({ authToken }: PlacementsDataTableProps) {
+export function PlacementsDataTable() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -78,7 +72,7 @@ export function PlacementsDataTable({ authToken }: PlacementsDataTableProps) {
     isLoading,
     error,
     refetch,
-  } = usePlacements(filters, authToken);
+  } = usePlacements(filters);
 
   const getTotalCount = (
     placementsResponse: BackendPaginatedResponse<BackendPlacement> | undefined

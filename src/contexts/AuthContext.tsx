@@ -1,23 +1,20 @@
 // lib/auth/AuthContext.tsx
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from 'react';
 import { AuthUser, AuthContextType } from '@/types/auth';
+import { apiClient } from '@/lib/api/apiClient';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [authState, setAuthState] = useState<{
-    user: AuthUser | null;
-    token: string | null;
-    isLoading: boolean;
-  }>({
-    user: null,
-    token: null,
-    isLoading: true,
-  });
-
-  const getAuthFromCookies = (): {
+  const getAuthFromCookies = useCallback((): {
     user: AuthUser | null;
     token: string | null;
   } => {
@@ -37,7 +34,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const userData = JSON.parse(
           decodeURIComponent(userCookie.split('=')[1])
         );
-        // Validate user structure
         if (userData && userData.id && userData.email && userData.role) {
           user = userData as AuthUser;
         }
@@ -47,32 +43,96 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     return { user, token };
-  };
+  }, []);
 
-  const refreshAuth = async (): Promise<void> => {
+  const [authState, setAuthState] = useState<{
+    user: AuthUser | null;
+    token: string | null;
+    isLoading: boolean;
+  }>(() => {
+    const { user, token } = getAuthFromCookies();
+    if (token) {
+      apiClient.setAuthToken(token);
+    }
+    return {
+      user,
+      token,
+      isLoading: !token, // Only loading if no token found initially
+    };
+  });
+
+  const refreshAuth = useCallback(async (): Promise<void> => {
     try {
-      const response = await fetch('/api/auth/me', {
-        credentials: 'include',
-      });
+      console.log('Starting auth refresh...');
 
-      if (response.ok) {
-        const session = await response.json();
+      // FIRST: Get auth from cookies immediately
+      const { user: cookieUser, token: cookieToken } = getAuthFromCookies();
+      console.log(
+        'Cookie auth - user:',
+        cookieUser?.email,
+        'token exists:',
+        !!cookieToken
+      );
+
+      // Set token in API client immediately if not already set by initial state
+      if (cookieToken && !apiClient.getAuthToken()) {
+        apiClient.setAuthToken(cookieToken);
+        console.log('Token set in API client from cookies');
+      }
+
+      // THEN: Try to refresh from API
+      try {
+        const response = await fetch('/api/auth/session', {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        console.log('Session API response status:', response.status);
+
+        if (response.ok) {
+          const session = await response.json();
+          console.log('Session API success:', session.user?.email);
+          setAuthState({
+            user: session.user,
+            token: session.access_token,
+            isLoading: false,
+          });
+          apiClient.setAuthToken(session.access_token);
+        } else {
+          // API failed but we have cookies - use them
+          console.log('Session API failed, using cookies');
+          setAuthState({
+            user: cookieUser,
+            token: cookieToken,
+            isLoading: false,
+          });
+          // Token already set from cookies above
+        }
+      } catch (apiError) {
+        console.error('Session API call failed:', apiError);
+        // API call failed but we have cookies - use them
         setAuthState({
-          user: session.user,
-          token: session.access_token,
+          user: cookieUser,
+          token: cookieToken,
           isLoading: false,
         });
-      } else {
-        const { user, token } = getAuthFromCookies();
-        setAuthState({ user, token, isLoading: false });
       }
     } catch (error) {
+      console.error('Auth refresh error:', error);
+      // Final fallback to cookies
       const { user, token } = getAuthFromCookies();
-      setAuthState({ user, token, isLoading: false });
+      setAuthState({
+        user,
+        token,
+        isLoading: false,
+      });
+      apiClient.setAuthToken(token);
     }
-  };
+  }, [getAuthFromCookies]);
 
-  const logout = async (): Promise<void> => {
+  const logout = useCallback(async (): Promise<void> => {
     try {
       await fetch('/api/auth/logout', {
         method: 'POST',
@@ -82,13 +142,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Logout error:', error);
     } finally {
       setAuthState({ user: null, token: null, isLoading: false });
-      // Clear cookies
+      apiClient.clearAuthToken();
       document.cookie =
         'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
       document.cookie =
         'auth_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     }
-  };
+  }, []);
 
   useEffect(() => {
     refreshAuth();

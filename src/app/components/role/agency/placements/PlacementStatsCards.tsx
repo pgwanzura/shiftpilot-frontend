@@ -5,10 +5,6 @@ import { InteractiveStatsCard } from '@/app/components/ui';
 import { Icon } from '@/app/components/ui';
 import { usePlacementStats } from '@/hooks/usePlacements';
 
-interface PlacementStatsCardsProps {
-  authToken: string | null;
-}
-
 interface PlacementStatsData {
   total: number;
   active: number;
@@ -18,13 +14,13 @@ interface PlacementStatsData {
   responses: number;
 }
 
-export function PlacementStatsCards({ authToken }: PlacementStatsCardsProps) {
+interface StatsResponse {
+  data?: PlacementStatsData | PlacementStatsData[];
+}
+
+export function PlacementStatsCards() {
   const router = useRouter();
-  const {
-    data: statsResponse,
-    isLoading,
-    error,
-  } = usePlacementStats(authToken);
+  const { data: statsResponse, isLoading, error } = usePlacementStats();
 
   const handleTotalClick = () => {
     router.push('/agency/placements?status=all');
@@ -48,6 +44,47 @@ export function PlacementStatsCards({ authToken }: PlacementStatsCardsProps) {
 
   const handleResponsesClick = () => {
     router.push('/agency/responses');
+  };
+
+  const extractStatsData = (response: unknown): PlacementStatsData => {
+    if (!response || typeof response !== 'object') {
+      return {
+        total: 0,
+        active: 0,
+        draft: 0,
+        filled: 0,
+        completed: 0,
+        responses: 0,
+      };
+    }
+
+    const statsResponse = response as StatsResponse;
+
+    if (!statsResponse.data) {
+      return {
+        total: 0,
+        active: 0,
+        draft: 0,
+        filled: 0,
+        completed: 0,
+        responses: 0,
+      };
+    }
+
+    if (Array.isArray(statsResponse.data)) {
+      return (
+        statsResponse.data[0] || {
+          total: 0,
+          active: 0,
+          draft: 0,
+          filled: 0,
+          completed: 0,
+          responses: 0,
+        }
+      );
+    }
+
+    return statsResponse.data;
   };
 
   if (isLoading) {
@@ -77,42 +114,18 @@ export function PlacementStatsCards({ authToken }: PlacementStatsCardsProps) {
           <Icon name="alertTriangle" className="h-5 w-5 text-yellow-600" />
           <div>
             <div className="text-yellow-800 font-medium text-sm">
-              Unable to load statistics
+              Unable to load placement stats
             </div>
-            <div className="text-yellow-700 text-sm mt-1">{error.message}</div>
+            <div className="text-yellow-700 text-sm mt-1">
+              Some features may be temporarily unavailable
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
-  const statsData: PlacementStatsData = (() => {
-    if (statsResponse?.data) {
-      if (Array.isArray(statsResponse.data)) {
-        return (
-          (statsResponse.data[0] as PlacementStatsData) || {
-            total: 0,
-            active: 0,
-            draft: 0,
-            filled: 0,
-            completed: 0,
-            responses: 0,
-          }
-        );
-      } else if (typeof statsResponse.data === 'object') {
-        return statsResponse.data as PlacementStatsData;
-      }
-    }
-
-    return {
-      total: 0,
-      active: 0,
-      draft: 0,
-      filled: 0,
-      completed: 0,
-      responses: 0,
-    };
-  })();
+  const statsData = extractStatsData(statsResponse);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">

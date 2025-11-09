@@ -24,9 +24,9 @@ export type JsonValue =
   | JsonObject
   | JsonArray;
 export interface JsonObject {
-  [key: string]: JsonValue;
+  [key: string]: JsonValue | undefined;
 }
-export type JsonArray = Array<JsonValue>;
+export type JsonArray = JsonValue[];
 
 export interface User extends AuthUser {
   phone?: string;

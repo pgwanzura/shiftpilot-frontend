@@ -40,7 +40,7 @@ export {
 } from './actions';
 
 // Providers
-export { AuthProvider, useAuth } from './providers';
+// export { AuthProvider, useAuth } from './providers'; // Removed as providers directory was deleted
 
 // Utils
 export * from './roles';

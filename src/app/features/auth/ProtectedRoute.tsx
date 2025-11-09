@@ -1,6 +1,6 @@
 // @/components/auth/ProtectedRoute.tsx
 'use client';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { Loader } from '@/app/components/ui';
 
 interface ProtectedRouteProps {
