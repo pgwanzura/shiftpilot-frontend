@@ -1,5 +1,5 @@
 import { JSX } from 'react';
-import { CalendarEvent } from './utils/types';
+import { CalendarEvent } from '@/types';
 import {
   getDaysInMonth,
   getFirstDayOfMonth,
@@ -9,8 +9,6 @@ import {
   shortDayNames,
 } from './utils/calendarHelpers';
 import { Icon } from '@/app/components/ui';
-import { StatusBadge } from '@/app/components/ui/StatusBadge';
-import { getStatusBadgeConfig } from './utils/calendarHelpers';
 
 interface CalendarMonthViewProps {
   currentDate: Date;
@@ -64,13 +62,15 @@ export function CalendarMonthView({
             h-36 p-2 border border-gray-100 dark:border-gray-700 
             cursor-pointer transition-all duration-300 ease-in-out 
             group relative
-            ${isToday
-              ? 'bg-primary-50 dark:bg-primary-900/20'
-              : 'bg-white dark:bg-gray-800 hover:bg-primary-50 dark:hover:bg-primary-900/10'
+            ${
+              isToday
+                ? 'bg-primary-50 dark:bg-primary-900/20'
+                : 'bg-white dark:bg-gray-800 hover:bg-primary-50 dark:hover:bg-primary-900/10'
             }
-            ${isSelected
-              ? '!border-2 !border-primary-500 bg-primary-50 dark:bg-primary-900/20 z-10'
-              : ''
+            ${
+              isSelected
+                ? '!border-2 !border-primary-500 bg-primary-50 dark:bg-primary-900/20 z-10'
+                : ''
             }
           `}
         >
@@ -78,13 +78,14 @@ export function CalendarMonthView({
             <span
               className={`
                 text-sm font-bold transition-all duration-300 ease-in-out
-                ${isToday
-                  ? 'text-primary-500 dark:text-primary-400'
-                  : isSelected
+                ${
+                  isToday
                     ? 'text-primary-500 dark:text-primary-400'
-                    : date.getDay() === 0
-                      ? 'text-red-500 dark:text-red-400'
-                      : 'text-gray-700 dark:text-gray-300'
+                    : isSelected
+                      ? 'text-primary-500 dark:text-primary-400'
+                      : date.getDay() === 0
+                        ? 'text-red-500 dark:text-red-400'
+                        : 'text-gray-700 dark:text-gray-300'
                 }
               `}
             >

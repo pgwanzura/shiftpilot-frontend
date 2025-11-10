@@ -1,15 +1,9 @@
-import { CalendarEvent } from './utils/types';
-import {
-  getEventColor,
-  getEventIcon,
-  getStatusBadgeConfig,
-} from './utils/calendarHelpers';
-import { Icon } from '@/app/components/ui';
-import { StatusBadge } from '@/app/components/ui/StatusBadge';
+import { CalendarEvent } from '@/types';
 
 interface SelectedDateEventsProps {
   selectedDate: Date | null;
   selectedDateEvents: CalendarEvent[];
+  selectedEvent: CalendarEvent | null;
   onEventClick: (event: CalendarEvent) => void;
   onNewShiftClick: () => void;
 }
@@ -17,110 +11,57 @@ interface SelectedDateEventsProps {
 export function SelectedDateEvents({
   selectedDate,
   selectedDateEvents,
+  selectedEvent,
   onEventClick,
   onNewShiftClick,
 }: SelectedDateEventsProps) {
+  if (!selectedDate) return null;
+
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-          {selectedDate
-            ? selectedDate.toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })
-            : 'Select a Date'}
-        </h3>
-        <span className="text-sm text-primary-500 dark:text-primary-400">
-          {selectedDateEvents.length} events
-        </span>
+    <div className="bg-white border border-gray-200 rounded-lg p-6">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold text-gray-900">
+          Events for {selectedDate.toLocaleDateString()}
+        </h2>
+        <button
+          onClick={onNewShiftClick}
+          className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+        >
+          Add Event
+        </button>
       </div>
 
-      {selectedDate ? (
-        <div className="space-y-3">
-          {selectedDateEvents.length > 0 ? (
-            selectedDateEvents.map((event) => (
-              <div
-                key={event.id}
-                onClick={() => onEventClick(event)}
-                className={`p-4 rounded-lg border cursor-pointer hover:opacity-90 transition-opacity ${getEventColor(event.type, event.status)}`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <div
-                        className={`p-2 rounded-lg ${getEventColor(event.type, event.status).split(' ')[0]}`}
-                      >
-                        <Icon
-                          name={getEventIcon(event.type)}
-                          className="w-4 h-4"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <h4 className="font-bold text-gray-900 dark:text-white">
-                            {event.title}
-                          </h4>
-                          <StatusBadge
-                            status={event.status}
-                            config={getStatusBadgeConfig(event.status)}
-                            size="sm"
-                          />
-                        </div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {event.startTime} - {event.endTime} • {event.location}
-                        </p>
-                        {event.role && (
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Role: {event.role}
-                          </p>
-                        )}
-                        {event.employee && (
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Employee: {event.employee}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 ml-4">
-                    <Icon name="moreHorizontal" className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="text-center py-8">
-              <Icon
-                name="calendar"
-                className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4"
-              />
-              <p className="text-gray-500 dark:text-gray-400">
-                No events scheduled for this date
-              </p>
-              <button
-                onClick={onNewShiftClick}
-                className="mt-3 text-primary-500 dark:text-primary-400 hover:text-primary-600 dark:hover:text-primary-300 font-bold flex items-center justify-center space-x-2 mx-auto"
-              >
-                <Icon name="plus" className="w-4 h-4" />
-                <span>Create Shift</span>
-              </button>
+      <div className="space-y-3">
+        {selectedDateEvents.map((event) => (
+          <div
+            key={event.id}
+            className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+              selectedEvent?.id === event.id
+                ? 'border-blue-500 bg-blue-50'
+                : 'border-gray-200 hover:border-gray-300'
+            }`}
+            onClick={() => onEventClick(event)}
+          >
+            <div className="flex justify-between items-start">
+              <h3 className="font-medium text-gray-900">{event.title}</h3>
+              <span className="text-sm text-gray-500 capitalize">
+                {event.type.replace('_', ' ')}
+              </span>
             </div>
-          )}
-        </div>
-      ) : (
-        <div className="text-center py-8">
-          <Icon
-            name="calendar"
-            className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4"
-          />
-          <p className="text-gray-500 dark:text-gray-400">
-            Select a date to view events
+            <p className="text-sm text-gray-600 mt-1">
+              {event.date.toLocaleTimeString()}
+            </p>
+            {event.description && (
+              <p className="text-sm text-gray-500 mt-2">{event.description}</p>
+            )}
+          </div>
+        ))}
+        {selectedDateEvents.length === 0 && (
+          <p className="text-gray-500 text-center py-4">
+            No events for this date
           </p>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

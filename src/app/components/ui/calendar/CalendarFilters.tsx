@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Button, Icon } from '@/app/components/ui';
-import { EventFilter, FilterOption } from './utils/types';
+import { Button } from '@/app/components/ui';
+import { EventFilter, FilterOption } from '@/types';
 
 interface CalendarFiltersProps {
   filter: EventFilter;

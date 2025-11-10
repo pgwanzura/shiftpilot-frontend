@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarEvent } from './utils/types';
+import { CalendarEvent } from '@/types';
 import {
   getEventsForDate,
   getEventColor,
@@ -195,7 +195,7 @@ export function CalendarDayView({
         {/* Current Time Indicator */}
         {isToday && (
           <div
-            className="absolute left-24 right-0 h-0.5 bg-error-500 z-30"
+            className="absolute left-24 right-0 h-0.25 bg-error-500 z-30"
             style={{ top: `${currentTimePosition}px` }}
           >
             <div className="absolute -left-2 -top-1.5 w-3 h-3 bg-error-500 rounded-full border-2 border-white dark:border-gray-900" />

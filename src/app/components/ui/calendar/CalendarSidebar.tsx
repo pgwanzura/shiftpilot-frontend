@@ -1,4 +1,4 @@
-import { CalendarEvent } from './utils/types';
+import { CalendarEvent } from '@/types';
 import {
   getEventColor,
   getEventIcon,
@@ -10,20 +10,78 @@ import { StatusBadge } from '@/app/components/ui/StatusBadge';
 interface CalendarSidebarProps {
   upcomingEvents: CalendarEvent[];
   selectedDate: Date | null;
+  selectedEvent: CalendarEvent | null;
   onDateSelect: (date: Date) => void;
   onEventClick: (event: CalendarEvent) => void;
   onNewShiftClick: () => void;
+  onClearSelection: () => void;
 }
 
 export function CalendarSidebar({
   upcomingEvents,
-  selectedDate,
+  selectedEvent,
   onDateSelect,
   onEventClick,
   onNewShiftClick,
+  onClearSelection,
 }: CalendarSidebarProps) {
   return (
     <div className="space-y-6">
+      {selectedEvent && (
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+              Selected Event
+            </h3>
+            <button
+              onClick={onClearSelection}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            >
+              <Icon name="x" className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="p-4 border border-primary-200 dark:border-primary-700 rounded-lg bg-primary-50 dark:bg-primary-900/10">
+            <div className="flex items-start space-x-3">
+              <div
+                className={`p-2 rounded-lg ${getEventColor(selectedEvent.type, selectedEvent.status).split(' ')[0]}`}
+              >
+                <Icon
+                  name={getEventIcon(selectedEvent.type)}
+                  className="w-4 h-4"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-gray-900 dark:text-white truncate text-sm mb-1">
+                  {selectedEvent.title}
+                </p>
+                <p className="text-xs text-primary-500 dark:text-primary-400 mb-1">
+                  {selectedEvent.date.toLocaleDateString('en-US', {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {selectedEvent.startTime} • {selectedEvent.location}
+                </p>
+                {selectedEvent.role && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {selectedEvent.role}
+                  </p>
+                )}
+                <div className="mt-2">
+                  <StatusBadge
+                    status={selectedEvent.status}
+                    config={getStatusBadgeConfig(selectedEvent.status)}
+                    size="sm"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white">
@@ -42,7 +100,11 @@ export function CalendarSidebar({
                 onDateSelect(event.date);
                 onEventClick(event);
               }}
-              className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/10 transition-colors cursor-pointer group"
+              className={`p-4 border rounded-lg transition-colors cursor-pointer group ${
+                selectedEvent?.id === event.id
+                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/10 dark:border-primary-700'
+                  : 'border-gray-200 dark:border-gray-700 hover:bg-primary-50 dark:hover:bg-primary-900/10'
+              }`}
             >
               <div className="flex items-start space-x-3">
                 <div
