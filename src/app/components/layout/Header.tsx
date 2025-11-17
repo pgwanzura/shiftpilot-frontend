@@ -27,7 +27,7 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const checkMobile = () => {
+    const checkMobile = (): void => {
       setIsMobile(window.innerWidth < 1024);
     };
 
@@ -37,7 +37,7 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
   }, []);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent): void => {
       if (
         notificationsRef.current &&
         !notificationsRef.current.contains(event.target as Node)
@@ -74,22 +74,17 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
   const getCalendarDescription = (): string => {
     if (pathname !== '/calendar') return pageDescription;
 
-    const roleDescriptions = {
-      super_admin:
-        'Manage platform-wide schedules, events, and resource allocation',
-      agency_admin:
-        'Manage agency schedules, shift assignments, and resource planning',
-      agent: 'View and manage shift schedules, assignments, and availability',
-      employer_admin:
-        'Manage company schedules, shift planning, and resource allocation',
-      contact:
-        'View and manage daily schedules, shift assignments, and approvals',
-      employee:
-        'View personal schedule, shift assignments, and availability planning',
+    const roleDescriptions: Record<string, string> = {
+      super_admin: 'Manage platform-wide schedules and resource allocation',
+      agency_admin: 'Manage agency schedules and shift assignments',
+      agent: 'View and manage shift schedules and assignments',
+      employer_admin: 'Manage company schedules and shift planning',
+      contact: 'View and manage daily schedules and approvals',
+      employee: 'View personal schedule and shift assignments',
     };
 
     return (
-      roleDescriptions[user?.role as keyof typeof roleDescriptions] ||
+      roleDescriptions[user?.role || ''] ||
       'Manage your schedules and calendar events'
     );
   };
@@ -101,7 +96,7 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
     return count > 99 ? '99+' : count.toString();
   };
 
-  const handleCalendarClick = () => {
+  const handleCalendarClick = (): void => {
     router.push('/calendar');
   };
 
@@ -114,7 +109,7 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
           <div className="flex items-center space-x-3">
             <button
               onClick={onMenuToggle}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               aria-label="Toggle menu"
             >
               <Icon
@@ -136,7 +131,7 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
             <div className="relative" ref={notificationsRef}>
               <button
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
+                className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 aria-label="Notifications"
               >
                 <Icon
@@ -157,8 +152,8 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
                 className="flex items-center"
                 aria-label="User menu"
               >
-                <div className="w-8 h-8 bg-gradient-to-br from-primary-600 to-primary-800 rounded-full flex items-center justify-center">
-                  <span className="text-white font-semibold text-xs">
+                <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
+                  <span className="text-white font-medium text-xs">
                     {getUserInitials(user?.name || 'User')}
                   </span>
                 </div>
@@ -181,7 +176,7 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
             </div>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             <button
               onClick={handleCalendarClick}
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -196,11 +191,11 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
             <div className="relative" ref={messagesRef}>
               <button
                 onClick={() => setIsMessagesOpen(!isMessagesOpen)}
-                className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
+                className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 aria-label="Messages"
               >
                 <Icon
-                  name="messageCircle"
+                  name="mail"
                   className="w-5 h-5 text-gray-600 dark:text-gray-400"
                 />
                 {messageCount > 0 && (
@@ -214,7 +209,7 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
             <div className="relative" ref={notificationsRef}>
               <button
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
+                className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 aria-label="Notifications"
               >
                 <Icon
@@ -253,8 +248,8 @@ export default function Header({ onMenuToggle, user }: HeaderProps) {
                     {user?.role?.replace('_', ' ') || 'Unknown Role'}
                   </p>
                 </div>
-                <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-primary-800 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-white font-semibold text-sm">
+                <div className="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-white font-medium text-sm">
                     {getUserInitials(user?.name || 'User')}
                   </span>
                 </div>

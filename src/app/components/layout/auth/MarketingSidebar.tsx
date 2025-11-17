@@ -15,7 +15,7 @@ export function MarketingSidebar({
   features,
 }: MarketingSidebarProps) {
   return (
-    <div className="md:w-1/2 bg-gradient-to-br from-primary-900 via-primary-800 to-primary-700 text-white p-8 md:p-12 flex flex-col relative overflow-hidden">
+    <div className="md:w-1/2 bg-primary-800 text-white p-8 md:p-12 flex flex-col relative overflow-hidden">
       <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:60px_60px]" />
       <div className="absolute top-0 left-0 w-64 h-64 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
       <div className="absolute bottom-0 right-0 w-80 h-80 bg-primary-400/10 rounded-full translate-x-1/3 translate-y-1/3 blur-3xl" />
