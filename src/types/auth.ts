@@ -58,6 +58,7 @@ export interface AuthActionResult {
   success: boolean;
   redirectTo?: string;
   message?: string;
+  requiresVerification?: boolean;
 }
 
 export interface LoginCredentials {
@@ -92,8 +93,6 @@ export interface AgencyRegistrationData extends BaseRegistrationData {
 export interface EmployerRegistrationData extends BaseRegistrationData {
   role: 'employer_admin';
 }
-
-
 
 export interface RegisterData {
   name: string;

@@ -1,5 +1,6 @@
 'use client';
 
+import { z } from 'zod';
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,6 +22,16 @@ interface LoginFormProps {
   error?: string | null;
 }
 
+type FormValues = {
+  email: string;
+  password: string;
+  remember: boolean;
+};
+
+interface LoginError {
+  message: string;
+}
+
 export default function LoginForm({
   onSubmit,
   isLoading = false,
@@ -32,17 +43,17 @@ export default function LoginForm({
     setLoginError(error);
   }, [error]);
 
-  // Type assertion to fix the TypeScript compatibility issue
-  const form = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema) as any,
+  const form = useForm<FormValues>({
+    resolver: zodResolver(loginSchema),
     defaultValues: {
       email: '',
       password: '',
       remember: false,
     },
+    mode: 'onChange',
   });
 
-  const handleFormSubmit = async (data: LoginFormData): Promise<void> => {
+  const handleFormSubmit = async (data: FormValues): Promise<void> => {
     setLoginError(null);
 
     try {
@@ -59,8 +70,15 @@ export default function LoginForm({
       }
     } catch (error: unknown) {
       console.error('[LOGIN] Unexpected error during login:', error);
-      const errorMessage =
-        error instanceof Error ? error.message : 'An unexpected error occurred';
+
+      let errorMessage = 'An unexpected error occurred';
+
+      if (error && typeof error === 'object' && 'message' in error) {
+        errorMessage = (error as LoginError).message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+
       setLoginError(errorMessage);
     }
   };

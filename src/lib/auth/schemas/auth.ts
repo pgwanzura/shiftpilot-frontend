@@ -12,7 +12,7 @@ export const passwordSchema = z
   );
 
 export const loginSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
+  email: z.email('Please enter a valid email address'),
   password: z.string().min(1, 'Password is required'),
   remember: z.boolean().default(false),
 });
@@ -24,7 +24,7 @@ export const loginCredentialsSchema = loginSchema.extend({
 export const registerSchema = z
   .object({
     name: z.string().min(1, 'Full name is required'),
-    email: z.string().email('Invalid email address'),
+    email: z.email('Invalid email address'),
     password: passwordSchema,
     confirmPassword: z.string(),
     terms: z.boolean().refine((val) => val === true, {
@@ -83,24 +83,25 @@ export const employerStep2Schema = z.object({
   }),
 });
 
-// Complete registration schemas
 export const agencyRegistrationSchema = registrationStep1Schema
-  .merge(agencyStep2Schema)
-  .extend({
-    role: z.literal('agency_admin'),
-    confirmPassword: z.string(),
-  })
+  .merge(
+    agencyStep2Schema.extend({
+      confirmPassword: z.string(),
+      role: z.literal('agency_admin'),
+    })
+  )
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
     path: ['confirmPassword'],
   });
 
 export const employerRegistrationSchema = registrationStep1Schema
-  .merge(employerStep2Schema)
-  .extend({
-    role: z.literal('employer_admin'),
-    confirmPassword: z.string(),
-  })
+  .merge(
+    employerStep2Schema.extend({
+      confirmPassword: z.string(),
+      role: z.literal('employer_admin'),
+    })
+  )
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
     path: ['confirmPassword'],

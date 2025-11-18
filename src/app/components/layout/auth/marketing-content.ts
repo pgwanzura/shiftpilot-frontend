@@ -1,97 +1,127 @@
 export const marketingContent = {
   login: {
-    title: 'Build Your',
-    subtitle: 'Trust Profile',
+    title: 'Power Your Workforce',
+    subtitle: 'Enterprise Staffing Intelligence',
     description:
-      'Transform professional endorsements into verifiable career assets.',
+      'Connect the right talent with the right opportunities through our intelligent staffing platform.',
     features: [
       {
-        title: 'AI-Verified',
-        description: 'Fraud-proof verification',
+        title: 'Real-Time Availability',
+        description: 'Instant visibility into candidate schedules and capacity',
       },
       {
-        title: 'EcoTrust™',
-        description: 'Reputation metrics',
+        title: 'Smart Talent Matching',
+        description: 'AI-driven connections based on skills and preferences',
       },
       {
-        title: 'Smart Matching',
-        description: 'AI-powered talent matching',
+        title: 'Verified Professionals',
+        description: 'Quality-checked talent and trusted employers',
       },
       {
-        title: 'Real-time Analytics',
-        description: 'Live staffing insights',
+        title: 'Secure Platform',
+        description: 'Protected contracts and seamless payments',
       },
     ],
   },
 
   register: {
-    title: 'Join ShiftPilot',
-    subtitle: 'Transform Your Workforce Management',
-    description: 'Choose how you want to streamline your staffing operations',
+    title: 'Join the Future of Staffing',
+    subtitle: 'Intelligent Workforce Platform',
+    description:
+      'Create your account to access premium staffing solutions and opportunities',
     features: [
       {
-        title: 'Smart Matching',
-        description: 'AI-powered shift to talent matching',
+        title: 'Agency Growth',
+        description: 'Expand your talent placement capabilities',
       },
       {
-        title: 'Verified Talent',
-        description: 'Background checked professionals',
+        title: 'Employer Efficiency',
+        description: 'Streamline your workforce management',
       },
       {
-        title: 'Real-time Analytics',
-        description: 'Live performance insights',
+        title: 'Professional Growth',
+        description: 'Access quality career opportunities',
       },
       {
-        title: 'Automated Payroll',
-        description: 'Seamless payment processing',
+        title: 'Automated Workflows',
+        description: 'Simplified operations and management',
       },
     ],
   },
 
   agency: {
-    title: 'Grow Your Agency',
-    subtitle: 'Scale Your Staffing Business',
-    description: 'Access premium clients and manage placements efficiently',
+    title: 'Scale Your Agency',
+    subtitle: 'Premium Staffing Platform',
+    description:
+      'Manage your talent pool with real-time availability insights and optimize client placements',
     features: [
       {
-        title: 'Talent Pool',
-        description: 'Access qualified professionals',
+        title: 'Live Candidate Availability',
+        description: 'Real-time visibility into talent schedules and capacity',
       },
       {
-        title: 'Premium Clients',
-        description: 'Connect with top employers',
+        title: 'Exclusive Opportunities',
+        description: 'Premium staffing requests from verified employers',
       },
       {
-        title: 'Business Insights',
-        description: 'Track and optimize operations',
+        title: 'Talent Management',
+        description: 'Complete workforce optimization and deployment',
       },
       {
-        title: 'Fast Payments',
-        description: 'Automated invoicing',
+        title: 'Automated Operations',
+        description: 'Streamlined response and assignment workflows',
       },
     ],
   },
 
   employer: {
-    title: 'Staff Smarter',
-    subtitle: 'Find Perfect Talent Faster',
-    description: 'Fill shifts instantly with qualified, verified professionals',
+    title: 'Optimize Your Staffing',
+    subtitle: 'Quality Talent Solutions',
+    description:
+      'Access pre-vetted professionals with confirmed availability for your workforce needs',
     features: [
       {
-        title: 'Instant Fills',
-        description: 'Fill urgent shifts in minutes',
+        title: 'Confirmed Availability',
+        description: 'Work with candidates ready for immediate placement',
+      },
+      {
+        title: 'Rapid Staffing',
+        description: 'Fill critical roles quickly and efficiently',
       },
       {
         title: 'Quality Assurance',
-        description: 'Verified professionals',
+        description: 'Verified professionals from trusted agencies',
       },
       {
-        title: 'Time Savings',
-        description: 'Reduce admin time by 70%',
+        title: 'Workflow Automation',
+        description: 'Streamlined request and approval processes',
+      },
+    ],
+  },
+
+  employee: {
+    title: 'Set Your Schedule',
+    subtitle: 'Flexible Work Opportunities',
+    description:
+      'Register your availability and get matched with temporary and contract roles that fit your schedule',
+    features: [
+      {
+        title: 'Availability Registration',
+        description: 'Set your available times and preferred shift patterns',
       },
       {
-        title: 'Cost Effective',
-        description: 'Optimize staffing costs',
+        title: 'Smart Shift Matching',
+        description:
+          'Get automatically matched with roles that fit your schedule',
+      },
+      {
+        title: 'Flexible Work Options',
+        description: 'Choose from temporary and contract assignments',
+      },
+      {
+        title: 'Quick Placements',
+        description:
+          'Start working quickly with roles that match your availability',
       },
     ],
   },

@@ -53,7 +53,7 @@ function getApiUrl(): string {
 const API_URL = getApiUrl();
 
 async function storeAuth(token: string, user: AuthUser): Promise<void> {
-  const cookieStore = await cookies(); 
+  const cookieStore = await cookies();
   const isProduction = process.env.NODE_ENV === 'production';
 
   cookieStore.set({

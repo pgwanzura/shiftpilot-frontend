@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -9,10 +9,12 @@ import {
   Sun,
   Moon,
   Monitor,
+  ChevronDown,
 } from 'lucide-react';
 import clsx from 'clsx';
-import { MenuItems } from '@/app/components/ui';
-import { MenuItem, getMenuForRole } from '@/config';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { MenuItem, getMenuForRole, hasMenuAccess } from '@/config/menu';
 import { User } from '@/types';
 import { useSafeTheme } from '@/hooks/useSafeTheme';
 
@@ -38,7 +40,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [isClient, setIsClient] = useState(false);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
 
+  const submenuRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
+
   const { theme, toggleTheme } = useSafeTheme();
+  const pathname = usePathname();
 
   useEffect(() => {
     setIsClient(true);
@@ -104,11 +109,64 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const toggleDropdown = useCallback((label: string) => {
     setOpenDropdowns((prev) => {
-      const updated = new Set(prev);
-      updated.has(label) ? updated.delete(label) : updated.add(label);
-      return updated;
+      if (prev.has(label)) {
+        const updated = new Set(prev);
+        updated.delete(label);
+        return updated;
+      }
+      return new Set([label]);
     });
   }, []);
+
+  const filteredMenuItems = useMemo(() => {
+    return menuItems
+      .filter((item) => {
+        if (!user?.role || !item.permission) return true;
+        return hasMenuAccess(user.role, item.permission);
+      })
+      .map((item) => {
+        if (item.children) {
+          return {
+            ...item,
+            children: item.children.filter(
+              (child) =>
+                !child.permission ||
+                hasMenuAccess(user?.role || '', child.permission)
+            ),
+          };
+        }
+        return item;
+      })
+      .filter((item) => !item.children || item.children.length > 0);
+  }, [menuItems, user?.role]);
+
+  const isItemActive = useCallback(
+    (item: MenuItem): boolean => {
+      if (pathname === item.path) return true;
+      if (item.children) {
+        return item.children.some((child) => pathname === child.path);
+      }
+      return false;
+    },
+    [pathname]
+  );
+
+  const isChildActive = useCallback(
+    (children?: MenuItem[]): boolean => {
+      if (!children) return false;
+      return children.some((child) => pathname === child.path);
+    },
+    [pathname]
+  );
+
+  useEffect(() => {
+    for (const item of filteredMenuItems) {
+      if (item.children && isChildActive(item.children)) {
+        setOpenDropdowns(() => new Set([item.label]));
+        break;
+      }
+    }
+  }, [pathname, filteredMenuItems, isChildActive]);
 
   const sidebarClasses = useMemo(
     () =>
@@ -189,6 +247,266 @@ const Sidebar: React.FC<SidebarProps> = ({
     </svg>
   );
 
+  const renderMenuItem = (item: MenuItem): JSX.Element => {
+    const hasChildren = item.children && item.children.length > 0;
+    const isActive = isItemActive(item);
+    const isDropdownOpen = openDropdowns.has(item.label);
+    const childIsActive = hasChildren && isChildActive(item.children);
+    const displayDropdownOpen =
+      isDropdownOpen || (childIsActive && !isCollapsed);
+
+    const baseClasses = clsx(
+      'relative w-full flex items-center justify-between p-2 rounded-lg transition-colors duration-200 border-r-2',
+      isCollapsed ? 'justify-center' : ''
+    );
+
+    const activeClasses =
+      'bg-primary-50 dark:bg-primary-900/20 border-primary-500 text-primary-600 dark:text-primary-400';
+    const inactiveClasses =
+      'bg-white dark:bg-gray-900 border-transparent text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20';
+
+    const iconBaseClasses = 'p-1.5 rounded transition-colors duration-200';
+    const iconActiveClasses = 'bg-primary-100 dark:bg-primary-800';
+    const iconInactiveClasses =
+      'bg-gray-50 dark:bg-gray-800 group-hover:bg-primary-100 dark:group-hover:bg-primary-800';
+
+    const iconSvgBaseClasses = 'w-4 h-4';
+    const iconSvgActiveClasses = 'text-primary-600 dark:text-primary-400';
+    const iconSvgInactiveClasses =
+      'text-gray-600 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400';
+
+    if (hasChildren) {
+      return (
+        <div key={item.label} className="space-y-0.5">
+          <button
+            onClick={() => toggleDropdown(item.label)}
+            className={clsx(
+              baseClasses,
+              isActive ? activeClasses : inactiveClasses
+            )}
+            aria-expanded={isDropdownOpen}
+            aria-haspopup="true"
+            type="button"
+          >
+            <div
+              className={clsx(
+                'flex items-center',
+                isCollapsed ? '' : 'space-x-2'
+              )}
+            >
+              <div
+                className={clsx(
+                  iconBaseClasses,
+                  isActive ? iconActiveClasses : iconInactiveClasses
+                )}
+              >
+                <item.icon
+                  className={clsx(
+                    iconSvgBaseClasses,
+                    isActive ? iconSvgActiveClasses : iconSvgInactiveClasses
+                  )}
+                />
+              </div>
+              {!isCollapsed && (
+                <span className="text-sm font-medium">{item.label}</span>
+              )}
+            </div>
+
+            {!isCollapsed && (
+              <div className="flex items-center space-x-1">
+                {item.badge && (
+                  <span
+                    className={clsx(
+                      'px-1.5 py-0.5 text-xs rounded-full font-medium',
+                      {
+                        'bg-primary-100 dark:bg-primary-800 text-primary-800 dark:text-primary-200':
+                          isActive,
+                        'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200':
+                          !isActive,
+                      }
+                    )}
+                  >
+                    {item.badge}
+                  </span>
+                )}
+                <ChevronDown
+                  className={clsx('w-3 h-3 transition-transform duration-200', {
+                    'rotate-180': displayDropdownOpen,
+                    'text-primary-600 dark:text-primary-400': isActive,
+                    'text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400':
+                      !isActive,
+                  })}
+                />
+              </div>
+            )}
+          </button>
+
+          {!isCollapsed && item.children && (
+            <div
+              ref={(el) => submenuRefs.current.set(item.label, el)}
+              style={{
+                maxHeight: displayDropdownOpen
+                  ? `${submenuRefs.current.get(item.label)?.scrollHeight ?? 0}px`
+                  : '0px',
+                transition: 'max-height 280ms ease',
+                overflow: 'hidden',
+              }}
+              className={clsx('ml-3 space-y-0.5 border-l pl-2', {
+                'border-primary-300 dark:border-primary-600':
+                  displayDropdownOpen,
+                'border-gray-200 dark:border-gray-700': !displayDropdownOpen,
+              })}
+              role="menu"
+              aria-label={`${item.label} submenu`}
+            >
+              {item.children.map((child) => {
+                const isChildActive = pathname === child.path;
+                return (
+                  <Link
+                    key={child.label}
+                    href={child.path || '#'}
+                    className={clsx(
+                      'relative flex items-center justify-between p-1.5 rounded transition-colors duration-200 border-l ml-[-1px]',
+                      {
+                        'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border-primary-500':
+                          isChildActive,
+                        'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 border-transparent':
+                          !isChildActive,
+                      }
+                    )}
+                    role="menuitem"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <div
+                        className={clsx(
+                          'p-1 rounded transition-colors duration-200',
+                          {
+                            'bg-primary-100 dark:bg-primary-800': isChildActive,
+                            'bg-gray-100 dark:bg-gray-800 group-hover:bg-primary-100 dark:group-hover:bg-primary-800':
+                              !isChildActive,
+                          }
+                        )}
+                      >
+                        <child.icon
+                          className={clsx('w-3 h-3', {
+                            'text-primary-600 dark:text-primary-400':
+                              isChildActive,
+                            'text-gray-500 dark:text-gray-500 group-hover:text-primary-600 dark:group-hover:text-primary-400':
+                              !isChildActive,
+                          })}
+                        />
+                      </div>
+                      <span className="text-sm font-medium">{child.label}</span>
+                    </div>
+                    {child.badge && (
+                      <span
+                        className={clsx(
+                          'px-1.5 py-0.5 text-xs rounded-full font-medium',
+                          {
+                            'bg-primary-100 dark:bg-primary-800 text-primary-800 dark:text-primary-200':
+                              isChildActive,
+                            'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200':
+                              !isChildActive,
+                          }
+                        )}
+                      >
+                        {child.badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div key={item.label} className="space-y-0.5">
+        <Link
+          href={item.path || '#'}
+          className={clsx(
+            baseClasses,
+            isActive ? activeClasses : inactiveClasses
+          )}
+        >
+          <div
+            className={clsx(
+              'flex items-center',
+              isCollapsed ? '' : 'space-x-2'
+            )}
+          >
+            <div
+              className={clsx(
+                iconBaseClasses,
+                isActive ? iconActiveClasses : iconInactiveClasses
+              )}
+            >
+              <item.icon
+                className={clsx(
+                  iconSvgBaseClasses,
+                  isActive ? iconSvgActiveClasses : iconSvgInactiveClasses
+                )}
+              />
+            </div>
+            {!isCollapsed && (
+              <span className="text-sm font-medium">{item.label}</span>
+            )}
+          </div>
+          {!isCollapsed && item.badge && (
+            <span
+              className={clsx(
+                'px-1.5 py-0.5 text-xs rounded-full font-medium',
+                {
+                  'bg-primary-100 dark:bg-primary-800 text-primary-800 dark:text-primary-200':
+                    isActive,
+                  'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200':
+                    !isActive,
+                }
+              )}
+            >
+              {item.badge}
+            </span>
+          )}
+        </Link>
+      </div>
+    );
+  };
+
+  const renderMenuItems = (): JSX.Element => {
+    if (!isClient) {
+      return (
+        <div className="space-y-0.5">
+          {filteredMenuItems.map((item) => (
+            <div key={item.label} className="space-y-0.5">
+              <div className="flex items-center p-2 rounded-lg text-gray-700 dark:text-gray-300">
+                <div className="p-1.5 rounded bg-gray-50 dark:bg-gray-800">
+                  <item.icon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                </div>
+                {!isCollapsed && (
+                  <span className="text-sm font-medium ml-2">{item.label}</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    if (filteredMenuItems.length === 0) {
+      return (
+        <div className="p-2 text-center text-sm text-gray-500 dark:text-gray-400">
+          No menu items available
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-0.5">{filteredMenuItems.map(renderMenuItem)}</div>
+    );
+  };
+
   return (
     <>
       {showMobileOverlay && (
@@ -204,7 +522,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <button
             onClick={handleCollapseToggle}
             className={clsx(
-              'absolute -right-3 top-6 z-10 w-6 h-6 border rounded-lg flex items-center justify-center transition-all duration-200 group',
+              'absolute -right-3 top-6 z-10 w-6 h-6 border rounded-lg flex items-center justify-center transition-colors duration-200 group',
               'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
             )}
             aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -271,51 +589,51 @@ const Sidebar: React.FC<SidebarProps> = ({
 
         <div className="flex-1 overflow-y-auto">
           <nav className="p-2" aria-label="Primary navigation">
-            <MenuItems
-              isCollapsed={showFullSidebar && isMobile ? false : isCollapsed}
-              menuItems={menuItems}
-              userRole={user?.role}
-              openDropdowns={openDropdowns}
-              onToggleDropdown={toggleDropdown}
-            />
+            {renderMenuItems()}
           </nav>
         </div>
 
-        <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-800 space-y-2">
+        <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-800 space-y-0.5">
           <button
-            className="w-full flex items-center gap-3 p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+            className="w-full flex items-center justify-between p-2 rounded-lg transition-colors duration-200 border-r-2 border-transparent text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20"
             onClick={toggleTheme}
           >
-            <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center justify-center">
-              {getThemeIcon()}
+            <div className="flex items-center space-x-2">
+              <div className="p-1.5 rounded bg-gray-50 dark:bg-gray-800 group-hover:bg-primary-100 dark:group-hover:bg-primary-800 transition-colors duration-200">
+                {getThemeIcon()}
+              </div>
+              {showCollapsedContent && (
+                <span className="text-sm font-medium">{getThemeLabel()}</span>
+              )}
             </div>
-            {showCollapsedContent && (
-              <span className="font-medium">{getThemeLabel()}</span>
-            )}
           </button>
 
           <button
-            className="w-full flex items-center gap-3 p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            className="w-full flex items-center justify-between p-2 rounded-lg transition-colors duration-200 border-r-2 border-transparent text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20"
             onClick={handleSettingsClick}
           >
-            <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center justify-center">
-              <Settings className="w-5 h-5" />
+            <div className="flex items-center space-x-2">
+              <div className="p-1.5 rounded bg-gray-50 dark:bg-gray-800 group-hover:bg-primary-100 dark:group-hover:bg-primary-800 transition-colors duration-200">
+                <Settings className="w-4 h-4" />
+              </div>
+              {showCollapsedContent && (
+                <span className="text-sm font-medium">Settings</span>
+              )}
             </div>
-            {showCollapsedContent && (
-              <span className="font-medium">Settings</span>
-            )}
           </button>
 
           <button
-            className="w-full flex items-center gap-3 p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:text-error-600 dark:hover:text-error-400 hover:bg-error-50 dark:hover:bg-error-900/20 transition-colors"
+            className="w-full flex items-center justify-between p-2 rounded-lg transition-colors duration-200 border-r-2 border-transparent text-gray-700 dark:text-gray-300 hover:text-error-600 dark:hover:text-error-400 hover:bg-error-50 dark:hover:bg-error-900/20"
             onClick={handleLogoutClick}
           >
-            <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center justify-center">
-              <LogOut className="w-5 h-5" />
+            <div className="flex items-center space-x-2">
+              <div className="p-1.5 rounded bg-gray-50 dark:bg-gray-800 group-hover:bg-error-100 dark:group-hover:bg-error-800 transition-colors duration-200">
+                <LogOut className="w-4 h-4" />
+              </div>
+              {showCollapsedContent && (
+                <span className="text-sm font-medium">Logout</span>
+              )}
             </div>
-            {showCollapsedContent && (
-              <span className="font-medium">Logout</span>
-            )}
           </button>
         </div>
       </aside>

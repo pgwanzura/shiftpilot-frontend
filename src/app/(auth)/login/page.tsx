@@ -1,6 +1,6 @@
 'use client';
-
-import { useState, JSX } from 'react';
+     
+import { useState } from 'react';
 import { LoginForm } from '@/app/features/auth';
 import { AuthPageLayout } from '@/app/components/layout/auth/AuthPageLayout';
 import { MarketingSidebar } from '@/app/components/layout/auth/MarketingSidebar';
@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { type LoginFormData } from '@/lib/auth';
 import { loginAction, type AuthActionResult } from '@/lib/auth';
 
-export default function LoginPage(): JSX.Element {
+export default function LoginPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,7 +20,7 @@ export default function LoginPage(): JSX.Element {
     setError(null);
 
     try {
-      const result: AuthActionResult = await loginAction(data);
+      const result = await loginAction(data);
 
       if (result.success && result.redirectTo) {
         window.location.href = result.redirectTo;
@@ -33,8 +33,8 @@ export default function LoginPage(): JSX.Element {
       }
 
       return { success: true };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Login failed';
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Login failed';
       setError(message);
       return { success: false, error: message };
     } finally {
@@ -70,7 +70,7 @@ export default function LoginPage(): JSX.Element {
   );
 }
 
-function FooterLinks(): JSX.Element {
+function FooterLinks() {
   return (
     <div className="mt-8 text-center text-sm text-gray-600">
       <p>© 2024 ShiftPilot. All rights reserved.</p>
