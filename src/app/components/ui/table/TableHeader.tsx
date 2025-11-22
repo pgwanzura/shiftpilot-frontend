@@ -169,7 +169,13 @@ export function TableHeader<T extends TableData>({
                   className={getSortButtonClasses(column)}
                   disabled={isLoading}
                   type="button"
-                  aria-label={`Sort by ${column.header} ${state.sort?.key === column.key ? (state.sort.direction === 'asc' ? 'ascending' : 'descending') : ''}`}
+                  aria-label={`Sort by ${column.header} ${
+                    state.sort?.key === column.key
+                      ? state.sort.direction === 'asc'
+                        ? 'ascending'
+                        : 'descending'
+                      : ''
+                  }`}
                 >
                   <Icon
                     name="chevronUp"
@@ -177,7 +183,7 @@ export function TableHeader<T extends TableData>({
                       state.sort?.key === columnKey &&
                       state.sort.direction === 'asc'
                         ? 'text-primary-600 dark:text-primary-400'
-                        : 'text-current opacity-60 group-hover/sort:opacity-100'
+                        : 'text-current opacity-40 group-hover/sort:opacity-70'
                     }`}
                   />
                   <Icon
@@ -186,7 +192,7 @@ export function TableHeader<T extends TableData>({
                       state.sort?.key === columnKey &&
                       state.sort.direction === 'desc'
                         ? 'text-primary-600 dark:text-primary-400'
-                        : 'text-current opacity-60 group-hover/sort:opacity-100'
+                        : 'text-current opacity-40 group-hover/sort:opacity-70'
                     }`}
                   />
                 </button>

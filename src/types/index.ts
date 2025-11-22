@@ -84,6 +84,7 @@ export * from './user';
 export * from './status';
 export * from './table';
 export * from './calendar-events';
+export * from './assingments';
 
 export type RolePermissions = {
   canViewAgencyDashboard: boolean;

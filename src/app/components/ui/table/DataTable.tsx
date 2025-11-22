@@ -11,6 +11,41 @@ import { TableBody } from './TableBody';
 import { TablePagination } from './TablePagination';
 import { Button, Icon, Checkbox } from '@/app/components/ui';
 
+interface EditingState<T extends TableData> {
+  rowId: string | number;
+  key: keyof T;
+}
+
+interface LocalAdvancedFilters {
+  [key: string]: string;
+}
+
+type StatusKey = 'active' | 'draft' | 'filled' | 'cancelled' | 'completed';
+type StatusVariant = 'success' | 'warning' | 'error' | 'info' | 'primary';
+
+const VARIANT_CLASSES: Record<StatusVariant, string> = {
+  success:
+    'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border border-green-300 dark:border-green-700',
+  warning:
+    'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border border-yellow-300 dark:border-yellow-700',
+  error:
+    'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border border-red-300 dark:border-red-700',
+  info: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-700',
+  primary:
+    'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-700',
+};
+
+const DEFAULT_CONFIG: Record<
+  StatusKey,
+  { label: string; variant: StatusVariant; icon?: React.ReactNode }
+> = {
+  active: { label: 'Active', variant: 'success' },
+  draft: { label: 'Draft', variant: 'warning' },
+  filled: { label: 'Filled', variant: 'info' },
+  cancelled: { label: 'Cancelled', variant: 'error' },
+  completed: { label: 'Completed', variant: 'primary' },
+};
+
 export function DataTable<T extends TableData>({
   data,
   columns: initialColumns,
@@ -47,15 +82,11 @@ export function DataTable<T extends TableData>({
     visibleColumns: new Set(initialColumns.map((col) => col.key as string)),
   });
 
-  const [editingCell, setEditingCell] = useState<{
-    rowId: string | number;
-    key: keyof T;
-  } | null>(null);
+  const [editingCell, setEditingCell] = useState<EditingState<T> | null>(null);
   const [editValue, setEditValue] = useState<T[keyof T]>();
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [localAdvancedFilters, setLocalAdvancedFilters] = useState<
-    Record<string, string>
-  >({});
+  const [localAdvancedFilters, setLocalAdvancedFilters] =
+    useState<LocalAdvancedFilters>({});
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -204,8 +235,12 @@ export function DataTable<T extends TableData>({
 
   const handleSort = useCallback(
     (key: string): void => {
+      const column = initialColumns.find((col) => col.key === key);
+      if (!column?.sortable) return;
+
       setSortingColumn(key);
       setLocalLoading(true);
+
       const newSort: SortState =
         state.sort?.key === key && state.sort.direction === 'asc'
           ? { key, direction: 'desc' }
@@ -219,7 +254,7 @@ export function DataTable<T extends TableData>({
         setLocalLoading(false);
       }, 300);
     },
-    [state.sort, updateState, onSortChange]
+    [state.sort, updateState, onSortChange, initialColumns]
   );
 
   const handleSearch = useCallback(
@@ -370,6 +405,16 @@ export function DataTable<T extends TableData>({
     }, 300);
   }, [updateState, onFilterChange]);
 
+  const searchValue = useMemo(() => {
+    const search = state.filters.search;
+    return search ? String(search) : '';
+  }, [state.filters.search]);
+
+  const currentStatus = useMemo(() => {
+    const status = state.filters.status;
+    return status ? String(status) : undefined;
+  }, [state.filters.status]);
+
   if (error) {
     return (
       <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
@@ -406,10 +451,10 @@ export function DataTable<T extends TableData>({
             )}
             columns={columnSettingsData}
             showSearch={showSearch}
-            searchValue={state.filters.search || ''}
+            searchValue={searchValue}
             onSearch={handleSearch}
             statusFilterOptions={statusFilterOptions}
-            currentStatus={state.filters.status}
+            currentStatus={currentStatus}
             onStatusChange={handleStatusFilter}
             onClearStatus={handleClearStatusFilter}
             advancedFilters={advancedFilters}
@@ -561,18 +606,30 @@ export function DataTable<T extends TableData>({
   );
 }
 
-type StatusKey = 'active' | 'draft' | 'filled' | 'cancelled' | 'completed';
-
 export const formatCurrency = (
-  amount: number,
+  amount: number | string | null | undefined,
   currency: string = 'USD'
 ): string => {
+  const numericAmount =
+    typeof amount === 'string'
+      ? Number.parseFloat(amount)
+      : Number(amount || 0);
+
+  if (Number.isNaN(numericAmount) || !Number.isFinite(numericAmount)) {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(0);
+  }
+
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: currency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(amount);
+  }).format(numericAmount);
 };
 
 export const formatDate = (dateString: string): string => {
@@ -581,32 +638,38 @@ export const formatDate = (dateString: string): string => {
 
 interface StatusBadgeProps {
   status: string;
-  config?: Record<string, { label: string; variant: string }>;
+  config?: Partial<
+    Record<
+      StatusKey,
+      { label: string; variant: StatusVariant; icon?: React.ReactNode }
+    >
+  >;
+  icon?: React.ReactNode;
 }
 
-export const DataTableStatusBadge = ({ status, config }: StatusBadgeProps) => {
-  const defaultConfig = {
-    active: { label: 'Active', variant: 'success' },
-    draft: { label: 'Draft', variant: 'warning' },
-    filled: { label: 'Filled', variant: 'info' },
-    cancelled: { label: 'Cancelled', variant: 'error' },
-    completed: { label: 'Completed', variant: 'primary' },
-  };
+export const DataTableStatusBadge = ({
+  status,
+  config,
+  icon,
+}: StatusBadgeProps) => {
+  const mergedConfig = { ...DEFAULT_CONFIG, ...config };
 
-  const mergedConfig = { ...defaultConfig, ...config };
+  const statusConfig = Object.keys(mergedConfig).find(
+    (key): key is StatusKey => key === status && key in DEFAULT_CONFIG
+  );
 
-  const isValidStatus = (s: string): s is StatusKey => {
-    return s in mergedConfig;
-  };
+  const currentConfig = statusConfig
+    ? mergedConfig[statusConfig]
+    : { label: status, variant: 'primary' as StatusVariant, icon: undefined };
 
-  const currentConfig = isValidStatus(status)
-    ? mergedConfig[status]
-    : { label: status, variant: 'primary' };
+  const variantClasses = VARIANT_CLASSES[currentConfig.variant];
+  const displayIcon = icon || currentConfig.icon;
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-${currentConfig.variant}-100 dark:bg-${currentConfig.variant}-900/30 text-${currentConfig.variant}-800 dark:text-${currentConfig.variant}-300`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${variantClasses}`}
     >
+      {displayIcon && <span className="flex-shrink-0">{displayIcon}</span>}
       {currentConfig.label}
     </span>
   );

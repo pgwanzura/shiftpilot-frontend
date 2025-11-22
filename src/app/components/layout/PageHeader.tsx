@@ -11,7 +11,6 @@ interface PageHeaderProps {
 
 export default function PageHeader({
   actions,
-  children,
   customBreadcrumbs = {},
 }: PageHeaderProps) {
   const pathname = usePathname();
@@ -60,7 +59,7 @@ export default function PageHeader({
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
       <div className="flex-1 min-w-0">
         {breadcrumbs.length > 0 && (
-          <nav className="flex mb-2" aria-label="Breadcrumb">
+          <nav className="flex mb-4" aria-label="Breadcrumb">
             <ol className="flex items-center space-x-2 flex-wrap">
               {breadcrumbs.map((breadcrumb, index) => (
                 <li
@@ -99,10 +98,7 @@ export default function PageHeader({
             </ol>
           </nav>
         )}
-
-        {children}
       </div>
-
       {actions && <div className="mt-4 sm:mt-0 sm:ml-4">{actions}</div>}
     </div>
   );
