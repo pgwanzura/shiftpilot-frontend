@@ -3,7 +3,7 @@ import { TableState } from '@/types/table';
 
 export function useTableState(initialState?: Partial<TableState>) {
   const [state, setState] = useState<TableState>({
-    sort: null,
+    sort: undefined,
     filters: {},
     selectedRows: new Set(),
     columnOrder: [],

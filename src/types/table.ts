@@ -36,16 +36,18 @@ export interface SortState {
 }
 
 export interface FilterState {
+  search?: string;
+  status?: string;
   [key: string]: string | number | boolean | null | undefined;
 }
 
 export interface TableState {
-  sort: SortState | null;
+  sort?: SortState;
   filters: FilterState;
   selectedRows: Set<string | number>;
+  expandedRows: Set<string | number>;
   columnOrder: string[];
   visibleColumns: Set<string>;
-  expandedRows: Set<string | number>;
 }
 
 export interface BulkAction<T extends TableData> {

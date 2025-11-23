@@ -63,18 +63,25 @@ export function TableBody<T extends TableData>({
 }: TableBodyProps<T>) {
   if (data.length === 0) {
     return (
-      <div className="text-center py-12 animate-fade-in">
-        <div className="w-12 h-12 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center mx-auto mb-3">
-          <Icon name="search" className="h-5 w-5 text-gray-400" />
+      <div className="text-center py-20 animate-fade-in">
+        <div className="w-20 h-20 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 flex items-center justify-center mx-auto mb-6 shadow-sm">
+          <Icon 
+            name="database" 
+            className="h-8 w-8 text-gray-400 dark:text-gray-500" 
+          />
         </div>
-        <div className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-4 px-4">
+        <h3 className="text-gray-600 dark:text-gray-400 text-lg font-semibold mb-3 px-4">
+          No records found
+        </h3>
+        <p className="text-gray-500 dark:text-gray-500 text-base mb-6 px-4 max-w-md mx-auto leading-relaxed">
           {emptyMessage}
-        </div>
+        </p>
         {hasActiveFilters && (
           <button
             onClick={onClearFilters}
-            className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 text-sm font-medium transition-colors duration-200"
+            className="inline-flex items-center gap-3 px-6 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md hover:border-gray-400 dark:hover:border-gray-500"
           >
+            <Icon name="filter-x" className="h-4 w-4" />
             Clear all filters
           </button>
         )}
@@ -84,7 +91,7 @@ export function TableBody<T extends TableData>({
 
   return (
     <div
-      className="bg-white dark:bg-gray-900 min-w-full transition-all duration-300"
+      className="bg-white dark:bg-gray-900 min-w-full rounded-b-2xl shadow-sm"
       style={
         virtualScroll
           ? {
@@ -94,7 +101,7 @@ export function TableBody<T extends TableData>({
           : undefined
       }
     >
-      {virtualScroll && <div style={{ height: startIndex * 53 }} />}
+      {virtualScroll && <div style={{ height: startIndex * 58 }} />}
       {data.map((row, rowIndex) => (
         <React.Fragment key={row.id}>
           <TableRow
@@ -115,8 +122,8 @@ export function TableBody<T extends TableData>({
             clickedRow={clickedRow}
           />
           {rowExpansion && state.expandedRows.has(row.id) && (
-            <div className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 min-w-full animate-slide-down">
-              <div className="px-6 py-4 min-w-0">
+            <div className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/30 min-w-full animate-slide-down">
+              <div className="px-8 py-6 min-w-0 border-l-2 border-indigo-400 bg-white/70 dark:bg-gray-900/70 ml-6 rounded-r-xl shadow-inner">
                 {rowExpansion.render(row)}
               </div>
             </div>
@@ -124,7 +131,7 @@ export function TableBody<T extends TableData>({
         </React.Fragment>
       ))}
       {virtualScroll && (
-        <div style={{ height: (data.length - endIndex) * 53 }} />
+        <div style={{ height: (data.length - endIndex) * 58 }} />
       )}
     </div>
   );
@@ -158,7 +165,6 @@ function TableRow<T extends TableData>({
   onEditSave,
   onEditCancel,
   onEditValueChange,
-  hoveredRow,
   onHover,
   inlineEdit,
   actions,
@@ -166,30 +172,26 @@ function TableRow<T extends TableData>({
 }: TableRowProps<T>) {
   const isEditing = editingCell?.rowId === row.id;
 
-  const getRowBorderColor = () => {
-    if (hoveredRow === rowIndex) return 'border-l-indigo-500';
-    if (rowIndex % 2 === 0) return 'border-l-gray-50 dark:border-l-gray-800';
-    return 'border-l-gray-100 dark:border-l-gray-700';
+  const getRowBackgroundColor = () => {
+    if (clickedRow === rowIndex) return 'bg-blue-50/50 dark:bg-blue-900/20';
+    if (rowIndex % 2 === 0) return 'bg-white dark:bg-gray-900';
+    return 'bg-gray-50/30 dark:bg-gray-800/30';
   };
 
-  const getRowBackgroundColor = () => {
-    if (hoveredRow === rowIndex) return 'bg-indigo-50 dark:bg-indigo-900/20';
-    if (rowIndex % 2 === 0) return 'bg-white dark:bg-gray-900';
-    return 'bg-gray-50 dark:bg-gray-800';
+  const getRowBorder = () => {
+    if (clickedRow === rowIndex) return 'border-l-4 border-blue-500';
+    return 'border-l-0';
   };
 
   return (
     <div
       onMouseEnter={() => onHover(rowIndex)}
       onMouseLeave={() => onHover(null)}
-      className={`group relative grid min-w-full py-4 text-sm transition-all duration-300 border-b border-gray-100 dark:border-gray-700 last:border-b-0 min-w-fit border-l-4 ${getRowBorderColor()} ${getRowBackgroundColor()} ${
-        clickedRow === rowIndex
-          ? 'animate-pulse bg-indigo-100 dark:bg-indigo-900/30'
-          : ''
+      className={`group relative grid min-w-full py-5 text-sm transition-colors duration-150 border-b border-gray-100 dark:border-gray-800 last:border-b-0 min-w-fit ${getRowBorder()} ${getRowBackgroundColor()} ${
+        rowIndex === 0 ? 'rounded-t-2xl' : ''
       }`}
       style={{
         gridTemplateColumns: `repeat(${columns.length + (actions ? 1 : 0)}, minmax(80px, 1fr))`,
-        animationDelay: `${rowIndex * 20}ms`,
       }}
     >
       {columns.map((column, index) => {
@@ -200,13 +202,13 @@ function TableRow<T extends TableData>({
         return (
           <div
             key={column.key as string}
-            className={`flex items-center transition-all duration-300 min-w-0 ${
+            className={`flex items-center min-w-0 ${
               column.align === 'right'
                 ? 'justify-end'
                 : column.align === 'center'
                   ? 'justify-center'
                   : 'justify-start'
-            } ${isFirstColumn ? 'pl-6' : 'pl-3'} ${isLastColumn ? 'pr-6' : 'pr-3'}`}
+            } ${isFirstColumn ? 'pl-8' : 'pl-6'} ${isLastColumn ? 'pr-8' : 'pr-6'}`}
           >
             {isCellEditing && inlineEdit ? (
               <InlineEditor
@@ -220,15 +222,15 @@ function TableRow<T extends TableData>({
               />
             ) : (
               <div
-                className={`truncate font-medium transition-all duration-300 ${
-                  hoveredRow === rowIndex
-                    ? 'text-gray-900 dark:text-white'
+                className={`truncate font-normal ${
+                  clickedRow === rowIndex
+                    ? 'text-gray-900 dark:text-white font-medium'
                     : 'text-gray-700 dark:text-gray-300'
                 } ${
                   inlineEdit?.editable &&
                   column.key !== 'selection' &&
                   column.key !== 'expansion'
-                    ? 'cursor-text hover:bg-gray-100 dark:hover:bg-gray-700 rounded px-1'
+                    ? 'cursor-text rounded-lg px-3 py-2 border border-transparent hover:border-gray-300 dark:hover:border-gray-600 transition-colors'
                     : ''
                 }`}
                 onDoubleClick={() =>
@@ -237,11 +239,12 @@ function TableRow<T extends TableData>({
                   column.key !== 'expansion' &&
                   onEditStart(row, column.key)
                 }
+                title={typeof row[column.key] === 'string' ? row[column.key] as string : undefined}
               >
                 {column.render
                   ? column.render(row[column.key], row)
                   : (row[column.key] as React.ReactNode) || (
-                      <span className="text-gray-400 dark:text-gray-500 italic">
+                      <span className="text-gray-400 dark:text-gray-500 italic text-sm">
                         —
                       </span>
                     )}
@@ -252,12 +255,8 @@ function TableRow<T extends TableData>({
       })}
 
       {actions && (
-        <div className="flex justify-end min-w-0 pr-6 pl-3">
-          <div
-            className={`flex items-center gap-2 transition-all duration-300 ${
-              hoveredRow === rowIndex ? 'opacity-100' : 'opacity-70'
-            }`}
-          >
+        <div className="flex justify-end min-w-0 pr-8 pl-6">
+          <div className="flex items-center gap-3 opacity-80">
             {actions(row)}
           </div>
         </div>
@@ -289,6 +288,7 @@ function InlineEditor<T extends TableData>({
 
   React.useEffect(() => {
     inputRef.current?.focus();
+    inputRef.current?.select();
   }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -302,46 +302,55 @@ function InlineEditor<T extends TableData>({
 
   if (renderEditor) {
     return (
-      <div className="flex items-center gap-2 w-full min-w-0 animate-scale-in">
+      <div className="flex items-center gap-3 w-full min-w-0 animate-scale-in">
         {renderEditor(value as T[keyof T], row, columnKey)}
-        <button
-          onClick={onSave}
-          className="p-1 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-all duration-200 transform hover:scale-110"
-        >
-          <Icon name="check" className="h-3 w-3" />
-        </button>
-        <button
-          onClick={onCancel}
-          className="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-all duration-200 transform hover:scale-110"
-        >
-          <Icon name="x" className="h-3 w-3" />
-        </button>
+        <div className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg p-1 shadow-sm border border-gray-200 dark:border-gray-700">
+          <button
+            onClick={onSave}
+            className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-md transition-colors duration-150"
+            title="Save"
+          >
+            <Icon name="check" className="h-4 w-4" />
+          </button>
+          <button
+            onClick={onCancel}
+            className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors duration-150"
+            title="Cancel"
+          >
+            <Icon name="x" className="h-4 w-4" />
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex items-center gap-2 w-full min-w-0 animate-scale-in">
+    <div className="flex items-center gap-3 w-full min-w-0 animate-scale-in">
       <input
         ref={inputRef}
         type="text"
         value={value as string}
         onChange={(e) => handleChange(e.target.value)}
         onKeyDown={handleKeyDown}
-        className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm w-full min-w-0 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 focus:border-blue-500 outline-none transition-all duration-200 transform focus:scale-105 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+        className="border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 text-sm w-full min-w-0 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-400/20 focus:border-blue-500 outline-none transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-inner font-medium"
+        placeholder="Enter value..."
       />
-      <button
-        onClick={onSave}
-        className="p-1 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-all duration-200 transform hover:scale-110"
-      >
-        <Icon name="check" className="h-3 w-3" />
-      </button>
-      <button
-        onClick={onCancel}
-        className="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-all duration-200 transform hover:scale-110"
-      >
-        <Icon name="x" className="h-3 w-3" />
-      </button>
+      <div className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg p-1 shadow-sm border border-gray-200 dark:border-gray-700">
+        <button
+          onClick={onSave}
+          className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-md transition-colors duration-150"
+          title="Save"
+        >
+          <Icon name="check" className="h-4 w-4" />
+        </button>
+        <button
+          onClick={onCancel}
+          className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors duration-150"
+          title="Cancel"
+        >
+          <Icon name="x" className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   );
 }

@@ -260,10 +260,12 @@ export interface LocationMeta {
 
 export interface AssignmentFilters {
   status?: AssignmentStatus | 'all';
-  assignment_type?: AssignmentType | 'all';
+  assignment_type?: AssignmentType | undefined;
+  agency: string;
   search?: string;
   role?: string;
   location_id?: number;
+  location: string;
   start_date_from?: string;
   start_date_to?: string;
   end_date_from?: string;

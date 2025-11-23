@@ -1,44 +1,54 @@
-import { useState, useRef, useCallback } from 'react';
-import { TableData } from '@/types/table';
+import { useState, useRef, useCallback, useMemo } from 'react';
 
-export function useVirtualScroll<T extends TableData>(
-  data: T[],
-  itemHeight: number = 53,
+interface VirtualScrollResult {
+  containerRef: React.RefObject<HTMLDivElement>;
+  visibleData: any[];
+  totalHeight: number;
+  startIndex: number;
+  endIndex: number;
+  handleScroll: (event: React.UIEvent<HTMLDivElement>) => void;
+  scrollVelocity: number;
+}
+
+export function useVirtualScroll(
+  data: any[],
+  rowHeight: number = 53,
   overscan: number = 5
-) {
+): VirtualScrollResult {
   const [scrollTop, setScrollTop] = useState(0);
   const [scrollVelocity, setScrollVelocity] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const lastScrollTop = useRef(0);
-  const scrollTimer = useRef<NodeJS.Timeout>(null);
+  const lastScrollTime = useRef(Date.now());
 
-  const containerHeight = containerRef.current?.clientHeight || 500;
-  const totalHeight = data.length * itemHeight;
+  const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
+    const currentScrollTop = event.currentTarget.scrollTop;
+    const currentTime = Date.now();
+    const timeDiff = currentTime - lastScrollTime.current;
 
-  const startIndex = Math.max(0, Math.floor(scrollTop / itemHeight) - overscan);
-  const endIndex = Math.min(
-    data.length,
-    Math.ceil((scrollTop + containerHeight) / itemHeight) + overscan
-  );
-
-  const visibleData = data.slice(startIndex, endIndex);
-
-  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    const currentScrollTop = e.currentTarget.scrollTop;
-    const velocity = currentScrollTop - lastScrollTop.current;
-    setScrollVelocity(velocity);
-    lastScrollTop.current = currentScrollTop;
-
-    if (scrollTimer.current) {
-      clearTimeout(scrollTimer.current);
+    if (timeDiff > 0) {
+      const velocity =
+        Math.abs(currentScrollTop - lastScrollTop.current) / timeDiff;
+      setScrollVelocity(velocity * 1000);
     }
 
-    scrollTimer.current = setTimeout(() => {
-      setScrollVelocity(0);
-    }, 100);
-
     setScrollTop(currentScrollTop);
+    lastScrollTop.current = currentScrollTop;
+    lastScrollTime.current = currentTime;
   }, []);
+
+  const { startIndex, endIndex, visibleData, totalHeight } = useMemo(() => {
+    const containerHeight = containerRef.current?.clientHeight || 0;
+    const visibleStart = Math.floor(scrollTop / rowHeight);
+    const visibleEnd = Math.ceil((scrollTop + containerHeight) / rowHeight);
+
+    const startIndex = Math.max(0, visibleStart - overscan);
+    const endIndex = Math.min(data.length, visibleEnd + overscan);
+    const visibleData = data.slice(startIndex, endIndex);
+    const totalHeight = data.length * rowHeight;
+
+    return { startIndex, endIndex, visibleData, totalHeight };
+  }, [data, scrollTop, rowHeight, overscan]);
 
   return {
     containerRef,
