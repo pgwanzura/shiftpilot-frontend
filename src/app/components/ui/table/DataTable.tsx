@@ -1,15 +1,37 @@
 'use client';
 
-import React, { useState, useMemo, useRef, useCallback } from 'react';
+import React, {
+  useState,
+  useMemo,
+  useRef,
+  useCallback,
+  useEffect,
+} from 'react';
 import { TableData, Column, TableConfig, SortState } from '@/types/table';
 import { useTableState } from '@/hooks/useTableState';
-import { useVirtualScroll } from '@/hooks/useVirtualScroll';
 import { TableSkeleton } from './TableSkeleton';
 import { TableHeader } from './TableHeader';
 import { TableToolbar } from './TableToolbar';
 import { TableBody } from './TableBody';
 import { TablePagination } from './TablePagination';
-import { Button, Icon, Checkbox } from '@/app/components/ui';
+import { AdvancedFiltersPanel } from './AdvancedFiltersPanel';
+import { Button, Checkbox } from '@/app/components/ui';
+
+const Icon = ({
+  name,
+  className = '',
+}: {
+  name: string;
+  className?: string;
+}) => {
+  return (
+    <span
+      className={`inline-flex items-center justify-center w-4 h-4 ${className}`}
+    >
+      {name.charAt(0).toUpperCase()}
+    </span>
+  );
+};
 
 interface EditingState<T extends TableData> {
   rowId: string | number;
@@ -24,20 +46,16 @@ type StatusKey = 'active' | 'draft' | 'filled' | 'cancelled' | 'completed';
 type StatusVariant = 'success' | 'warning' | 'error' | 'info' | 'primary';
 
 const VARIANT_CLASSES: Record<StatusVariant, string> = {
-  success:
-    'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border border-green-300 dark:border-green-700',
-  warning:
-    'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border border-yellow-300 dark:border-yellow-700',
-  error:
-    'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border border-red-300 dark:border-red-700',
-  info: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-700',
-  primary:
-    'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-700',
+  success: 'bg-green-100 text-green-800 border border-green-300',
+  warning: 'bg-yellow-100 text-yellow-800 border border-yellow-300',
+  error: 'bg-red-100 text-red-800 border border-red-300',
+  info: 'bg-blue-100 text-blue-800 border border-blue-300',
+  primary: 'bg-purple-100 text-purple-800 border border-purple-300',
 };
 
 const DEFAULT_CONFIG: Record<
   StatusKey,
-  { label: string; variant: StatusVariant; icon?: React.ReactNode }
+  { label: string; variant: StatusVariant }
 > = {
   active: { label: 'Active', variant: 'success' },
   draft: { label: 'Draft', variant: 'warning' },
@@ -63,7 +81,6 @@ export function DataTable<T extends TableData>({
   rowClassName,
   emptyMessage = 'No data available',
   selectable = false,
-  virtualScroll = false,
   showSearch = true,
   showColumnSettings = true,
   actions,
@@ -92,21 +109,10 @@ export function DataTable<T extends TableData>({
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [sortingColumn, setSortingColumn] = useState<string | null>(null);
   const [clickedRow, setClickedRow] = useState<number | null>(null);
-  const [filterTransition, setFilterTransition] = useState(false);
   const [localLoading, setLocalLoading] = useState(false);
 
   const tableRef = useRef<HTMLDivElement>(null);
-
-  const virtualScrollData = virtualScroll ? data : [];
-  const {
-    containerRef,
-    visibleData,
-    totalHeight,
-    startIndex,
-    endIndex,
-    handleScroll,
-    scrollVelocity,
-  } = useVirtualScroll(virtualScrollData, 53, 5);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const columnSettingsData = useMemo(() => {
     return initialColumns.map((col) => ({
@@ -140,7 +146,62 @@ export function DataTable<T extends TableData>({
       .filter((col) => state.visibleColumns.has(col.key as string));
   }, [initialColumns, state.columnOrder, state.visibleColumns]);
 
-  const processedData = useMemo((): T[] => data, [data]);
+  const processedData = useMemo((): T[] => {
+    if (!state.sort) return data;
+
+    const { key, direction } = state.sort;
+
+    return [...data].sort((a, b) => {
+      const aValue = a[key as keyof T];
+      const bValue = b[key as keyof T];
+
+      if (aValue == null) return 1;
+      if (bValue == null) return -1;
+
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return direction === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+
+      const aStr = String(aValue).toLowerCase();
+      const bStr = String(bValue).toLowerCase();
+
+      if (aStr < bStr) return direction === 'asc' ? -1 : 1;
+      if (aStr > bStr) return direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [data, state.sort]);
+
+  const normalizedPagination = useMemo(() => {
+    if (!pagination) {
+      return { page: 1, pageSize: 10, total: data.length, last_page: 1 };
+    }
+
+    const page = Array.isArray(pagination.page)
+      ? Number(pagination.page[0])
+      : Number(pagination.page ?? 1);
+
+    const pageSize = Array.isArray(pagination.pageSize)
+      ? Number(pagination.pageSize[0])
+      : Number(pagination.pageSize ?? 10);
+
+    // Use data.length if API sends null
+    const total = Number(pagination.total ?? data.length ?? 0);
+
+    // Compute last_page if API sends null
+    const last_page =
+      pagination.last_page != null
+        ? Number(pagination.last_page)
+        : Math.max(1, Math.ceil(total / pageSize));
+
+    return { page, pageSize, total, last_page };
+  }, [pagination, data.length]);
+
+  const paginatedData = useMemo(() => {
+    const start =
+      (normalizedPagination.page - 1) * normalizedPagination.pageSize;
+    const end = start + normalizedPagination.pageSize;
+    return data.slice(start, end);
+  }, [data, normalizedPagination]);
 
   const handleSelectionChange = useCallback(
     (newSelectedRows: Set<string | number>) => {
@@ -204,7 +265,7 @@ export function DataTable<T extends TableData>({
                 }
                 updateState({ expandedRows: newExpanded });
               }}
-              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              className="p-1 hover:bg-gray-100 rounded transition-colors"
             >
               <Icon
                 name={
@@ -212,7 +273,7 @@ export function DataTable<T extends TableData>({
                     ? 'chevronDown'
                     : 'chevronRight'
                 }
-                className="h-4 w-4 text-gray-500 dark:text-gray-400"
+                className="h-4 w-4 text-gray-500"
               />
             </button>
           ),
@@ -230,7 +291,6 @@ export function DataTable<T extends TableData>({
     handleSelectRow,
   ]);
 
-  const displayData = virtualScroll ? visibleData : processedData;
   const isLoading = loading || localLoading;
 
   const handleSort = useCallback(
@@ -259,14 +319,12 @@ export function DataTable<T extends TableData>({
 
   const handleSearch = useCallback(
     (searchTerm: string): void => {
-      setFilterTransition(true);
       setLocalLoading(true);
       const newFilters = { ...state.filters, search: searchTerm };
       updateState({ filters: newFilters });
       onFilterChange?.(newFilters);
 
       setTimeout(() => {
-        setFilterTransition(false);
         setLocalLoading(false);
       }, 300);
     },
@@ -275,14 +333,12 @@ export function DataTable<T extends TableData>({
 
   const handleStatusFilter = useCallback(
     (status: string): void => {
-      setFilterTransition(true);
       setLocalLoading(true);
       const newFilters = { ...state.filters, status, page: 1 };
       updateState({ filters: newFilters });
       onFilterChange?.(newFilters);
 
       setTimeout(() => {
-        setFilterTransition(false);
         setLocalLoading(false);
       }, 300);
     },
@@ -290,7 +346,6 @@ export function DataTable<T extends TableData>({
   );
 
   const handleClearStatusFilter = useCallback((): void => {
-    setFilterTransition(true);
     setLocalLoading(true);
     const newFilters = { ...state.filters };
     delete newFilters.status;
@@ -298,55 +353,9 @@ export function DataTable<T extends TableData>({
     onFilterChange?.(newFilters);
 
     setTimeout(() => {
-      setFilterTransition(false);
       setLocalLoading(false);
     }, 300);
   }, [state.filters, updateState, onFilterChange]);
-
-  const handleEditStart = useCallback(
-    (row: T, key: keyof T) => {
-      if (!inlineEdit?.editable) return;
-      setEditingCell({ rowId: row.id, key });
-      setEditValue(row[key]);
-    },
-    [inlineEdit]
-  );
-
-  const handleEditSave = useCallback(async () => {
-    if (!editingCell || !inlineEdit) return;
-    const row = processedData.find((r) => r.id === editingCell.rowId);
-    if (row && editValue !== undefined) {
-      try {
-        await inlineEdit.onSave(row, editingCell.key, editValue);
-        setEditingCell(null);
-      } catch (error) {
-        console.error('Edit failed:', error);
-      }
-    }
-  }, [editingCell, editValue, inlineEdit, processedData]);
-
-  const handleEditCancel = useCallback(() => {
-    setEditingCell(null);
-  }, []);
-
-  const handleExport = useCallback(
-    (format: string) => {
-      if (!exportOptions) return;
-      const exportData = processedData.map((row) => {
-        const exportedRow: TableData & Record<string, unknown> = { id: row.id };
-        columns.forEach((col) => {
-          exportedRow[col.header] = row[col.key];
-        });
-        return exportedRow;
-      });
-      const exportColumns = columns.map((col) => ({
-        ...col,
-        key: col.key as string,
-      })) as Column<TableData>[];
-      exportOptions.onExport(format, exportData as TableData[], exportColumns);
-    },
-    [exportOptions, processedData, columns]
-  );
 
   const handleDragStart = (
     e: React.DragEvent<HTMLDivElement>,
@@ -393,14 +402,12 @@ export function DataTable<T extends TableData>({
     Object.keys(localAdvancedFilters).length > 0;
 
   const handleClearFilters = useCallback(() => {
-    setFilterTransition(true);
     setLocalLoading(true);
     const newFilters = {};
     updateState({ filters: newFilters });
     setLocalAdvancedFilters({});
     onFilterChange?.(newFilters);
     setTimeout(() => {
-      setFilterTransition(false);
       setLocalLoading(false);
     }, 300);
   }, [updateState, onFilterChange]);
@@ -417,14 +424,14 @@ export function DataTable<T extends TableData>({
 
   if (error) {
     return (
-      <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
+      <div className="bg-white rounded-md border border-gray-200 p-8 text-center">
         <div className="text-red-600 mb-4">
           <Icon name="alertCircle" className="h-12 w-12 mx-auto" />
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">
           Failed to load data
         </h3>
-        <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
+        <p className="text-gray-600 mb-4">{error}</p>
         {onRetry && (
           <Button onClick={onRetry} variant="primary">
             <Icon name="refreshCw" className="h-4 w-4 mr-2" />
@@ -436,106 +443,58 @@ export function DataTable<T extends TableData>({
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-300 dark:border-gray-700 w-full overflow-x-auto">
-      <div className="p-4 md:p-6 min-w-[800px]">
+    <div className="bg-white rounded-md border border-gray-300 w-full overflow-hidden">
+      <div className="min-w-[800px]">
         <div className={`space-y-4 ${className}`}>
-          <TableToolbar
-            title={title}
-            description={description}
-            isLoading={isLoading}
-            selectedCount={state.selectedRows.size}
-            totalCount={pagination?.total ?? processedData.length}
-            bulkActions={bulkActions}
-            selectedData={processedData.filter((row) =>
-              state.selectedRows.has(row.id)
-            )}
-            columns={columnSettingsData}
-            showSearch={showSearch}
-            searchValue={searchValue}
-            onSearch={handleSearch}
-            statusFilterOptions={statusFilterOptions}
-            currentStatus={currentStatus}
-            onStatusChange={handleStatusFilter}
-            onClearStatus={handleClearStatusFilter}
-            advancedFilters={advancedFilters}
-            showAdvancedFilters={showAdvancedFilters}
-            onToggleAdvancedFilters={() =>
-              setShowAdvancedFilters(!showAdvancedFilters)
-            }
-            exportOptions={exportOptions}
-            onExport={handleExport}
-            showColumnSettings={showColumnSettings}
-            onToggleColumnSettings={() => {}}
-            onRetry={onRetry}
-            onColumnVisibilityChange={handleColumnVisibilityChange}
-          />
+          <div className="p-6">
+            <TableToolbar
+              title={title}
+              description={description}
+              isLoading={isLoading}
+              selectedCount={state.selectedRows.size}
+              totalCount={pagination?.total ?? processedData.length}
+              bulkActions={bulkActions}
+              selectedData={processedData.filter((row) =>
+                state.selectedRows.has(row.id)
+              )}
+              columns={columnSettingsData}
+              showSearch={showSearch}
+              searchValue={searchValue}
+              onSearch={handleSearch}
+              statusFilterOptions={statusFilterOptions}
+              currentStatus={currentStatus}
+              onStatusChange={handleStatusFilter}
+              onClearStatus={handleClearStatusFilter}
+              advancedFilters={advancedFilters}
+              showAdvancedFilters={showAdvancedFilters}
+              onToggleAdvancedFilters={() =>
+                setShowAdvancedFilters(!showAdvancedFilters)
+              }
+              exportOptions={exportOptions}
+              onExport={() => {}}
+              showColumnSettings={showColumnSettings}
+              onToggleColumnSettings={() => {}}
+              onRetry={onRetry}
+              onColumnVisibilityChange={handleColumnVisibilityChange}
+            />
+          </div>
 
           {showAdvancedFilters && advancedFilters.length > 0 && (
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {advancedFilters.map((filter) => (
-                  <div key={filter.key} className="min-w-0">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      {filter.label}
-                    </label>
-                    {filter.type === 'select' ? (
-                      <select
-                        value={localAdvancedFilters[filter.key] || ''}
-                        onChange={(e) => {
-                          setLocalAdvancedFilters((prev) => ({
-                            ...prev,
-                            [filter.key]: e.target.value,
-                          }));
-                        }}
-                        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                        disabled={isLoading}
-                      >
-                        <option value="">All</option>
-                        {filter.options?.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        type={filter.type === 'number' ? 'number' : 'text'}
-                        placeholder={filter.placeholder}
-                        value={localAdvancedFilters[filter.key] || ''}
-                        onChange={(e) => {
-                          setLocalAdvancedFilters((prev) => ({
-                            ...prev,
-                            [filter.key]: e.target.value,
-                          }));
-                        }}
-                        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                        disabled={isLoading}
-                      />
-                    )}
-                  </div>
-                ))}
-              </div>
-              <div className="flex justify-end mt-4">
-                <Button
-                  variant="secondary-outline"
-                  size="sm"
-                  onClick={() => setLocalAdvancedFilters({})}
-                  disabled={isLoading}
-                >
-                  Clear Filters
-                </Button>
-              </div>
-            </div>
+            <AdvancedFiltersPanel
+              advancedFilters={advancedFilters}
+              localAdvancedFilters={localAdvancedFilters}
+              setLocalAdvancedFilters={setLocalAdvancedFilters}
+              isLoading={isLoading}
+            />
           )}
 
           <div
-            className="overflow-hidden w-full rounded-lg border border-gray-200 dark:border-gray-700"
+            className="overflow-hidden border-t border-gray-200"
             ref={tableRef}
           >
             <div
-              className={`${virtualScroll ? 'h-[500px]' : 'max-h-[500px]'} overflow-auto`}
-              ref={virtualScroll ? containerRef : undefined}
-              onScroll={virtualScroll ? handleScroll : undefined}
+              className="max-h-[600px] overflow-auto"
+              ref={scrollContainerRef}
             >
               {isLoading ? (
                 <TableSkeleton
@@ -563,22 +522,18 @@ export function DataTable<T extends TableData>({
                   />
 
                   <TableBody
-                    data={displayData}
+                    data={paginatedData}
                     columns={enhancedColumns}
                     state={state}
-                    virtualScroll={virtualScroll}
-                    totalHeight={totalHeight}
-                    startIndex={startIndex}
-                    endIndex={endIndex}
-                    scrollVelocity={scrollVelocity}
+                    onRowClick={onRowClick}
                     actions={actions}
                     rowExpansion={rowExpansion}
                     inlineEdit={inlineEdit}
                     editingCell={editingCell}
                     editValue={editValue}
-                    onEditStart={handleEditStart}
-                    onEditSave={handleEditSave}
-                    onEditCancel={handleEditCancel}
+                    onEditStart={() => {}}
+                    onEditSave={() => {}}
+                    onEditCancel={() => {}}
                     onEditValueChange={setEditValue}
                     hoveredRow={hoveredRow}
                     onHover={setHoveredRow}
@@ -591,15 +546,16 @@ export function DataTable<T extends TableData>({
                 </>
               )}
             </div>
+            {pagination && (
+              <div className="sticky bottom-0 bg-white border-t border-gray-200 z-20">
+                <TablePagination
+                  pagination={normalizedPagination}
+                  onPaginationChange={onPaginationChange}
+                  selectedCount={state.selectedRows.size}
+                />
+              </div>
+            )}
           </div>
-
-          {pagination && (
-            <TablePagination
-              pagination={pagination}
-              onPaginationChange={onPaginationChange}
-              selectedCount={state.selectedRows.size}
-            />
-          )}
         </div>
       </div>
     </div>
@@ -608,7 +564,7 @@ export function DataTable<T extends TableData>({
 
 export const formatCurrency = (
   amount: number | string | null | undefined,
-  currency: string = 'USD'
+  currency: string = 'GBP'
 ): string => {
   const numericAmount =
     typeof amount === 'string'
@@ -616,7 +572,7 @@ export const formatCurrency = (
       : Number(amount || 0);
 
   if (Number.isNaN(numericAmount) || !Number.isFinite(numericAmount)) {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-GB', {
       style: 'currency',
       currency: currency,
       minimumFractionDigits: 0,
@@ -624,7 +580,7 @@ export const formatCurrency = (
     }).format(0);
   }
 
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('en-GB', {
     style: 'currency',
     currency: currency,
     minimumFractionDigits: 0,
@@ -633,25 +589,22 @@ export const formatCurrency = (
 };
 
 export const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString('en-US');
+  return new Date(dateString).toLocaleDateString('en-GB');
 };
 
 interface StatusBadgeProps {
   status: string;
   config?: Partial<
-    Record<
-      StatusKey,
-      { label: string; variant: StatusVariant; icon?: React.ReactNode }
-    >
+    Record<StatusKey, { label: string; variant: StatusVariant }>
   >;
   icon?: React.ReactNode;
 }
 
-export const DataTableStatusBadge = ({
+export const DataTableStatusBadge: React.FC<StatusBadgeProps> = ({
   status,
   config,
   icon,
-}: StatusBadgeProps) => {
+}) => {
   const mergedConfig = { ...DEFAULT_CONFIG, ...config };
 
   const statusConfig = Object.keys(mergedConfig).find(
@@ -660,16 +613,15 @@ export const DataTableStatusBadge = ({
 
   const currentConfig = statusConfig
     ? mergedConfig[statusConfig]
-    : { label: status, variant: 'primary' as StatusVariant, icon: undefined };
+    : { label: status, variant: 'primary' as StatusVariant };
 
   const variantClasses = VARIANT_CLASSES[currentConfig.variant];
-  const displayIcon = icon || currentConfig.icon;
 
   return (
     <span
       className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${variantClasses}`}
     >
-      {displayIcon && <span className="flex-shrink-0">{displayIcon}</span>}
+      {icon && <span className="flex-shrink-0">{icon}</span>}
       {currentConfig.label}
     </span>
   );

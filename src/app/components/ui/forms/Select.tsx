@@ -1,350 +1,258 @@
-'use client';
-
-import { useState, useRef, useEffect } from 'react';
-import { Icon } from '@/app/components/ui';
+// components/ui/forms/Select.tsx
+import React, { forwardRef, useState, useRef, useEffect } from 'react';
+import { FieldWrapper } from './FieldWrapper';
+import {
+  baseInputClasses,
+  iconLeftClasses,
+  iconRightClasses,
+} from './field-styles';
 
 export interface SelectOption {
   value: string;
   label: string;
+  disabled?: boolean;
 }
 
-export interface SelectProps {
-  name: string;
+export interface SelectProps
+  extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> {
   label?: string;
-  className?: string;
-  options: SelectOption[];
-  required?: boolean;
-  value?: string;
-  defaultValue?: string;
   error?: string;
   description?: string;
+  options: SelectOption[];
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+  containerClassName?: string;
   onChange?: (value: string) => void;
-  disabled?: boolean;
-  labelClassName?: string;
 }
 
-export default function Select({
-  name,
-  label,
-  className = '',
-  options,
-  required,
-  value,
-  defaultValue,
-  error,
-  description,
-  onChange,
-  disabled = false,
-  labelClassName = '',
-}: SelectProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const [internalValue, setInternalValue] = useState(defaultValue || '');
-  const selectRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const listboxRef = useRef<HTMLUListElement>(null);
-
-  const isControlled = value !== undefined;
-  const currentValue = isControlled ? value : internalValue;
-
-  const getDisplayLabel = () => {
-    if (!currentValue) {
-      return 'Select an option';
-    }
-    const selectedOption = options.find(
-      (option) => option.value === currentValue
+export const Select = forwardRef<HTMLSelectElement, SelectProps>(
+  (
+    {
+      label,
+      error,
+      description,
+      options,
+      leftIcon,
+      rightIcon,
+      onChange,
+      className = '',
+      containerClassName = '',
+      ...props
+    },
+    ref
+  ) => {
+    const selectId = React.useId();
+    const [isOpen, setIsOpen] = useState(false);
+    const [selectedOption, setSelectedOption] = useState<SelectOption | null>(
+      null
     );
-    return selectedOption ? selectedOption.label : currentValue;
-  };
+    const selectRef = useRef<HTMLDivElement>(null);
+    const hiddenSelectRef = useRef<HTMLSelectElement>(null);
 
-  const selectedIndex = options.findIndex(
-    (option) => option.value === currentValue
-  );
+    const paddingLeft = leftIcon ? 'pl-10' : 'pl-3';
+    const paddingRight = 'pr-10';
 
-  const navigableOptions = options.filter((option) => option.value !== '');
+    const selectClasses = `
+      ${baseInputClasses}
+      ${paddingLeft}
+      ${paddingRight}
+      ${error ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}
+      ${props.disabled ? 'opacity-60 cursor-not-allowed bg-gray-50 dark:bg-gray-900' : ''}
+      cursor-pointer select-none
+      ${className}
+    `
+      .replace(/\s+/g, ' ')
+      .trim();
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        selectRef.current &&
-        !selectRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-        setHighlightedIndex(-1);
+    // Initialize selected option
+    useEffect(() => {
+      if (props.value !== undefined) {
+        const option = options.find((opt) => opt.value === props.value) || null;
+        setSelectedOption(option);
+      } else if (props.defaultValue !== undefined) {
+        const option =
+          options.find((opt) => opt.value === props.defaultValue) || null;
+        setSelectedOption(option);
+      } else {
+        setSelectedOption(options[0] || null);
+      }
+    }, [props.value, props.defaultValue, options]);
+
+    const handleOptionClick = (option: SelectOption) => {
+      if (option.disabled) return;
+
+      setSelectedOption(option);
+      setIsOpen(false);
+      onChange?.(option.value);
+
+      // Trigger change on hidden select for form compatibility
+      if (hiddenSelectRef.current) {
+        hiddenSelectRef.current.value = option.value;
+        hiddenSelectRef.current.dispatchEvent(
+          new Event('change', { bubbles: true })
+        );
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
+    const handleToggle = () => {
+      if (!props.disabled) {
+        setIsOpen(!isOpen);
+      }
+    };
 
-  useEffect(() => {
-    if (isOpen) {
-      const newIndex =
-        selectedIndex >= 0
-          ? navigableOptions.findIndex(
-              (opt) => opt.value === options[selectedIndex]?.value
-            )
-          : 0;
-      setHighlightedIndex(newIndex);
-
-      setTimeout(() => listboxRef.current?.focus(), 0);
-    } else {
-      setHighlightedIndex(-1);
-    }
-  }, [isOpen, selectedIndex, navigableOptions, options]);
-
-  const handleSelect = (optionValue: string) => {
-    if (!isControlled) {
-      setInternalValue(optionValue);
-    }
-    onChange?.(optionValue);
-    setIsOpen(false);
-    setHighlightedIndex(-1);
-    buttonRef.current?.focus();
-  };
-
-  const handleButtonClick = () => {
-    if (!disabled) {
-      setIsOpen((prev) => !prev);
-    }
-  };
-
-  const handleButtonKeyDown = (event: React.KeyboardEvent) => {
-    if (disabled) return;
-
-    switch (event.key) {
-      case ' ':
-      case 'Enter':
-      case 'ArrowDown':
+    const handleKeyDown = (event: React.KeyboardEvent) => {
+      if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
-        setIsOpen(true);
-        break;
-      case 'ArrowUp':
-        event.preventDefault();
-        setIsOpen(true);
-        break;
-      case 'Escape':
+        handleToggle();
+      } else if (event.key === 'Escape') {
         setIsOpen(false);
-        break;
-      case 'Tab':
-        setIsOpen(false);
-        break;
-    }
-  };
+      }
+    };
 
-  const handleListboxKeyDown = (event: React.KeyboardEvent) => {
-    switch (event.key) {
-      case 'Escape':
-        event.preventDefault();
-        setIsOpen(false);
-        buttonRef.current?.focus();
-        break;
-
-      case 'Tab':
-        setIsOpen(false);
-        break;
-
-      case 'ArrowDown':
-        event.preventDefault();
-        setHighlightedIndex((prev) => {
-          const nextIndex = prev + 1;
-          return nextIndex >= navigableOptions.length ? 0 : nextIndex;
-        });
-        break;
-
-      case 'ArrowUp':
-        event.preventDefault();
-        setHighlightedIndex((prev) => {
-          const nextIndex = prev - 1;
-          return nextIndex < 0 ? navigableOptions.length - 1 : nextIndex;
-        });
-        break;
-
-      case 'Enter':
-      case ' ':
-        event.preventDefault();
+    // Close dropdown when clicking outside
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
         if (
-          highlightedIndex >= 0 &&
-          highlightedIndex < navigableOptions.length
+          selectRef.current &&
+          !selectRef.current.contains(event.target as Node)
         ) {
-          handleSelect(navigableOptions[highlightedIndex].value);
+          setIsOpen(false);
         }
-        break;
+      };
 
-      case 'Home':
-        event.preventDefault();
-        setHighlightedIndex(0);
-        break;
+      document.addEventListener('mousedown', handleClickOutside);
+      return () =>
+        document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
-      case 'End':
-        event.preventDefault();
-        setHighlightedIndex(navigableOptions.length - 1);
-        break;
-    }
-  };
+    const displayValue = selectedOption?.label || 'Select an option';
 
-  const handleOptionMouseEnter = (index: number) => {
-    setHighlightedIndex(index);
-  };
-
-  const handleOptionMouseLeave = () => {
-    setHighlightedIndex(
-      selectedIndex >= 0
-        ? navigableOptions.findIndex(
-            (opt) => opt.value === options[selectedIndex]?.value
-          )
-        : -1
-    );
-  };
-
-  return (
-    <div className="w-full relative" ref={selectRef}>
-      {label && (
-        <label
-          htmlFor={name}
-          className={`block text-sm font-semibold mb-1 text-gray-700 ${labelClassName}`}
-        >
-          {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
-        </label>
-      )}
-
-      <div className="relative">
+    return (
+      <FieldWrapper
+        label={label}
+        error={error}
+        description={description}
+        htmlFor={selectId}
+        required={props.required}
+        className={containerClassName}
+      >
+        {/* Hidden native select for form submission */}
         <select
-          name={name}
-          value={currentValue}
-          onChange={(e) => handleSelect(e.target.value)}
+          ref={(node) => {
+            if (typeof ref === 'function') {
+              ref(node);
+            } else if (ref) {
+              ref.current = node;
+            }
+            hiddenSelectRef.current = node;
+          }}
+          id={selectId}
+          value={selectedOption?.value || ''}
+          onChange={(e) => onChange?.(e.target.value)}
           className="sr-only"
           aria-hidden="true"
           tabIndex={-1}
-          disabled={disabled}
+          {...props}
         >
-          <option value=""></option>
           {options.map((option) => (
-            <option key={option.value} value={option.value}>
+            <option
+              key={option.value}
+              value={option.value}
+              disabled={option.disabled}
+            >
               {option.label}
             </option>
           ))}
         </select>
 
-        <button
-          ref={buttonRef}
-          type="button"
-          id={name}
-          className={`
-            relative w-full rounded-lg border px-4 py-3
-            text-left text-base font-medium
-            focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
-            bg-white
-            flex items-center justify-between
-            transition-colors duration-200
-            ${
-              disabled
-                ? 'bg-gray-100 cursor-not-allowed opacity-70 text-gray-500'
-                : 'cursor-pointer hover:border-gray-400'
-            }
-            ${
-              error
-                ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
-                : 'border-gray-300'
-            }
-            ${!currentValue ? 'text-gray-500' : 'text-gray-900'}
-            ${className}
-          `}
-          onClick={handleButtonClick}
-          onKeyDown={handleButtonKeyDown}
-          aria-haspopup="listbox"
-          aria-expanded={isOpen}
-          aria-labelledby={label ? `${name}-label` : undefined}
-          aria-describedby={error ? `${name}-error` : undefined}
-          disabled={disabled}
-        >
-          <span className="truncate">{getDisplayLabel()}</span>
-          <div className="pointer-events-none flex items-center ml-2">
-            <Icon
-              name="chevronDown"
-              className={`h-4 w-4 transform transition-transform duration-200 ${
-                isOpen ? 'rotate-180' : ''
-              } ${disabled ? 'text-gray-400' : 'text-gray-500'}`}
-            />
-          </div>
-        </button>
+        {/* Custom select UI */}
+        <div className="relative" ref={selectRef}>
+          {leftIcon && <div className={iconLeftClasses}>{leftIcon}</div>}
 
-        {isOpen && (
-          <ul
-            ref={listboxRef}
-            className="absolute z-50 w-full mt-1 rounded-lg bg-white py-1 shadow-lg border border-gray-200 max-h-60 overflow-auto focus:outline-none"
-            role="listbox"
-            aria-labelledby={label ? `${name}-label` : undefined}
-            tabIndex={-1}
-            onKeyDown={handleListboxKeyDown}
+          {/* Select trigger */}
+          <button
+            type="button"
+            className={selectClasses}
+            onClick={handleToggle}
+            onKeyDown={handleKeyDown}
+            disabled={props.disabled}
+            aria-haspopup="listbox"
+            aria-expanded={isOpen}
+            aria-labelledby={label ? `${selectId}-label` : undefined}
           >
-            {options.map((option) => {
-              const isSelected = currentValue === option.value;
-              const isNavigableOption = option.value !== '';
-              const navigableIndex = isNavigableOption
-                ? navigableOptions.findIndex(
-                    (opt) => opt.value === option.value
-                  )
-                : -1;
-              const isHighlighted = navigableIndex === highlightedIndex;
+            <span className="block truncate text-left">{displayValue}</span>
+          </button>
 
-              if (option.value === '') {
-                return (
-                  <li
-                    key="empty-option"
+          {rightIcon && <div className={iconRightClasses}>{rightIcon}</div>}
+
+          {/* Custom dropdown arrow */}
+          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400 dark:text-gray-500">
+            <svg
+              className={`h-4 w-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </div>
+
+          {/* Dropdown menu */}
+          {isOpen && (
+            <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-auto focus:outline-none">
+              <div className="py-1" role="listbox">
+                {options.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`
+                      w-full text-left px-3 py-2 text-sm transition-colors duration-150
+                      ${
+                        option.disabled
+                          ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                          : 'text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }
+                      ${
+                        selectedOption?.value === option.value
+                          ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-medium'
+                          : ''
+                      }
+                    `}
+                    onClick={() => handleOptionClick(option)}
+                    disabled={option.disabled}
                     role="option"
-                    aria-selected={isSelected}
-                    className="py-3 px-4 text-gray-500 cursor-default select-none text-base"
+                    aria-selected={selectedOption?.value === option.value}
                   >
-                    {option.label}
-                  </li>
-                );
-              }
+                    <div className="flex items-center justify-between">
+                      <span className="block truncate">{option.label}</span>
+                      {selectedOption?.value === option.value && (
+                        <svg
+                          className="h-4 w-4 text-blue-600 dark:text-blue-400"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </FieldWrapper>
+    );
+  }
+);
 
-              return (
-                <li
-                  key={option.value}
-                  role="option"
-                  aria-selected={isSelected}
-                  className={`
-                    relative cursor-pointer select-none py-3 px-4
-                    transition-colors duration-200 text-base
-                    ${
-                      isSelected
-                        ? 'bg-indigo-50 text-indigo-900 font-medium'
-                        : 'text-gray-900'
-                    }
-                    ${
-                      isHighlighted && !isSelected
-                        ? 'bg-gray-50 text-gray-900'
-                        : ''
-                    }
-                    hover:bg-gray-50
-                  `}
-                  onClick={() => handleSelect(option.value)}
-                  onMouseEnter={() => handleOptionMouseEnter(navigableIndex)}
-                  onMouseLeave={handleOptionMouseLeave}
-                >
-                  <span className="block truncate">{option.label}</span>
-                  {isSelected && (
-                    <span className="absolute inset-y-0 right-0 flex items-center pr-4 text-indigo-600">
-                      <Icon name="check" size={16} />
-                    </span>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
-
-      {description && (
-        <p className="mt-1 text-sm text-gray-500">{description}</p>
-      )}
-
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
-    </div>
-  );
-}
+Select.displayName = 'Select';

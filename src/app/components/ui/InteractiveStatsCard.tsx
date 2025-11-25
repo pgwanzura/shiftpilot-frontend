@@ -67,21 +67,21 @@ const VARIANT_STYLES = {
 
 const SIZE_STYLES = {
   sm: {
-    container: 'p-3 rounded-lg',
+    container: 'p-3 rounded-md',
     icon: 'p-1.5 rounded-md',
     value: 'text-xl font-semibold',
     title: 'text-sm font-medium mb-1',
     description: 'text-xs leading-snug',
   },
   md: {
-    container: 'p-4 rounded-xl',
+    container: 'p-4 rounded-md',
     icon: 'p-2 rounded-lg',
     value: 'text-2xl font-semibold',
     title: 'text-base font-medium mb-1',
     description: 'text-sm leading-tight',
   },
   lg: {
-    container: 'p-5 rounded-xl',
+    container: 'p-5 rounded-md',
     icon: 'p-2.5 rounded-lg',
     value: 'text-3xl font-semibold',
     title: 'text-lg font-medium mb-2',

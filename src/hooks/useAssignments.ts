@@ -1,24 +1,64 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useApiQuery } from './useApiQuery';
 import { useApiMutation } from './useApiMutation';
-import { useQueryClient } from '@tanstack/react-query';
 import {
   Assignment,
   AssignmentFilters,
-  AssignmentStats,
   AssignmentStatsResponse,
   CreateAssignmentData,
   UpdateAssignmentData,
   StatusChangeData,
   PaginatedResponse,
+  AssignmentStatus,
+  AssignmentType,
 } from '@/types';
 
-export function useAssignments(filters: Partial<AssignmentFilters> = {}) {
-  const params = {
-    page: filters.page || 1,
-    per_page: filters.per_page || 20,
-    status: filters.status === 'all' ? undefined : filters.status,
-    assignment_type:
-      filters.assignment_type === 'all' ? undefined : filters.assignment_type,
+interface AssignmentQueryParams extends Record<string, unknown> {
+  page: number;
+  per_page: number;
+  status?: AssignmentStatus;
+  assignment_type?: AssignmentType;
+  search?: string;
+  role?: string;
+  location_id?: number;
+  start_date_from?: string;
+  start_date_to?: string;
+  end_date_from?: string;
+  end_date_to?: string;
+  employer_id?: number;
+  agency_employee_id?: number;
+  sort_by?: string;
+  sort_direction?: 'asc' | 'desc';
+}
+
+const ASSIGNMENTS_STALE_TIME = 300_000;
+const ASSIGNMENT_STATS_STALE_TIME = 120_000;
+const SINGLE_ASSIGNMENT_STALE_TIME = 600_000;
+
+const assignmentKeys = {
+  all: ['assignments'] as const,
+  lists: () => [...assignmentKeys.all, 'list'] as const,
+  list: (filters: AssignmentQueryParams) =>
+    [...assignmentKeys.lists(), { ...filters }] as const,
+  details: () => [...assignmentKeys.all, 'detail'] as const,
+  detail: (id: number) => [...assignmentKeys.details(), id.toString()] as const,
+  stats: ['assignment-stats'] as const,
+};
+
+function buildAssignmentParams(
+  filters: Partial<AssignmentFilters>
+): AssignmentQueryParams {
+  const status = filters.status === 'all' ? undefined : filters.status;
+  const assignment_type =
+    filters.assignment_type === 'all'
+      ? undefined
+      : (filters.assignment_type as AssignmentType);
+
+  return {
+    page: filters.page ?? 1,
+    per_page: filters.per_page ?? 20,
+    status,
+    assignment_type,
     search: filters.search,
     role: filters.role,
     location_id: filters.location_id,
@@ -31,28 +71,37 @@ export function useAssignments(filters: Partial<AssignmentFilters> = {}) {
     sort_by: filters.sort_by,
     sort_direction: filters.sort_direction,
   };
+}
+
+export function useAssignments(filters: Partial<AssignmentFilters> = {}) {
+  const params = buildAssignmentParams(filters);
+  const queryKey = [...assignmentKeys.list(params)] as string[];
 
   return useApiQuery<PaginatedResponse<Assignment>>({
-    queryKey: ['assignments', JSON.stringify(params)],
+    queryKey,
     endpoint: '/assignments',
     params,
-    staleTime: 1000 * 60 * 5,
+    staleTime: ASSIGNMENTS_STALE_TIME,
   });
 }
 
 export function useAssignmentStats() {
+  const queryKey = [...assignmentKeys.stats] as string[];
+
   return useApiQuery<AssignmentStatsResponse>({
-    queryKey: ['assignment-stats'],
+    queryKey,
     endpoint: '/assignments/agency/statistics',
-    staleTime: 1000 * 60 * 2,
+    staleTime: ASSIGNMENT_STATS_STALE_TIME,
   });
 }
 
 export function useAssignment(id: number) {
+  const queryKey = [...assignmentKeys.detail(id)] as string[];
+
   return useApiQuery<Assignment>({
-    queryKey: ['assignment', id.toString()],
+    queryKey,
     endpoint: `/assignments/${id}`,
-    staleTime: 1000 * 60 * 10,
+    staleTime: SINGLE_ASSIGNMENT_STALE_TIME,
   });
 }
 
@@ -63,15 +112,12 @@ export function useCreateAssignment() {
     endpoint: '/assignments',
     method: 'POST',
     onSuccess: (newAssignment) => {
-      // Invalidate assignments list
-      queryClient.invalidateQueries({ queryKey: ['assignments'] });
-      queryClient.invalidateQueries({ queryKey: ['assignment-stats'] });
-
-      // Add the new assignment to the cache
       queryClient.setQueryData(
-        ['assignment', newAssignment.id.toString()],
+        assignmentKeys.detail(newAssignment.id),
         newAssignment
       );
+      queryClient.invalidateQueries({ queryKey: assignmentKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: assignmentKeys.stats });
     },
   });
 }
@@ -83,102 +129,73 @@ export function useUpdateAssignment() {
     {
       endpoint: '/assignments',
       method: 'PUT',
-      onSuccess: (updatedAssignment, variables) => {
-        queryClient.setQueryData(
-          ['assignment', variables.id.toString()],
-          updatedAssignment
-        );
-
-        queryClient.invalidateQueries({ queryKey: ['assignments'] });
-        queryClient.invalidateQueries({ queryKey: ['assignment-stats'] });
+      onSuccess: (updated, { id }) => {
+        queryClient.setQueryData(assignmentKeys.detail(id), updated);
+        queryClient.invalidateQueries({ queryKey: assignmentKeys.lists() });
+        queryClient.invalidateQueries({ queryKey: assignmentKeys.stats });
       },
     }
   );
 }
 
-export function useChangeAssignmentStatus() {
+export function useAssignmentActions() {
   const queryClient = useQueryClient();
 
-  return useApiMutation<Assignment, { id: number; data: StatusChangeData }>({
+  const changeStatus = useApiMutation<
+    Assignment,
+    { id: number; data: StatusChangeData }
+  >({
     endpoint: '/assignments',
     method: 'PATCH',
-    onSuccess: (updatedAssignment, variables) => {
-      queryClient.setQueryData(
-        ['assignment', variables.id.toString()],
-        updatedAssignment
-      );
-
-      queryClient.invalidateQueries({ queryKey: ['assignments'] });
-      queryClient.invalidateQueries({ queryKey: ['assignment-stats'] });
+    onSuccess: (updated, { id }) => {
+      queryClient.setQueryData(assignmentKeys.detail(id), updated);
+      queryClient.invalidateQueries({ queryKey: assignmentKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: assignmentKeys.stats });
     },
   });
-}
-
-export function useDeleteAssignment() {
-  const queryClient = useQueryClient();
-
-  return useApiMutation<void, number>({
-    endpoint: '/assignments',
-    method: 'DELETE',
-    onSuccess: (_, assignmentId) => {
-      queryClient.removeQueries({
-        queryKey: ['assignment', assignmentId.toString()],
-      });
-
-      queryClient.invalidateQueries({ queryKey: ['assignments'] });
-      queryClient.invalidateQueries({ queryKey: ['assignment-stats'] });
-    },
-  });
-}
-
-export function useCompleteAssignment() {
-  const changeStatus = useChangeAssignmentStatus();
 
   return {
-    ...changeStatus,
-    mutate: (assignmentId: number, reason?: string) =>
+    changeStatus: (
+      id: number,
+      status: AssignmentStatus,
+      reason?: string | null
+    ) => changeStatus.mutate({ id, data: { status, reason: reason ?? null } }),
+    pause: (id: number, reason?: string) =>
       changeStatus.mutate({
-        id: assignmentId,
-        data: { status: 'completed', reason: reason ?? null },
-      }),
-  };
-}
-
-export function usePauseAssignment() {
-  const changeStatus = useChangeAssignmentStatus();
-
-  return {
-    ...changeStatus,
-    mutate: (assignmentId: number, reason?: string) =>
-      changeStatus.mutate({
-        id: assignmentId,
+        id,
         data: { status: 'paused', reason: reason ?? null },
       }),
-  };
-}
-
-export function useReactivateAssignment() {
-  const changeStatus = useChangeAssignmentStatus();
-
-  return {
-    ...changeStatus,
-    mutate: (assignmentId: number) =>
+    complete: (id: number, reason?: string) =>
       changeStatus.mutate({
-        id: assignmentId,
-        data: { status: 'active', reason: null },
+        id,
+        data: { status: 'completed', reason: reason ?? null },
       }),
-  };
-}
-
-export function useCancelAssignment() {
-  const changeStatus = useChangeAssignmentStatus();
-
-  return {
-    ...changeStatus,
-    mutate: (assignmentId: number, reason?: string) =>
+    reactivate: (id: number) =>
+      changeStatus.mutate({ id, data: { status: 'active', reason: null } }),
+    cancel: (id: number, reason?: string) =>
       changeStatus.mutate({
-        id: assignmentId,
+        id,
         data: { status: 'cancelled', reason: reason ?? null },
       }),
   };
 }
+
+export const usePauseAssignment = () => {
+  const { pause } = useAssignmentActions();
+  return { mutate: pause };
+};
+
+export const useCompleteAssignment = () => {
+  const { complete } = useAssignmentActions();
+  return { mutate: complete };
+};
+
+export const useReactivateAssignment = () => {
+  const { reactivate } = useAssignmentActions();
+  return { mutate: reactivate };
+};
+
+export const useCancelAssignment = () => {
+  const { cancel } = useAssignmentActions();
+  return { mutate: cancel };
+};

@@ -1,19 +1,24 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import PageHeader from '@/app/components/layout/PageHeader';
 import { QuickActions } from '@/app/components/ui';
 import { AssignmentsTable } from '@/app/components/ui/assignments/AssignmentsTable';
 import { AssignmentStats } from '@/app/components/ui/assignments/AssignmentStats';
-import { useAssignments, useAssignmentStats } from '@/hooks/useAssignments';
+import {
+  useAssignments,
+  useAssignmentStats,
+  usePauseAssignment,
+  useReactivateAssignment,
+} from '@/hooks/useAssignments';
 import type { AssignmentFilters, Assignment, Pagination } from '@/types';
 
 const DEFAULT_FILTERS: AssignmentFilters = {
   status: 'all',
   assignment_type: 'all',
   page: 1,
-  per_page: 20,
+  per_page: 10,
 };
 
 interface ApiPagination {
@@ -31,6 +36,9 @@ export default function AssignmentsPage() {
     useAssignments(filters);
   const { data: statsResponse, isLoading: statsLoading } = useAssignmentStats();
 
+  const pauseAssignment = usePauseAssignment();
+  const resumeAssignment = useReactivateAssignment();
+
   const handleFiltersChange = useCallback((newFilters: AssignmentFilters) => {
     setFilters(newFilters);
   }, []);
@@ -43,27 +51,36 @@ export default function AssignmentsPage() {
     }));
   }, []);
 
-  const handleRowClick = useCallback(
-    (assignment: Assignment) => {
-      router.push(`/assignments/${assignment.id}`);
+  const tableData: Assignment[] = useMemo(
+    () => assignmentsData?.data || [],
+    [assignmentsData]
+  );
+  const pagination: Pagination | undefined = useMemo(() => {
+    if (!assignmentsData?.meta) return undefined;
+    const meta = assignmentsData.meta as ApiPagination;
+    return {
+      page: meta.current_page,
+      pageSize: meta.per_page,
+      total: meta.total,
+      last_page: meta.last_page,
+    };
+  }, [assignmentsData]);
+
+  const navigateToAssignment = useCallback(
+    (assignmentId: number, path: 'view' | 'edit' = 'view') => {
+      const url =
+        path === 'edit'
+          ? `/assignments/${assignmentId}/edit`
+          : `/assignments/${assignmentId}`;
+      router.push(url);
     },
     [router]
   );
 
-  const convertPagination = (
-    apiPagination: ApiPagination | undefined
-  ): Pagination | undefined => {
-    if (!apiPagination) return undefined;
-
-    return {
-      page: apiPagination.current_page,
-      pageSize: apiPagination.per_page,
-      total: apiPagination.total,
-    };
-  };
-
-  const tableData = assignmentsData?.data || [];
-  const pagination = convertPagination(assignmentsData?.meta);
+  const navigateToShifts = useCallback(
+    (assignmentId: number) => router.push(`/shifts?assignment=${assignmentId}`),
+    [router]
+  );
 
   return (
     <div className="space-y-6">
@@ -76,7 +93,7 @@ export default function AssignmentsPage() {
         }}
       />
 
-      <AssignmentStats stats={statsResponse?.data} loading={statsLoading} />
+      {/* <AssignmentStats stats={statsResponse?.data} loading={statsLoading} /> */}
 
       <AssignmentsTable
         data={tableData}
@@ -85,7 +102,12 @@ export default function AssignmentsPage() {
         loading={assignmentsLoading}
         onFiltersChange={handleFiltersChange}
         onPaginationChange={handlePaginationChange}
-        onRowClick={handleRowClick}
+        onRowClick={(assignment) => navigateToAssignment(assignment.id)}
+        onEdit={(assignment) => navigateToAssignment(assignment.id, 'edit')}
+        onPause={(assignment) => pauseAssignment.mutate(assignment.id)}
+        onResume={(assignment) => resumeAssignment.mutate(assignment.id)}
+        onViewDetails={(assignment) => navigateToAssignment(assignment.id)}
+        onViewShifts={(assignment) => navigateToShifts(assignment.id)}
       />
     </div>
   );

@@ -9,6 +9,7 @@ import {
 } from '@/types/table';
 import { Button, Icon } from '@/app/components/ui';
 import { IconName } from '@/config';
+import { Input } from '@/app/components/ui/forms';
 
 interface TableToolbarProps<T extends TableData> {
   title?: string;
@@ -60,7 +61,6 @@ export function TableToolbar<T extends TableData>({
   exportOptions,
   onExport,
   showColumnSettings,
-  onToggleColumnSettings,
   onRetry,
   columns = [],
   onColumnVisibilityChange,
@@ -192,9 +192,12 @@ export function TableToolbar<T extends TableData>({
     [onExport]
   );
 
-  const handleSearchClear = useCallback((): void => {
-    onSearch('');
-  }, [onSearch]);
+  const handleSearchChange = useCallback(
+    (value: string): void => {
+      onSearch(value);
+    },
+    [onSearch]
+  );
 
   const handleColumnVisibilityToggle = useCallback(
     (key: string, visible: boolean): void => {
@@ -242,7 +245,7 @@ export function TableToolbar<T extends TableData>({
             size="sm"
             onClick={() => action.onClick(selectedData)}
             disabled={action.disabled}
-            className="h-[38px] transition-all duration-300 hover:scale-105 active:scale-95"
+            className="h-[38px]"
           >
             {action.icon}
             {action.label}
@@ -255,36 +258,20 @@ export function TableToolbar<T extends TableData>({
   const searchInput = useMemo((): React.ReactNode => {
     if (!showSearch) return null;
     return (
-      <div className="relative w-full sm:w-auto sm:min-w-[280px] flex-1 h-[38px] animate-fade-in">
-        <Icon
-          name="search"
-          className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 transition-all duration-300 group-hover:text-gray-600 dark:group-hover:text-gray-300"
-        />
-        <input
+      <div className="w-full sm:w-auto sm:min-w-[280px] flex-1 animate-fade-in">
+        <Input
           type="text"
           placeholder="Search records..."
           value={searchValue}
-          onChange={(e) => onSearch(e.target.value)}
-          className="w-full h-full pl-10 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:border-gray-400 dark:hover:border-gray-500 focus:hover:border-blue-500 group"
+          onChange={(e) => handleSearchChange(e.target.value)}
           disabled={isLoading}
+          leftIcon={<Icon name="search" className="h-4 w-4" />}
+          containerClassName="mb-0"
+          label={undefined}
         />
-        {searchValue && (
-          <button
-            onClick={handleSearchClear}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all duration-300 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95"
-            disabled={isLoading}
-            type="button"
-            aria-label="Clear search"
-          >
-            <Icon
-              name="x"
-              className="h-3 w-3 transition-transform duration-300 hover:scale-110"
-            />
-          </button>
-        )}
       </div>
     );
-  }, [showSearch, searchValue, onSearch, isLoading, handleSearchClear]);
+  }, [showSearch, searchValue, handleSearchChange, isLoading]);
 
   const statusFilterDropdown = useMemo((): React.ReactNode => {
     if (!statusFilterOptions) return null;
@@ -298,12 +285,9 @@ export function TableToolbar<T extends TableData>({
           size="sm"
           onClick={() => handleDropdownToggle('status')}
           disabled={isLoading}
-          className="transition-all duration-300 hover:scale-105 active:scale-95 h-[38px] group"
+          className="h-[38px]"
         >
-          <Icon
-            name="filter"
-            className="h-4 w-4 transition-transform duration-300 group-hover:rotate-12"
-          />
+          <Icon name="filter" className="h-4 w-4" />
           <span className="ml-2 transition-colors duration-300">
             {currentStatusLabel}
           </span>
@@ -369,7 +353,7 @@ export function TableToolbar<T extends TableData>({
           size="sm"
           onClick={() => handleDropdownToggle('export')}
           disabled={isLoading}
-          className="transition-all duration-300 hover:scale-105 active:scale-95 h-[38px] group"
+          className="h-[38px]"
         >
           <Icon
             name="download"
@@ -437,8 +421,6 @@ export function TableToolbar<T extends TableData>({
     );
   }, [
     exportOptions,
-    openDropdown,
-    isClosing,
     isLoading,
     selectedCount,
     handleDropdownToggle,
@@ -491,8 +473,6 @@ export function TableToolbar<T extends TableData>({
     );
   }, [
     showColumnSettings,
-    openDropdown,
-    isClosing,
     columns,
     handleColumnVisibilityToggle,
     getDropdownAnimation,
@@ -571,12 +551,9 @@ export function TableToolbar<T extends TableData>({
             size="sm"
             onClick={onToggleAdvancedFilters}
             disabled={isLoading}
-            className="transition-all duration-300 hover:scale-105 active:scale-95 h-[38px] group"
+            className="h-[38px]"
           >
-            <Icon
-              name="sliders"
-              className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90"
-            />
+            <Icon name="sliders" className="h-4 w-4" />
             <span className="ml-2 transition-colors duration-300">Filters</span>
           </Button>
         )}
@@ -613,12 +590,9 @@ function TooltipButton({
         size={size}
         onClick={onClick}
         disabled={disabled}
-        className="transition-all duration-300 hover:scale-105 active:scale-95 h-[38px] group"
+        className="h-[38px]"
       >
-        <Icon
-          name={icon}
-          className={`h-4 w-4 transition-transform duration-300 group-hover:rotate-90 ${iconClassName}`}
-        />
+        <Icon name={icon} className={`h-4 w-4 ${iconClassName}`} />
       </Button>
       <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap z-50 translate-y-2 group-hover:translate-y-0">
         {tooltip}

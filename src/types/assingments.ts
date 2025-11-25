@@ -1,3 +1,14 @@
+export type AssignmentStatus = 'active' | 'paused' | 'completed' | 'cancelled';
+export type AssignmentType = 'temp' | 'direct' | 'contract';
+
+export interface ShiftPattern {
+  [day: string]: {
+    start: string;
+    end: string;
+    duration: number;
+  };
+}
+
 export interface Assignment {
   id: number;
   contract_id: number;
@@ -7,8 +18,8 @@ export interface Assignment {
   location_id: number;
   role: string;
   start_date: string;
-  end_date: string | undefined;
-  expected_hours_per_week: number | null;
+  end_date?: string;
+  expected_hours_per_week?: number | null;
   agreed_rate: number;
   pay_rate: number;
   markup_amount: number;
@@ -18,15 +29,15 @@ export interface Assignment {
   assignment_type: AssignmentType;
   assignment_type_label: string;
   shift_pattern: ShiftPattern;
-  notes: string | null;
+  notes?: string | null;
   created_by_id: number;
   created_at: string;
   updated_at: string;
   is_active: boolean;
   is_completed: boolean;
   is_ongoing: boolean;
-  duration_days: number | null;
-  total_expected_hours: number | null;
+  duration_days?: number | null;
+  total_expected_hours?: number | null;
   can_be_updated: boolean;
   can_be_deleted: boolean;
   contract?: Contract;
@@ -37,17 +48,6 @@ export interface Assignment {
   created_by?: User;
   shifts?: Shift[];
   timesheets?: Timesheet[];
-}
-
-export type AssignmentStatus = 'active' | 'paused' | 'completed' | 'cancelled';
-export type AssignmentType = 'temp' | 'direct' | 'contract';
-
-export interface ShiftPattern {
-  [day: string]: {
-    start: string;
-    end: string;
-    duration: number;
-  };
 }
 
 export interface Contract {
@@ -64,11 +64,7 @@ export interface Contract {
   updated_at: string;
   employer: Employer;
   agency: Agency;
-  links: {
-    self: string;
-    employer: string;
-    agency: string;
-  };
+  links: { self: string; employer: string; agency: string };
 }
 
 export interface AgencyEmployee {
@@ -83,11 +79,11 @@ export interface AgencyEmployee {
   status: string;
   status_label: string;
   contract_start_date: string;
-  contract_end_date: string | null;
-  specializations: string[] | null;
-  preferred_locations: LocationPreference[] | null;
-  max_weekly_hours: number | null;
-  notes: string | null;
+  contract_end_date?: string | null;
+  specializations?: string[] | null;
+  preferred_locations?: LocationPreference[] | null;
+  max_weekly_hours?: number | null;
+  notes?: string | null;
   created_at: string;
   updated_at: string;
   agency: Agency;
@@ -102,13 +98,13 @@ export interface LocationPreference {
 export interface Employee {
   id: number;
   user_id: number;
-  agency_id: number | null;
-  employer_id: number | null;
-  position: string | null;
-  pay_rate: number | null;
-  availability: EmployeeAvailability | null;
+  agency_id?: number | null;
+  employer_id?: number | null;
+  position?: string | null;
+  pay_rate?: number | null;
+  availability?: EmployeeAvailability | null;
   qualifications: Qualification[];
-  employment_type: string | null;
+  employment_type?: string | null;
   status: string;
   meta: EmployeeMeta;
   created_at: string;
@@ -139,17 +135,17 @@ export interface User {
   role: string;
   phone: string;
   status: string;
-  address: UserAddress | null;
-  date_of_birth: string | null;
-  emergency_contact_name: string | null;
-  emergency_contact_phone: string | null;
-  meta: UserMeta | null;
+  address?: UserAddress | null;
+  date_of_birth?: string | null;
+  emergency_contact_name?: string | null;
+  emergency_contact_phone?: string | null;
+  meta?: UserMeta | null;
   email_verified_at: string;
   last_login_at: string;
   created_at: string;
   updated_at: string;
   has_complete_profile: boolean;
-  formatted_address: string | null;
+  formatted_address?: string | null;
   employee?: Employee;
   agent?: Agent;
 }
@@ -175,9 +171,9 @@ export interface Agent {
   id: number;
   user_id: number;
   agency_id: number;
-  name: string | null;
-  email: string | null;
-  phone: string | null;
+  name?: string | null;
+  email?: string | null;
+  phone?: string | null;
   permissions: string[];
   created_at: string;
   updated_at: string;
@@ -209,13 +205,13 @@ export interface AgencyAddress {
 
 export interface Employer {
   id: number;
-  user_id: number | null;
+  user_id?: number | null;
   name: string;
   billing_email: string;
   address: EmployerAddress;
   city: string;
   country: string;
-  subscription_status: string | null;
+  subscription_status?: string | null;
   meta: EmployerMeta;
   created_at: string;
   updated_at: string;
@@ -260,12 +256,12 @@ export interface LocationMeta {
 
 export interface AssignmentFilters {
   status?: AssignmentStatus | 'all';
-  assignment_type?: AssignmentType | undefined;
-  agency: string;
+  assignment_type?: AssignmentType | 'all';
+  agency: string | number | true | undefined;
   search?: string;
-  role?: string;
+  role?: string | number | true | undefined;
   location_id?: number;
-  location: string;
+  location: string | number | true | undefined;
   start_date_from?: string;
   start_date_to?: string;
   end_date_from?: string;
@@ -289,9 +285,9 @@ export interface AssignmentStats {
   standard_assignments: number;
   total_weekly_margin: number;
   average_utilization: number;
-  financial_summary: FinancialSummary | null;
-  utilization_rate: number | null;
-  average_duration_days: number | null;
+  financial_summary?: FinancialSummary | null;
+  utilization_rate?: number | null;
+  average_duration_days?: number | null;
   period: Period;
 }
 
@@ -306,8 +302,8 @@ export interface FinancialSummary {
 }
 
 export interface Period {
-  start_date: string | null;
-  end_date: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
 }
 
 export interface ShiftRequest {
@@ -367,4 +363,12 @@ export interface UpdateAssignmentData {
 export interface StatusChangeData {
   status: AssignmentStatus;
   reason?: string | null;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  page: number;
+  per_page: number;
+  total: number;
+  total_pages: number;
 }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { TableData, Column, TableState } from '@/types/table';
 import { Icon } from '@/app/components/ui';
 
@@ -6,16 +6,8 @@ interface TableHeaderProps<T extends TableData> {
   columns: Column<T>[];
   state: TableState;
   onSort: (key: string) => void;
-  onDragStart: (
-    e: React.DragEvent<HTMLDivElement>,
-    columnKey: string,
-    index: number
-  ) => void;
-  onDragOver: (
-    e: React.DragEvent<HTMLDivElement>,
-    columnKey: string,
-    index: number
-  ) => void;
+  onDragStart: (e: React.DragEvent<HTMLDivElement>, columnKey: string) => void;
+  onDragOver: (e: React.DragEvent<HTMLDivElement>, columnKey: string) => void;
   onDragLeave: (e: React.DragEvent<HTMLDivElement>) => void;
   onDragEnd: (e: React.DragEvent<HTMLDivElement>) => void;
   hasActions: boolean;
@@ -24,6 +16,48 @@ interface TableHeaderProps<T extends TableData> {
   draggedColumn?: string | null;
   dragOverIndex?: number | null;
 }
+
+function useColumnAlignment<T extends TableData>(column: Column<T>): string {
+  switch (column.align) {
+    case 'right':
+      return 'justify-end';
+    case 'center':
+      return 'justify-center';
+    default:
+      return 'justify-start';
+  }
+}
+
+const SortIndicator = React.memo(function <T extends TableData>({
+  column,
+  isActive,
+  isAsc,
+}: {
+  column: Column<T>;
+  isActive: boolean;
+  isAsc: boolean;
+}) {
+  return (
+    <div
+      className="flex flex-col transition-opacity duration-150"
+      aria-hidden="true"
+    >
+      <Icon
+        name="chevronUp"
+        className={`h-3 w-3 -mb-0.5 transition-colors ${
+          isActive && isAsc ? 'text-blue-600' : 'text-gray-400'
+        }`}
+      />
+      <Icon
+        name="chevronDown"
+        className={`h-3 w-3 transition-colors ${
+          isActive && !isAsc ? 'text-blue-600' : 'text-gray-400'
+        }`}
+      />
+    </div>
+  );
+});
+SortIndicator.displayName = 'SortIndicator';
 
 export function TableHeader<T extends TableData>({
   columns,
@@ -39,160 +73,118 @@ export function TableHeader<T extends TableData>({
   draggedColumn,
   dragOverIndex,
 }: TableHeaderProps<T>): React.JSX.Element {
-  const getColumnAlignment = (column: Column<T>): string => {
-    switch (column.align) {
-      case 'right':
-        return 'justify-end';
-      case 'center':
-        return 'justify-center';
-      default:
-        return 'justify-start';
-    }
-  };
+  const handleSortClick = useCallback(
+    (columnKey: string) => {
+      if (!isLoading) {
+        onSort(columnKey);
+      }
+    },
+    [isLoading, onSort]
+  );
 
-  const getSortButtonClasses = (column: Column<T>): string => {
-    const baseClasses =
-      'flex flex-col rounded-lg flex-shrink-0 p-1.5 group/sort transition-colors';
-    const isActive = state.sort?.key === column.key;
+  const handleKeySort = useCallback(
+    (e: React.KeyboardEvent, columnKey: string) => {
+      if (isLoading) return;
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onSort(columnKey);
+      }
+    },
+    [isLoading, onSort]
+  );
 
-    if (isLoading) {
-      return `${baseClasses} opacity-40 cursor-not-allowed`;
-    }
+  const getSortButtonClasses = useCallback(
+    (column: Column<T>): string => {
+      const base =
+        'flex flex-col rounded-md flex-shrink-0 p-1.5 group/sort transition-colors';
+      if (isLoading) return `${base} opacity-40 cursor-not-allowed`;
+      const isActive = state.sort?.key === column.key;
+      if (isActive) return `${base} bg-blue-50 text-blue-600`;
+      return `${base} text-gray-400 hover:text-gray-600 hover:bg-gray-50`;
+    },
+    [isLoading, state.sort]
+  );
 
-    if (isActive) {
-      return `${baseClasses} bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400`;
-    }
+  const getHeaderTextClasses = useCallback(
+    (column: Column<T>): string => {
+      const base = 'text-sm font-semibold flex-1';
+      const isSorted = state.sort?.key === column.key;
+      const colorClass = isSorted ? 'text-blue-700' : 'text-gray-900';
+      const wrap =
+        column.wrapHeader !== false
+          ? 'break-words whitespace-normal line-clamp-2 min-h-[48px] flex items-center'
+          : 'truncate whitespace-nowrap h-[48px] flex items-center';
+      return `${base} ${colorClass} ${wrap}`;
+    },
+    [state.sort]
+  );
 
-    return `${baseClasses} text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700`;
-  };
+  const getColumnClasses = useCallback(
+    (column: Column<T>, index: number): string => {
+      const alignment = useColumnAlignment(column);
+      const isSorted = state.sort?.key === column.key;
+      const baseClasses = [
+        'flex items-center gap-2 group relative min-w-0 transition-colors h-[48px]',
+        alignment,
+        sortingColumn === column.key ? 'animate-pulse' : '',
+        index === 0 ? 'pl-6' : 'pl-4',
+        index === columns.length - 1 && !hasActions ? 'pr-6' : 'pr-4',
+        'py-3',
+        'border-r border-gray-100 last:border-r-0',
+      ].join(' ');
+      const sortedClass = isSorted ? 'bg-blue-50/30' : '';
+      return `${baseClasses} ${sortedClass}`.trim();
+    },
+    [columns.length, hasActions, state.sort, sortingColumn]
+  );
 
-  const getHeaderTextClasses = (column: Column<T>): string => {
-    const baseClasses = 'text-sm font-semibold flex-1';
-    const isSorted = state.sort?.key === column.key;
-    const colorClass = isSorted
-      ? 'text-blue-700 dark:text-blue-400'
-      : 'text-gray-900 dark:text-white';
-    const wrapClass =
-      column.wrapHeader !== false
-        ? 'break-words whitespace-normal line-clamp-2 min-h-[2.5rem] flex items-center'
-        : 'truncate whitespace-nowrap';
-
-    return `${baseClasses} ${colorClass} ${wrapClass}`;
-  };
-
-  const getColumnClasses = (column: Column<T>, index: number): string => {
-    const baseClasses = [
-      'flex items-center gap-2 group relative min-w-0 transition-colors',
-      getColumnAlignment(column),
-      sortingColumn === column.key ? 'animate-pulse' : '',
-      index === 0 ? 'pl-6' : 'pl-4',
-      index === columns.length - 1 && !hasActions ? 'pr-6' : 'pr-4',
-      'py-3',
-      'border-r border-gray-100 dark:border-gray-700 last:border-r-0',
-    ].join(' ');
-
-    const sortedClass =
-      state.sort?.key === column.key ? 'bg-blue-25 dark:bg-blue-900/10' : '';
-
-    return `${baseClasses} ${sortedClass}`;
-  };
-
-  const getGripIconClasses = (): string => {
-    const baseClasses =
-      'h-3.5 w-3.5 text-gray-400 dark:text-gray-500 cursor-grab active:cursor-grabbing flex-shrink-0 transition-colors hover:text-gray-600 dark:hover:text-gray-300';
+  const getGripIconClasses = useCallback((): string => {
+    const base = 'h-3.5 w-3.5 text-gray-300 flex-shrink-0 transition-opacity';
     return isLoading
-      ? `${baseClasses} opacity-30 cursor-not-allowed`
-      : baseClasses;
-  };
+      ? `${base} opacity-20 cursor-not-allowed`
+      : `${base} opacity-20 group-hover:opacity-60 cursor-grab active:cursor-grabbing`;
+  }, [isLoading]);
 
-  const handleSortClick = (columnKey: string): void => {
-    if (!isLoading) {
-      onSort(columnKey);
-    }
-  };
-
-  const handleDragStart = (
-    e: React.DragEvent<HTMLDivElement>,
-    columnKey: string,
-    index: number
-  ): void => {
-    if (!isLoading) {
-      onDragStart(e, columnKey, index);
-    }
-  };
-
-  const handleDragOver = (
-    e: React.DragEvent<HTMLDivElement>,
-    columnKey: string,
-    index: number
-  ): void => {
-    if (!isLoading) {
-      onDragOver(e, columnKey, index);
-    }
-  };
-
-  const SortIndicator = ({ column }: { column: Column<T> }) => {
-    const isActive = state.sort?.key === column.key;
-    const isAsc = state.sort?.direction === 'asc';
-
-    if (!isActive) {
-      return (
-        <div className="flex flex-col opacity-0 group-hover:opacity-100 transition-opacity">
-          <Icon name="chevronUp" className="h-3 w-3 -mb-0.5 text-gray-400" />
-          <Icon name="chevronDown" className="h-3 w-3 text-gray-400" />
-        </div>
-      );
-    }
-
-    return (
-      <div className="flex flex-col">
-        <Icon
-          name="chevronUp"
-          className={`h-3 w-3 -mb-0.5 transition-colors ${
-            isAsc
-              ? 'text-blue-600 dark:text-blue-400'
-              : 'text-gray-400 dark:text-gray-500'
-          }`}
-        />
-        <Icon
-          name="chevronDown"
-          className={`h-3 w-3 transition-colors ${
-            !isAsc
-              ? 'text-blue-600 dark:text-blue-400'
-              : 'text-gray-400 dark:text-gray-500'
-          }`}
-        />
-      </div>
-    );
-  };
+  const gridTemplate = useMemo(() => {
+    return `repeat(${columns.length + (hasActions ? 1 : 0)}, minmax(80px, 1fr))`;
+  }, [columns.length, hasActions]);
 
   return (
-    <div className="sticky top-0 z-20 border-b border-gray-200 dark:border-gray-700 min-w-full bg-white dark:bg-gray-900 shadow-sm">
+    <div className="sticky top-0 z-20 border-b border-gray-300 min-w-full bg-white shadow-sm">
       <div
         className="grid min-w-full"
-        style={{
-          gridTemplateColumns: `repeat(${columns.length + (hasActions ? 1 : 0)}, minmax(80px, 1fr))`,
-        }}
+        style={{ gridTemplateColumns: gridTemplate }}
       >
         {columns.map((column, index) => {
           const columnKey = String(column.key);
           const isFirstColumn = index === 0;
           const isLastColumn = index === columns.length - 1 && !hasActions;
+          const isActive = state.sort?.key === column.key;
+          const isAsc = state.sort?.direction === 'asc';
 
           return (
             <div
               key={columnKey}
               className={getColumnClasses(column, index)}
               draggable={!isLoading}
-              onDragStart={(e) => handleDragStart(e, columnKey, index)}
-              onDragOver={(e) => handleDragOver(e, columnKey, index)}
+              onDragStart={(e) => onDragStart(e, columnKey)}
+              onDragOver={(e) => onDragOver(e, columnKey)}
               onDragLeave={onDragLeave}
               onDragEnd={onDragEnd}
             >
               <div className="flex items-center gap-2 flex-1 min-w-0">
-                <Icon name="gripVertical" className={getGripIconClasses()} />
+                <div role="presentation" className="flex items-center">
+                  <Icon name="gripVertical" className={getGripIconClasses()} />
+                </div>
 
-                <span className={getHeaderTextClasses(column)}>
+                <span
+                  className={getHeaderTextClasses(column)}
+                  tabIndex={0}
+                  onKeyDown={(e) => handleKeySort(e, columnKey)}
+                  aria-sort={
+                    isActive ? (isAsc ? 'ascending' : 'descending') : 'none'
+                  }
+                >
                   {column.header}
                 </span>
               </div>
@@ -200,30 +192,36 @@ export function TableHeader<T extends TableData>({
               {column.sortable && (
                 <button
                   onClick={() => handleSortClick(columnKey)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleSortClick(columnKey);
+                    }
+                  }}
                   className={getSortButtonClasses(column)}
                   disabled={isLoading}
                   type="button"
                   aria-label={`Sort by ${column.header} ${
-                    state.sort?.key === column.key
-                      ? state.sort.direction === 'asc'
-                        ? 'ascending'
-                        : 'descending'
-                      : ''
+                    isActive ? (isAsc ? 'ascending' : 'descending') : ''
                   }`}
                 >
-                  <SortIndicator column={column} />
+                  <SortIndicator
+                    column={column}
+                    isActive={isActive}
+                    isAsc={isAsc}
+                  />
                 </button>
               )}
 
               {draggedColumn === columnKey && (
                 <div
-                  className="absolute inset-0 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-700 rounded-md animate-pulse"
+                  className="absolute inset-0 bg-blue-50/40 border border-blue-200 rounded-md"
                   aria-hidden="true"
                 />
               )}
               {dragOverIndex === index && draggedColumn !== columnKey && (
                 <div
-                  className="absolute inset-0 bg-blue-25 dark:bg-blue-900/10 border-2 border-dashed border-blue-300 dark:border-blue-600 rounded-md animate-pulse"
+                  className="absolute inset-0 bg-blue-50/30 border border-dashed border-blue-300 rounded-md"
                   aria-hidden="true"
                 />
               )}
@@ -232,9 +230,9 @@ export function TableHeader<T extends TableData>({
         })}
 
         {hasActions && (
-          <div className="flex items-center justify-end min-w-0 pr-6 pl-4 py-3 border-gray-100 dark:border-gray-700">
+          <div className="flex items-center justify-end min-w-0 pr-6 pl-4 py-3 border-gray-100 h-[48px]">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-gray-900 dark:text-white truncate whitespace-nowrap">
+              <span className="text-sm font-semibold text-gray-900 truncate whitespace-nowrap">
                 Actions
               </span>
               <Icon name="moreHorizontal" className="h-4 w-4 text-gray-400" />
@@ -245,3 +243,5 @@ export function TableHeader<T extends TableData>({
     </div>
   );
 }
+
+export default React.memo(TableHeader) as typeof TableHeader;

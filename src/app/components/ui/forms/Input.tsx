@@ -1,54 +1,80 @@
-import { forwardRef } from 'react';
+// components/ui/forms/Input.tsx
+import React, { forwardRef } from 'react';
+import { FieldWrapper } from './FieldWrapper';
+import {
+  baseInputClasses,
+  iconLeftClasses,
+  iconRightClasses,
+} from './field-styles';
 
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   description?: string;
-  labelClassName?: string;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+  containerClassName?: string;
 }
 
-const Input = forwardRef<HTMLInputElement, InputProps>(
+export const Input = forwardRef<HTMLInputElement, InputProps>(
   (
     {
       label,
       error,
       description,
+      leftIcon,
+      rightIcon,
       className = '',
-      labelClassName = '',
+      containerClassName = '',
+      id,
       ...props
     },
     ref
   ) => {
+    const generatedId = React.useId();
+    const inputId = id || generatedId;
+
+    const paddingLeft = leftIcon ? 'pl-10' : 'pl-3';
+    const paddingRight = rightIcon ? 'pr-10' : 'pr-3';
+
+    const inputClasses = [
+      baseInputClasses,
+      paddingLeft,
+      paddingRight,
+      className,
+      error && 'border-red-500 focus:ring-red-500 focus:border-red-500',
+      props.disabled &&
+        'opacity-60 cursor-not-allowed pointer-events-none bg-gray-50 dark:bg-gray-900',
+    ]
+      .filter(Boolean)
+      .join(' ');
+
     return (
-      <div>
-        {label && (
-          <label
-            htmlFor={props.name}
-            className={`block text-sm font-semibold mb-1 text-gray-700 ${labelClassName}`}
-          >
-            {label}
-          </label>
-        )}
-        <input
-          ref={ref}
-          {...props}
-          className={`
-            block w-full rounded-lg border px-4 py-3 
-            focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
-            ${error ? 'border-red-500' : 'border-gray-300'}
-            ${className}
-          `}
-        />
-        {description && (
-          <p className="mt-1 text-sm text-gray-500">{description}</p>
-        )}
-        {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
-      </div>
+      <FieldWrapper
+        label={label}
+        error={error}
+        description={description}
+        htmlFor={inputId}
+        required={props.required}
+        className={containerClassName}
+      >
+        <div className="relative">
+          {leftIcon && <div className={iconLeftClasses}>{leftIcon}</div>}
+
+          <input
+            ref={ref}
+            id={inputId}
+            className={inputClasses}
+            aria-invalid={!!error}
+            {...props}
+          />
+
+          {rightIcon && <div className={iconRightClasses}>{rightIcon}</div>}
+        </div>
+      </FieldWrapper>
     );
   }
 );
 
 Input.displayName = 'Input';
-
-export default Input;

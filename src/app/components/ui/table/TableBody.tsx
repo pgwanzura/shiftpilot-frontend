@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useMemo, useState, useCallback } from 'react';
 import {
   TableData,
   Column,
@@ -12,11 +14,7 @@ interface TableBodyProps<T extends TableData> {
   data: T[];
   columns: Column<T>[];
   state: TableState;
-  virtualScroll: boolean;
-  totalHeight: number;
-  startIndex: number;
-  endIndex: number;
-  scrollVelocity: number;
+  onRowClick?: (row: T) => void;
   actions?: (row: T) => React.ReactNode;
   rowExpansion?: RowExpansionConfig<T>;
   inlineEdit?: InlineEditConfig<T>;
@@ -39,12 +37,8 @@ export function TableBody<T extends TableData>({
   data,
   columns,
   state,
-  virtualScroll,
-  totalHeight,
-  startIndex,
-  endIndex,
-  scrollVelocity,
   actions,
+  onRowClick,
   rowExpansion,
   inlineEdit,
   editingCell,
@@ -61,27 +55,44 @@ export function TableBody<T extends TableData>({
   hasActiveFilters,
   onClearFilters,
 }: TableBodyProps<T>) {
-  if (data.length === 0) {
+  const sortedData = useMemo(() => {
+    if (!state.sortColumn) return data;
+    const column = columns.find((col) => col.key === state.sortColumn);
+    if (!column) return data;
+    return [...data].sort((a, b) => {
+      const valA = a[state.sortColumn];
+      const valB = b[state.sortColumn];
+      if (valA == null) return 1;
+      if (valB == null) return -1;
+      if (typeof valA === 'number' && typeof valB === 'number') {
+        return state.sortDirection === 'asc' ? valA - valB : valB - valA;
+      }
+      const strA = String(valA).toLowerCase();
+      const strB = String(valB).toLowerCase();
+      if (strA < strB) return state.sortDirection === 'asc' ? -1 : 1;
+      if (strA > strB) return state.sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [data, columns, state.sortColumn, state.sortDirection]);
+
+  if (sortedData.length === 0) {
     return (
       <div className="text-center py-20 animate-fade-in">
-        <div className="w-20 h-20 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 flex items-center justify-center mx-auto mb-6 shadow-sm">
-          <Icon 
-            name="database" 
-            className="h-8 w-8 text-gray-400 dark:text-gray-500" 
-          />
+        <div className="w-20 h-20 bg-gradient-to-br from-gray-50 to-white rounded-2xl border border-gray-200/80 flex items-center justify-center mx-auto mb-6 shadow-sm">
+          <Icon name="database" className="h-8 w-8 text-gray-400" />
         </div>
-        <h3 className="text-gray-600 dark:text-gray-400 text-lg font-semibold mb-3 px-4">
+        <h3 className="text-gray-600 text-lg font-semibold mb-3 px-4">
           No records found
         </h3>
-        <p className="text-gray-500 dark:text-gray-500 text-base mb-6 px-4 max-w-md mx-auto leading-relaxed">
+        <p className="text-gray-500 text-base mb-6 px-4 max-w-md mx-auto leading-relaxed">
           {emptyMessage}
         </p>
         {hasActiveFilters && (
           <button
             onClick={onClearFilters}
-            className="inline-flex items-center gap-3 px-6 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md hover:border-gray-400 dark:hover:border-gray-500"
+            className="inline-flex items-center gap-3 px-6 py-3 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md hover:border-gray-400"
           >
-            <Icon name="filter-x" className="h-4 w-4" />
+            <Icon name="xCircle" className="h-4 w-4" />
             Clear all filters
           </button>
         )}
@@ -90,19 +101,8 @@ export function TableBody<T extends TableData>({
   }
 
   return (
-    <div
-      className="bg-white dark:bg-gray-900 min-w-full rounded-b-2xl shadow-sm"
-      style={
-        virtualScroll
-          ? {
-              height: totalHeight,
-              transform: `translateY(${Math.min(scrollVelocity * 0.1, 20)}px)`,
-            }
-          : undefined
-      }
-    >
-      {virtualScroll && <div style={{ height: startIndex * 58 }} />}
-      {data.map((row, rowIndex) => (
+    <div className="bg-white min-w-full shadow-sm">
+      {sortedData.map((row, rowIndex) => (
         <React.Fragment key={row.id}>
           <TableRow
             row={row}
@@ -122,17 +122,14 @@ export function TableBody<T extends TableData>({
             clickedRow={clickedRow}
           />
           {rowExpansion && state.expandedRows.has(row.id) && (
-            <div className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/30 min-w-full animate-slide-down">
-              <div className="px-8 py-6 min-w-0 border-l-2 border-indigo-400 bg-white/70 dark:bg-gray-900/70 ml-6 rounded-r-xl shadow-inner">
+            <div className="border-b border-gray-100 bg-gray-50/30 min-w-full animate-slide-down">
+              <div className="px-8 py-6 min-w-0 border-l-2 border-indigo-400 bg-white/70 ml-6 rounded-r-xl shadow-inner">
                 {rowExpansion.render(row)}
               </div>
             </div>
           )}
         </React.Fragment>
       ))}
-      {virtualScroll && (
-        <div style={{ height: (data.length - endIndex) * 58 }} />
-      )}
     </div>
   );
 }
@@ -153,6 +150,7 @@ interface TableRowProps<T extends TableData> {
   rowClassName?: (row: T, rowIndex: number) => string;
   actions?: (row: T) => React.ReactNode;
   clickedRow: number | null;
+  onRowClick?: (row: T) => void;
 }
 
 function TableRow<T extends TableData>({
@@ -172,10 +170,10 @@ function TableRow<T extends TableData>({
 }: TableRowProps<T>) {
   const isEditing = editingCell?.rowId === row.id;
 
-  const getRowBackgroundColor = () => {
-    if (clickedRow === rowIndex) return 'bg-blue-50/50 dark:bg-blue-900/20';
-    if (rowIndex % 2 === 0) return 'bg-white dark:bg-gray-900';
-    return 'bg-gray-50/30 dark:bg-gray-800/30';
+  const getRowBackground = () => {
+    if (clickedRow === rowIndex) return 'bg-blue-50/50';
+    if (rowIndex % 2 === 0) return 'bg-white';
+    return 'bg-gray-50/30';
   };
 
   const getRowBorder = () => {
@@ -187,9 +185,7 @@ function TableRow<T extends TableData>({
     <div
       onMouseEnter={() => onHover(rowIndex)}
       onMouseLeave={() => onHover(null)}
-      className={`group relative grid min-w-full py-5 text-sm transition-colors duration-150 border-b border-gray-100 dark:border-gray-800 last:border-b-0 min-w-fit ${getRowBorder()} ${getRowBackgroundColor()} ${
-        rowIndex === 0 ? 'rounded-t-2xl' : ''
-      }`}
+      className={`group relative grid min-w-full py-5 text-sm transition-colors duration-150 border-b border-gray-100 last:border-b-0 min-w-fit ${getRowBorder()} ${getRowBackground()}`}
       style={{
         gridTemplateColumns: `repeat(${columns.length + (actions ? 1 : 0)}, minmax(80px, 1fr))`,
       }}
@@ -224,13 +220,13 @@ function TableRow<T extends TableData>({
               <div
                 className={`truncate font-normal ${
                   clickedRow === rowIndex
-                    ? 'text-gray-900 dark:text-white font-medium'
-                    : 'text-gray-700 dark:text-gray-300'
+                    ? 'text-gray-900 font-medium'
+                    : 'text-gray-700'
                 } ${
                   inlineEdit?.editable &&
                   column.key !== 'selection' &&
                   column.key !== 'expansion'
-                    ? 'cursor-text rounded-lg px-3 py-2 border border-transparent hover:border-gray-300 dark:hover:border-gray-600 transition-colors'
+                    ? 'cursor-text rounded-lg px-3 py-2 border border-transparent hover:border-gray-300 transition-colors'
                     : ''
                 }`}
                 onDoubleClick={() =>
@@ -239,21 +235,22 @@ function TableRow<T extends TableData>({
                   column.key !== 'expansion' &&
                   onEditStart(row, column.key)
                 }
-                title={typeof row[column.key] === 'string' ? row[column.key] as string : undefined}
+                title={
+                  typeof row[column.key] === 'string'
+                    ? (row[column.key] as string)
+                    : undefined
+                }
               >
                 {column.render
                   ? column.render(row[column.key], row)
                   : (row[column.key] as React.ReactNode) || (
-                      <span className="text-gray-400 dark:text-gray-500 italic text-sm">
-                        —
-                      </span>
+                      <span className="text-gray-400 italic text-sm">—</span>
                     )}
               </div>
             )}
           </div>
         );
       })}
-
       {actions && (
         <div className="flex justify-end min-w-0 pr-8 pl-6">
           <div className="flex items-center gap-3 opacity-80">
@@ -304,17 +301,17 @@ function InlineEditor<T extends TableData>({
     return (
       <div className="flex items-center gap-3 w-full min-w-0 animate-scale-in">
         {renderEditor(value as T[keyof T], row, columnKey)}
-        <div className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg p-1 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-2 bg-white rounded-lg p-1 shadow-sm border border-gray-200">
           <button
             onClick={onSave}
-            className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-md transition-colors duration-150"
+            className="p-2 text-green-600 hover:bg-green-50 rounded-md transition-colors duration-150"
             title="Save"
           >
             <Icon name="check" className="h-4 w-4" />
           </button>
           <button
             onClick={onCancel}
-            className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors duration-150"
+            className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors duration-150"
             title="Cancel"
           >
             <Icon name="x" className="h-4 w-4" />
@@ -332,20 +329,20 @@ function InlineEditor<T extends TableData>({
         value={value as string}
         onChange={(e) => handleChange(e.target.value)}
         onKeyDown={handleKeyDown}
-        className="border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 text-sm w-full min-w-0 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-400/20 focus:border-blue-500 outline-none transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-inner font-medium"
+        className="border border-gray-300 rounded-xl px-4 py-3 text-sm w-full min-w-0 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all duration-200 bg-white text-gray-900 shadow-inner font-medium"
         placeholder="Enter value..."
       />
-      <div className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg p-1 shadow-sm border border-gray-200 dark:border-gray-700">
+      <div className="flex items-center gap-2 bg-white rounded-lg p-1 shadow-sm border border-gray-200">
         <button
           onClick={onSave}
-          className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-md transition-colors duration-150"
+          className="p-2 text-green-600 hover:bg-green-50 rounded-md transition-colors duration-150"
           title="Save"
         >
           <Icon name="check" className="h-4 w-4" />
         </button>
         <button
           onClick={onCancel}
-          className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors duration-150"
+          className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors duration-150"
           title="Cancel"
         >
           <Icon name="x" className="h-4 w-4" />

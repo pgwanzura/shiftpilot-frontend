@@ -1,112 +1,59 @@
-'use client';
+// components/ui/forms/Radio.tsx
+import React, { forwardRef } from 'react';
+import { FieldWrapper } from './FieldWrapper';
+import { labelClasses, errorClasses, descriptionClasses } from './field-styles';
 
-import { useState, useEffect } from 'react';
-
-export interface RadioOption {
-  value: string;
-  label: string;
-}
-
-export interface RadioProps {
-  name: string;
+export interface RadioProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
-  className?: string;
-  options: RadioOption[];
-  required?: boolean;
-  value?: string;
-  defaultValue?: string;
   error?: string;
-  onChange?: (value: string) => void;
-  disabled?: boolean;
-  orientation?: 'horizontal' | 'vertical';
+  description?: string;
 }
 
-export default function Radio({
-  name,
-  label,
-  className = '',
-  options,
-  required,
-  value,
-  defaultValue,
-  error,
-  onChange,
-  disabled = false,
-  orientation = 'vertical',
-}: RadioProps) {
-  const [selectedValue, setSelectedValue] = useState<string>('');
+export const Radio = forwardRef<HTMLInputElement, RadioProps>(
+  ({ label, error, description, className = '', ...props }, ref) => {
+    const radioId = React.useId();
 
-  useEffect(() => {
-    if (value) {
-      setSelectedValue(value);
-    } else if (defaultValue) {
-      setSelectedValue(defaultValue);
-    }
-  }, [value, defaultValue]);
+    const radioClasses = `
+      w-4 h-4 text-blue-600 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600
+      focus:ring focus:ring-blue-500 focus:ring-offset-0 focus:border-blue-500
+      transition-all duration-300
+      ${error ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}
+      ${props.disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
+      ${className}
+    `
+      .replace(/\s+/g, ' ')
+      .trim();
 
-  const handleChange = (optionValue: string) => {
-    if (disabled) return;
-    setSelectedValue(optionValue);
-    onChange?.(optionValue);
-  };
-
-  return (
-    <div className="w-full">
-      {label && (
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
-        </label>
-      )}
-
-      <div
-        className={`flex gap-4 ${
-          orientation === 'horizontal' ? 'flex-row' : 'flex-col'
-        } ${className}`}
+    return (
+      <FieldWrapper
+        label={undefined}
+        error={error}
+        description={description}
+        htmlFor={radioId}
+        required={props.required}
       >
-        {options.map((option) => (
-          <label
-            key={option.value}
-            className={`flex items-center cursor-pointer ${
-              disabled ? 'cursor-not-allowed opacity-70' : ''
-            }`}
-          >
-            <input
-              type="radio"
-              name={name}
-              value={option.value}
-              checked={selectedValue === option.value}
-              onChange={() => handleChange(option.value)}
-              disabled={disabled}
-              className="hidden"
-            />
-            <div
-              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mr-3 transition-colors ${
-                selectedValue === option.value
-                  ? 'border-indigo-500 bg-indigo-500'
-                  : 'border-gray-300 bg-white'
-              } ${
-                disabled
-                  ? 'bg-gray-100 border-gray-300'
-                  : 'hover:border-indigo-400'
-              }`}
-            >
-              {selectedValue === option.value && (
-                <div className="w-2 h-2 rounded-full bg-white"></div>
-              )}
-            </div>
-            <span
-              className={`text-sm ${
-                disabled ? 'text-gray-500' : 'text-gray-700'
-              }`}
-            >
-              {option.label}
-            </span>
-          </label>
-        ))}
-      </div>
+        <div className="flex items-center gap-3">
+          <input
+            ref={ref}
+            id={radioId}
+            type="radio"
+            className={radioClasses}
+            {...props}
+          />
 
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
-    </div>
-  );
-}
+          {label && (
+            <label
+              htmlFor={radioId}
+              className={`${labelClasses} mb-0 cursor-pointer select-none`}
+            >
+              {label}
+            </label>
+          )}
+        </div>
+      </FieldWrapper>
+    );
+  }
+);
+
+Radio.displayName = 'Radio';

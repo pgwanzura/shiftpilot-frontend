@@ -227,28 +227,63 @@ export function AssignmentsTable({
       name,
       title,
       onClick,
-      extraClass,
+      variant = 'view',
     }: {
       name: IconName;
       title: string;
       onClick?: () => void;
-      extraClass?: string;
-    }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={(e: React.MouseEvent) => {
-          e.stopPropagation();
-          onClick?.();
-        }}
-        title={title}
-        className={['h-8 w-8 p-0 flex items-center justify-center', extraClass]
-          .filter(Boolean)
-          .join(' ')}
-      >
-        <Icon name={name} className="h-3.5 w-3.5" />
-      </Button>
-    ),
+      variant?: 'view' | 'edit' | 'pause' | 'resume' | 'shifts' | 'default';
+    }) => {
+      const variantStyles = {
+        view: {
+          base: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700',
+          hover:
+            'hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:border-blue-300 dark:hover:border-blue-600 hover:scale-105 shadow-xs',
+        },
+        edit: {
+          base: 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-700',
+          hover:
+            'hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40 hover:border-purple-300 dark:hover:border-purple-600 hover:scale-105 shadow-xs',
+        },
+        pause: {
+          base: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700',
+          hover:
+            'hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/40 hover:border-amber-300 dark:hover:border-amber-600 hover:scale-105 shadow-xs',
+        },
+        resume: {
+          base: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700',
+          hover:
+            'hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 hover:border-emerald-300 dark:hover:border-emerald-600 hover:scale-105 shadow-xs',
+        },
+        shifts: {
+          base: 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700',
+          hover:
+            'hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 hover:border-indigo-300 dark:hover:border-indigo-600 hover:scale-105 shadow-xs',
+        },
+        default: {
+          base: 'text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-900/30 border border-cyan-200 dark:border-cyan-700', // Changed from gray to cyan
+          hover:
+            'hover:text-cyan-700 dark:hover:text-cyan-300 hover:bg-cyan-100 dark:hover:bg-cyan-900/40 hover:border-cyan-300 dark:hover:border-cyan-600 hover:scale-105 shadow-xs',
+        },
+      };
+
+      const styles = variantStyles[variant];
+
+      return (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e: React.MouseEvent) => {
+            e.stopPropagation();
+            onClick?.();
+          }}
+          title={title}
+          className={`h-8 w-8 p-0 flex items-center justify-center rounded-lg transition-all duration-200 ${styles.base} ${styles.hover}`}
+        >
+          <Icon name={name} className="h-3.5 w-3.5" />
+        </Button>
+      );
+    },
     []
   );
 
@@ -257,32 +292,39 @@ export function AssignmentsTable({
       const original = assignmentMap[assignment.id];
       if (!original) return null;
       const buttons: JSX.Element[] = [];
+
       buttons.push(
         <ActionIcon
           key="view"
           name="eye"
           title="View assignment details"
+          variant="view"
           onClick={() => onViewDetails?.(original)}
         />
       );
+
       buttons.push(
         <ActionIcon
           key="shifts"
           name="calendar"
           title="View shifts"
+          variant="shifts"
           onClick={() => onViewShifts?.(original)}
         />
       );
+
       if (assignment.can_be_updated) {
         buttons.push(
           <ActionIcon
             key="edit"
             name="edit"
             title="Edit assignment"
+            variant="edit"
             onClick={() => onEdit?.(original)}
           />
         );
       }
+
       if (assignment.is_active && !assignment.is_completed) {
         if (assignment.status === 'active') {
           buttons.push(
@@ -290,7 +332,7 @@ export function AssignmentsTable({
               key="pause"
               name="pause"
               title="Pause assignment"
-              extraClass="text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
+              variant="pause"
               onClick={() => onPause?.(original)}
             />
           );
@@ -300,12 +342,13 @@ export function AssignmentsTable({
               key="resume"
               name="play"
               title="Resume assignment"
-              extraClass="text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
+              variant="resume"
               onClick={() => onResume?.(original)}
             />
           );
         }
       }
+
       return (
         <div className="flex flex-wrap items-center justify-end gap-1 min-w-[120px] max-w-[140px]">
           {buttons}
@@ -704,7 +747,7 @@ export function AssignmentsTable({
       currentStatus={currentStatus}
       onStatusChange={handleStatusChange}
       advancedFilters={advancedFilters}
-      selectable={true}
+      selectable={false}
       title="Assignments"
       description="Manage and monitor all employee assignments"
       emptyMessage="No assignments found. Create your first assignment to get started."

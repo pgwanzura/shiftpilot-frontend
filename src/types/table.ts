@@ -41,6 +41,13 @@ export interface FilterState {
   [key: string]: string | number | boolean | null | undefined;
 }
 
+export type StatusVariant =
+  | 'success'
+  | 'warning'
+  | 'error'
+  | 'primary'
+  | 'secondary';
+
 export interface TableState {
   sort?: SortState;
   filters: FilterState;

@@ -1,63 +1,76 @@
-import { TextareaHTMLAttributes } from 'react';
+// components/ui/forms/Textarea.tsx
+import React, { forwardRef } from 'react';
+import { FieldWrapper } from './FieldWrapper';
+import {
+  baseInputClasses,
+  iconLeftClasses,
+  iconRightClasses,
+  iconTopClasses,
+} from './field-styles';
 
 export interface TextareaProps
-  extends TextareaHTMLAttributes<HTMLTextAreaElement> {
-  name: string;
+  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
-  className?: string;
-  required?: boolean;
-  description?: string;
   error?: string;
+  description?: string;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
 }
 
-export default function Textarea({
-  name,
-  label,
-  className = '',
-  required,
-  description,
-  error,
-  ...props
-}: TextareaProps) {
-  return (
-    <div className="w-full">
-      {label && (
-        <label
-          htmlFor={name}
-          className="block text-sm font-semibold text-gray-700 mb-1"
-        >
-          {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
-        </label>
-      )}
+export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
+  (
+    {
+      label,
+      error,
+      description,
+      leftIcon,
+      rightIcon,
+      className = '',
+      ...props
+    },
+    ref
+  ) => {
+    const textareaId = React.useId();
 
-      <textarea
-        id={name}
-        name={name}
-        {...props}
-        className={`
-          mt-1 block w-full rounded-md py-2 px-3
-          text-base font-medium text-gray-900 shadow-sm
-          focus:ring-2 focus:ring-indigo-500
-          sm:text-sm
-          bg-white
-          resize-y
-          min-h-[100px]
-          border
-          ${
-            error
-              ? 'border-red-500 focus:border-red-500'
-              : 'border-gray-300 focus:border-indigo-500'
-          }
-          ${className}
-        `}
-      />
+    const paddingLeft = leftIcon ? 'pl-10' : 'pl-3';
+    const paddingRight = rightIcon ? 'pr-10' : 'pr-3';
 
-      {description && !error && (
-        <p className="mt-1 text-xs text-gray-500">{description}</p>
-      )}
+    const textareaClasses = `
+      ${baseInputClasses}
+      ${paddingLeft}
+      ${paddingRight}
+      resize-none
+      ${error ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}
+      ${props.disabled ? 'opacity-60 cursor-not-allowed bg-gray-50 dark:bg-gray-900' : ''}
+      ${className}
+    `
+      .replace(/\s+/g, ' ')
+      .trim();
 
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
-    </div>
-  );
-}
+    return (
+      <FieldWrapper
+        label={label}
+        error={error}
+        description={description}
+        htmlFor={textareaId}
+        required={props.required}
+      >
+        <div className="relative">
+          {leftIcon && <div className={iconTopClasses}>{leftIcon}</div>}
+
+          <textarea
+            ref={ref}
+            id={textareaId}
+            className={textareaClasses}
+            aria-invalid={error ? 'true' : 'false'}
+            {...props}
+          />
+
+          {rightIcon && <div className={iconTopClasses}>{rightIcon}</div>}
+        </div>
+      </FieldWrapper>
+    );
+  }
+);
+
+Textarea.displayName = 'Textarea';

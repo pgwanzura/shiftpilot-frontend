@@ -1,62 +1,108 @@
-import { InputHTMLAttributes } from 'react';
+// components/ui/forms/FileInput.tsx
+import React, { forwardRef, useState } from 'react';
+import { FieldWrapper } from './FieldWrapper';
+import {
+  baseInputClasses,
+  iconLeftClasses,
+  iconRightClasses,
+} from './field-styles';
 
-export interface FileInputProps extends InputHTMLAttributes<HTMLInputElement> {
-  name: string;
+export interface FileInputProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
-  className?: string;
   error?: string;
-  required?: boolean;
+  description?: string;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
   accept?: string;
   multiple?: boolean;
 }
 
-export default function FileInput({
-  name,
-  label,
-  className = '',
-  error,
-  required,
-  accept,
-  multiple,
-  ...props
-}: FileInputProps) {
-  return (
-    <div className="w-full">
-      {label && (
-        <label
-          htmlFor={name}
-          className="block text-sm font-semibold text-gray-700 mb-1"
-        >
-          {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
-        </label>
-      )}
-      <input
-        id={name}
-        type="file"
-        name={name}
-        accept={accept}
-        multiple={multiple}
-        className={`
-          mt-1 block w-full rounded-md border py-2 px-3
-          text-base font-medium text-gray-900
-          sm:text-sm
-          bg-white
-          file:mr-4 file:py-2 file:px-4
-          file:rounded-full file:border-0
-          file:text-sm file:font-semibold
-          file:bg-indigo-50 file:text-indigo-700
-          hover:file:bg-indigo-100
-          ${
-            error
-              ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
-              : 'border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500'
-          }
-          ${className}
-        `}
-        {...props}
-      />
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
-    </div>
-  );
-}
+export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
+  (
+    {
+      label,
+      error,
+      description,
+      leftIcon,
+      rightIcon,
+      accept,
+      multiple,
+      className = '',
+      onChange,
+      ...props
+    },
+    ref
+  ) => {
+    const fileInputId = React.useId();
+    const [fileName, setFileName] = useState<string>('');
+
+    const paddingLeft = leftIcon ? 'pl-10' : 'pl-3';
+    const paddingRight = rightIcon ? 'pr-10' : 'pr-3';
+
+    const fileInputClasses = `
+      ${baseInputClasses}
+      ${paddingLeft}
+      ${paddingRight}
+      ${error ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}
+      ${props.disabled ? 'opacity-60 cursor-not-allowed bg-gray-50 dark:bg-gray-900' : ''}
+      file:mr-4 file:py-2 file:px-4 file:rounded file:border-0
+      file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700
+      hover:file:bg-blue-100 dark:file:bg-blue-900/30 dark:file:text-blue-300
+      cursor-pointer
+      ${className}
+    `
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = event.target.files;
+      if (files && files.length > 0) {
+        if (multiple && files.length > 1) {
+          setFileName(`${files.length} files selected`);
+        } else {
+          setFileName(files[0].name);
+        }
+      } else {
+        setFileName('');
+      }
+      onChange?.(event);
+    };
+
+    return (
+      <FieldWrapper
+        label={label}
+        error={error}
+        description={description}
+        htmlFor={fileInputId}
+        required={props.required}
+      >
+        <div className="relative">
+          {leftIcon && <div className={iconLeftClasses}>{leftIcon}</div>}
+
+          <input
+            ref={ref}
+            id={fileInputId}
+            type="file"
+            className={fileInputClasses}
+            aria-invalid={error ? 'true' : 'false'}
+            accept={accept}
+            multiple={multiple}
+            onChange={handleFileChange}
+            {...props}
+          />
+
+          {rightIcon && <div className={iconRightClasses}>{rightIcon}</div>}
+        </div>
+
+        {fileName && (
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            Selected: {fileName}
+          </p>
+        )}
+      </FieldWrapper>
+    );
+  }
+);
+
+FileInput.displayName = 'FileInput';
