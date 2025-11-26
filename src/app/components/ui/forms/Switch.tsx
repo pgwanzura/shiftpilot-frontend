@@ -1,4 +1,5 @@
-// components/ui/forms/Switch.tsx
+'use client';
+
 import React, { forwardRef } from 'react';
 import { FieldWrapper } from './FieldWrapper';
 import { labelClasses } from './field-styles';

@@ -1,4 +1,5 @@
-// components/ui/forms/PasswordInput.tsx
+'use client';
+
 import React, { forwardRef, useState } from 'react';
 import { Input, InputProps } from './Input';
 

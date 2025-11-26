@@ -1,14 +1,12 @@
 'use client';
 
-import React, {
-  useState,
-  useMemo,
-  useRef,
-  useCallback,
-  useEffect,
-} from 'react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { TableData, Column, TableConfig, SortState } from '@/types/table';
 import { useTableState } from '@/hooks/useTableState';
+import { useTableSorting } from '@/hooks/datatable/useTableSorting';
+import { useTableFiltering } from '@/hooks/datatable/useTableFiltering';
+import { useTablePagination } from '@/hooks/datatable/useTablePagination';
+import { useColumnDragging } from '@/hooks/datatable/useColumnDragging';
 import { TableSkeleton } from './TableSkeleton';
 import { TableHeader } from './TableHeader';
 import { TableToolbar } from './TableToolbar';
@@ -36,10 +34,6 @@ const Icon = ({
 interface EditingState<T extends TableData> {
   rowId: string | number;
   key: keyof T;
-}
-
-interface LocalAdvancedFilters {
-  [key: string]: string;
 }
 
 type StatusKey = 'active' | 'draft' | 'filled' | 'cancelled' | 'completed';
@@ -101,18 +95,44 @@ export function DataTable<T extends TableData>({
 
   const [editingCell, setEditingCell] = useState<EditingState<T> | null>(null);
   const [editValue, setEditValue] = useState<T[keyof T]>();
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [localAdvancedFilters, setLocalAdvancedFilters] =
-    useState<LocalAdvancedFilters>({});
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
-  const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-  const [sortingColumn, setSortingColumn] = useState<string | null>(null);
   const [clickedRow, setClickedRow] = useState<number | null>(null);
-  const [localLoading, setLocalLoading] = useState(false);
 
   const tableRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const { sortingColumn, sortLoading, handleSort } = useTableSorting(
+    state.sort,
+    (newSort) => {
+      updateState({ sort: newSort });
+      onSortChange?.(newSort);
+    }
+  );
+
+  const {
+    filterLoading,
+    localAdvancedFilters,
+    showAdvancedFilters,
+    hasActiveFilters,
+    searchValue,
+    currentStatus,
+    handleSearch,
+    handleStatusFilter,
+    handleClearStatusFilter,
+    handleClearFilters,
+    setLocalAdvancedFilters,
+    setShowAdvancedFilters,
+    setFilterLoading,
+  } = useTableFiltering(state.filters, onFilterChange);
+
+  const {
+    draggedColumn,
+    dragOverIndex,
+    handleDragStart,
+    handleDragOver,
+    handleDragLeave,
+    handleDragEnd,
+  } = useColumnDragging(state.columnOrder, updateState);
 
   const columnSettingsData = useMemo(() => {
     return initialColumns.map((col) => ({
@@ -124,7 +144,7 @@ export function DataTable<T extends TableData>({
 
   const handleColumnVisibilityChange = useCallback(
     (key: string, visible: boolean) => {
-      setLocalLoading(true);
+      setFilterLoading(true);
       const newVisibleColumns = new Set(state.visibleColumns);
 
       if (visible) {
@@ -134,9 +154,9 @@ export function DataTable<T extends TableData>({
       }
 
       updateState({ visibleColumns: newVisibleColumns });
-      setTimeout(() => setLocalLoading(false), 150);
+      setTimeout(() => setFilterLoading(false), 150);
     },
-    [state.visibleColumns, updateState]
+    [state.visibleColumns, updateState, setFilterLoading]
   );
 
   const columns = useMemo((): Column<T>[] => {
@@ -146,9 +166,8 @@ export function DataTable<T extends TableData>({
       .filter((col) => state.visibleColumns.has(col.key as string));
   }, [initialColumns, state.columnOrder, state.visibleColumns]);
 
-  const processedData = useMemo((): T[] => {
+  const processedData = useMemo(() => {
     if (!state.sort) return data;
-
     const { key, direction } = state.sort;
 
     return [...data].sort((a, b) => {
@@ -164,44 +183,16 @@ export function DataTable<T extends TableData>({
 
       const aStr = String(aValue).toLowerCase();
       const bStr = String(bValue).toLowerCase();
-
       if (aStr < bStr) return direction === 'asc' ? -1 : 1;
       if (aStr > bStr) return direction === 'asc' ? 1 : -1;
       return 0;
     });
   }, [data, state.sort]);
 
-  const normalizedPagination = useMemo(() => {
-    if (!pagination) {
-      return { page: 1, pageSize: 10, total: data.length, last_page: 1 };
-    }
-
-    const page = Array.isArray(pagination.page)
-      ? Number(pagination.page[0])
-      : Number(pagination.page ?? 1);
-
-    const pageSize = Array.isArray(pagination.pageSize)
-      ? Number(pagination.pageSize[0])
-      : Number(pagination.pageSize ?? 10);
-
-    // Use data.length if API sends null
-    const total = Number(pagination.total ?? data.length ?? 0);
-
-    // Compute last_page if API sends null
-    const last_page =
-      pagination.last_page != null
-        ? Number(pagination.last_page)
-        : Math.max(1, Math.ceil(total / pageSize));
-
-    return { page, pageSize, total, last_page };
-  }, [pagination, data.length]);
-
-  const paginatedData = useMemo(() => {
-    const start =
-      (normalizedPagination.page - 1) * normalizedPagination.pageSize;
-    const end = start + normalizedPagination.pageSize;
-    return data.slice(start, end);
-  }, [data, normalizedPagination]);
+  const { normalizedPagination, paginatedData } = useTablePagination(
+    pagination,
+    processedData
+  );
 
   const handleSelectionChange = useCallback(
     (newSelectedRows: Set<string | number>) => {
@@ -291,136 +282,7 @@ export function DataTable<T extends TableData>({
     handleSelectRow,
   ]);
 
-  const isLoading = loading || localLoading;
-
-  const handleSort = useCallback(
-    (key: string): void => {
-      const column = initialColumns.find((col) => col.key === key);
-      if (!column?.sortable) return;
-
-      setSortingColumn(key);
-      setLocalLoading(true);
-
-      const newSort: SortState =
-        state.sort?.key === key && state.sort.direction === 'asc'
-          ? { key, direction: 'desc' }
-          : { key, direction: 'asc' };
-
-      updateState({ sort: newSort });
-      onSortChange?.(newSort);
-
-      setTimeout(() => {
-        setSortingColumn(null);
-        setLocalLoading(false);
-      }, 300);
-    },
-    [state.sort, updateState, onSortChange, initialColumns]
-  );
-
-  const handleSearch = useCallback(
-    (searchTerm: string): void => {
-      setLocalLoading(true);
-      const newFilters = { ...state.filters, search: searchTerm };
-      updateState({ filters: newFilters });
-      onFilterChange?.(newFilters);
-
-      setTimeout(() => {
-        setLocalLoading(false);
-      }, 300);
-    },
-    [state.filters, updateState, onFilterChange]
-  );
-
-  const handleStatusFilter = useCallback(
-    (status: string): void => {
-      setLocalLoading(true);
-      const newFilters = { ...state.filters, status, page: 1 };
-      updateState({ filters: newFilters });
-      onFilterChange?.(newFilters);
-
-      setTimeout(() => {
-        setLocalLoading(false);
-      }, 300);
-    },
-    [state.filters, updateState, onFilterChange]
-  );
-
-  const handleClearStatusFilter = useCallback((): void => {
-    setLocalLoading(true);
-    const newFilters = { ...state.filters };
-    delete newFilters.status;
-    updateState({ filters: newFilters });
-    onFilterChange?.(newFilters);
-
-    setTimeout(() => {
-      setLocalLoading(false);
-    }, 300);
-  }, [state.filters, updateState, onFilterChange]);
-
-  const handleDragStart = (
-    e: React.DragEvent<HTMLDivElement>,
-    columnKey: string
-  ): void => {
-    setDraggedColumn(columnKey);
-    e.dataTransfer.effectAllowed = 'move';
-    e.currentTarget.style.opacity = '0.4';
-  };
-
-  const handleDragOver = (
-    e: React.DragEvent<HTMLDivElement>,
-    targetColumnKey: string
-  ): void => {
-    e.preventDefault();
-    if (!draggedColumn || draggedColumn === targetColumnKey) return;
-
-    const targetIndex = state.columnOrder.indexOf(targetColumnKey);
-    setDragOverIndex(targetIndex);
-    e.currentTarget.style.background = 'rgba(99, 102, 241, 0.08)';
-
-    const newOrder = [...state.columnOrder];
-    const draggedIndex = newOrder.indexOf(draggedColumn);
-    newOrder.splice(draggedIndex, 1);
-    newOrder.splice(targetIndex, 0, draggedColumn);
-    updateState({ columnOrder: newOrder });
-  };
-
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>): void => {
-    e.currentTarget.style.background = '';
-    setDragOverIndex(null);
-  };
-
-  const handleDragEnd = (e: React.DragEvent<HTMLDivElement>): void => {
-    e.currentTarget.style.opacity = '';
-    e.currentTarget.style.background = '';
-    setDraggedColumn(null);
-    setDragOverIndex(null);
-  };
-
-  const hasActiveFilters =
-    !!state.filters.search ||
-    (state.filters.status && state.filters.status !== 'all') ||
-    Object.keys(localAdvancedFilters).length > 0;
-
-  const handleClearFilters = useCallback(() => {
-    setLocalLoading(true);
-    const newFilters = {};
-    updateState({ filters: newFilters });
-    setLocalAdvancedFilters({});
-    onFilterChange?.(newFilters);
-    setTimeout(() => {
-      setLocalLoading(false);
-    }, 300);
-  }, [updateState, onFilterChange]);
-
-  const searchValue = useMemo(() => {
-    const search = state.filters.search;
-    return search ? String(search) : '';
-  }, [state.filters.search]);
-
-  const currentStatus = useMemo(() => {
-    const status = state.filters.status;
-    return status ? String(status) : undefined;
-  }, [state.filters.status]);
+  const isLoading = loading || sortLoading || filterLoading;
 
   if (error) {
     return (
@@ -441,6 +303,15 @@ export function DataTable<T extends TableData>({
       </div>
     );
   }
+
+  console.log('DataTable pagination props:', {
+    incomingPagination: pagination,
+    normalizedPagination: normalizedPagination,
+    dataLength: data.length,
+    totalPages: Math.ceil(
+      normalizedPagination.total / normalizedPagination.pageSize
+    ),
+  });
 
   return (
     <div className="bg-white rounded-md border border-gray-300 w-full overflow-hidden">
@@ -508,10 +379,8 @@ export function DataTable<T extends TableData>({
                     columns={enhancedColumns}
                     state={state}
                     onSort={handleSort}
-                    onDragStart={(e, columnKey) =>
-                      handleDragStart(e, columnKey)
-                    }
-                    onDragOver={(e, columnKey) => handleDragOver(e, columnKey)}
+                    onDragStart={handleDragStart}
+                    onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDragEnd={handleDragEnd}
                     hasActions={!!actions}

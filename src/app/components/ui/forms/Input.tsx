@@ -1,4 +1,5 @@
-// components/ui/forms/Input.tsx
+'use client';
+
 import React, { forwardRef } from 'react';
 import { FieldWrapper } from './FieldWrapper';
 import {

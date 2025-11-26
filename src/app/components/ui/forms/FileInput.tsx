@@ -1,4 +1,5 @@
-// components/ui/forms/FileInput.tsx
+'use client';
+
 import React, { forwardRef, useState } from 'react';
 import { FieldWrapper } from './FieldWrapper';
 import {

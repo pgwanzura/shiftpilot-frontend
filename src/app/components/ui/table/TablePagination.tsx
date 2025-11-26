@@ -1,10 +1,10 @@
 import React from 'react';
-import { Pagination } from '@/types/table';
+import { PaginationState } from '@/types';
 import { Icon } from '@/app/components/ui';
 
 interface TablePaginationProps {
-  pagination: Pagination;
-  onPaginationChange?: (pagination: Pagination) => void;
+  pagination: PaginationState;
+  onPaginationChange?: (pagination: PaginationState) => void;
   selectedCount: number;
 }
 
@@ -16,7 +16,7 @@ export function TablePagination({
   const safePage = Math.max(1, Number(pagination?.page) || 1);
   const safePageSize = Math.max(1, Number(pagination?.pageSize) || 10);
   const safeTotal = Math.max(0, Number(pagination?.total) || 0);
-console.log('safeTotal:', safeTotal);
+  console.log('safeTotal:', safeTotal);
   const totalPages = Math.max(1, Math.ceil(safeTotal / safePageSize));
 
   const startRecord = safeTotal === 0 ? 0 : (safePage - 1) * safePageSize + 1;

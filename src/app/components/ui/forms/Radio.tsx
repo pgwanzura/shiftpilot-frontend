@@ -1,4 +1,5 @@
-// components/ui/forms/Radio.tsx
+'use client';
+
 import React, { forwardRef } from 'react';
 import { FieldWrapper } from './FieldWrapper';
 import { labelClasses, errorClasses, descriptionClasses } from './field-styles';
