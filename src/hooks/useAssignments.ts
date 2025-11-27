@@ -56,7 +56,7 @@ function buildAssignmentParams(
 
   return {
     page: filters.page ?? 1,
-    per_page: filters.per_page ?? 20,
+    per_page: filters.pageSize ?? filters.per_page ?? 20,
     status,
     assignment_type,
     search: filters.search,
@@ -64,7 +64,6 @@ function buildAssignmentParams(
     location_id: filters.location_id,
     start_date_from: filters.start_date_from,
     start_date_to: filters.start_date_to,
-    end_date_from: filters.end_date_from,
     end_date_to: filters.end_date_to,
     employer_id: filters.employer_id,
     agency_employee_id: filters.agency_employee_id,

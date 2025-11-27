@@ -5,20 +5,20 @@ import { useRouter } from 'next/navigation';
 import PageHeader from '@/app/components/layout/PageHeader';
 import { QuickActions } from '@/app/components/ui';
 import { AssignmentsTable } from '@/app/components/ui/assignments/AssignmentsTable';
-import { AssignmentStats } from '@/app/components/ui/assignments/AssignmentStats';
+// import { AssignmentStats } from '@/app/components/ui/assignments/AssignmentStats';
 import {
   useAssignments,
-  useAssignmentStats,
+  // useAssignmentStats,
   usePauseAssignment,
   useReactivateAssignment,
 } from '@/hooks/useAssignments';
-import type { AssignmentFilters, Assignment, Pagination } from '@/types';
+import type { AssignmentFilters, Assignment, PaginationState } from '@/types';
 
 const DEFAULT_FILTERS: AssignmentFilters = {
   status: 'all',
   assignment_type: 'all',
   page: 1,
-  per_page: 10,
+  per_page: undefined,
 };
 
 interface ApiPagination {
@@ -34,7 +34,7 @@ export default function AssignmentsPage() {
 
   const { data: assignmentsData, isLoading: assignmentsLoading } =
     useAssignments(filters);
-  const { data: statsResponse, isLoading: statsLoading } = useAssignmentStats();
+  // const { data: statsResponse, isLoading: statsLoading } = useAssignmentStats();
 
   const pauseAssignment = usePauseAssignment();
   const resumeAssignment = useReactivateAssignment();
@@ -43,7 +43,7 @@ export default function AssignmentsPage() {
     setFilters(newFilters);
   }, []);
 
-  const handlePaginationChange = useCallback((pagination: Pagination) => {
+  const handlePaginationChange = useCallback((pagination: PaginationState) => {
     setFilters((prev) => ({
       ...prev,
       page: pagination.page,
@@ -55,7 +55,7 @@ export default function AssignmentsPage() {
     () => assignmentsData?.data || [],
     [assignmentsData]
   );
-  const pagination: Pagination | undefined = useMemo(() => {
+  const pagination: PaginationState | undefined = useMemo(() => {
     if (!assignmentsData?.meta) return undefined;
     const meta = assignmentsData.meta as ApiPagination;
     return {

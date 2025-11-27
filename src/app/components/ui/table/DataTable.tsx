@@ -304,14 +304,7 @@ export function DataTable<T extends TableData>({
     );
   }
 
-  console.log('DataTable pagination props:', {
-    incomingPagination: pagination,
-    normalizedPagination: normalizedPagination,
-    dataLength: data.length,
-    totalPages: Math.ceil(
-      normalizedPagination.total / normalizedPagination.pageSize
-    ),
-  });
+  
 
   return (
     <div className="bg-white rounded-md border border-gray-300 w-full overflow-hidden">
@@ -363,10 +356,7 @@ export function DataTable<T extends TableData>({
             className="overflow-hidden border-t border-gray-200"
             ref={tableRef}
           >
-            <div
-              className="max-h-[600px] overflow-auto"
-              ref={scrollContainerRef}
-            >
+            <div className="h-[600px] overflow-auto" ref={scrollContainerRef}>
               {isLoading ? (
                 <TableSkeleton
                   columns={enhancedColumns.length}

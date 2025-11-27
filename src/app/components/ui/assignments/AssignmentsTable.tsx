@@ -327,6 +327,7 @@ export function AssignmentsTable({
 
       if (assignment.is_active && !assignment.is_completed) {
         if (assignment.status === 'active') {
+          // Show pause button for active assignments
           buttons.push(
             <ActionIcon
               key="pause"
@@ -337,6 +338,7 @@ export function AssignmentsTable({
             />
           );
         } else if (assignment.status === 'paused') {
+          // Show resume button for paused assignments
           buttons.push(
             <ActionIcon
               key="resume"

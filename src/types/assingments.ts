@@ -257,11 +257,11 @@ export interface LocationMeta {
 export interface AssignmentFilters {
   status?: AssignmentStatus | 'all';
   assignment_type?: AssignmentType | 'all';
-  agency: string | number | true | undefined;
+  agency?: string | number | true | undefined;
   search?: string;
   role?: string | number | true | undefined;
   location_id?: number;
-  location: string | number | true | undefined;
+  location?: string | number | true | undefined;
   start_date_from?: string;
   start_date_to?: string;
   end_date_from?: string;

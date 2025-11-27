@@ -95,7 +95,7 @@ export function TablePagination({
             {getRecordsText()}
           </div>
           {selectedCount > 0 && (
-            <div className="text-sm text-blue-600 font-medium whitespace-nowrap bg-blue-50 px-3 py-1 rounded-md border border-blue-200">
+            <div className="text-sm text-primary-600 font-medium whitespace-nowrap bg-primary-50 px-3 py-1 rounded-md border border-primary-200">
               {selectedCount.toLocaleString()} selected
             </div>
           )}
@@ -106,10 +106,9 @@ export function TablePagination({
             <button
               onClick={() => handlePageChange(safePage - 1)}
               disabled={safePage === 1}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-white border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors duration-200 min-w-[100px] justify-center"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-white border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors duration-200 justify-center"
             >
               <Icon name="chevronLeft" className="h-4 w-4" />
-              <span>Previous</span>
             </button>
 
             <div className="flex items-center gap-1 mx-2">
@@ -120,9 +119,9 @@ export function TablePagination({
                   ) : (
                     <button
                       onClick={() => handlePageChange(pageNum)}
-                      className={`min-w-[40px] px-3 py-2 text-sm font-medium rounded-lg border transition-colors duration-200 ${
+                      className={`min-w-[40px] px-3 py-2 text-sm font-medium rounded-md border transition-colors duration-200 ${
                         safePage === pageNum
-                          ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                          ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
                           : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                       }`}
                     >
@@ -136,16 +135,15 @@ export function TablePagination({
             <button
               onClick={() => handlePageChange(safePage + 1)}
               disabled={safePage >= totalPages}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-white border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors duration-200 min-w-[100px] justify-center"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-white border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors duration-200  justify-center"
             >
-              <span>Next</span>
               <Icon name="chevronRight" className="h-4 w-4" />
             </button>
           </div>
         )}
       </div>
 
-      {safeTotal > 0 && (
+      {/* {safeTotal > 0 && (
         <div className="flex items-center justify-center sm:justify-start gap-2 mt-4 pt-3 border-t border-gray-100">
           <label className="text-sm text-gray-600 whitespace-nowrap">
             Rows per page:
@@ -159,7 +157,7 @@ export function TablePagination({
                 page: 1,
               })
             }
-            className="px-3 py-1 text-sm border border-gray-300 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="px-3 py-1 text-sm border border-gray-300 rounded-md bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           >
             {[10, 25, 50, 100].map((size) => (
               <option key={size} value={size}>
@@ -168,7 +166,7 @@ export function TablePagination({
             ))}
           </select>
         </div>
-      )}
+      )} */}
     </div>
   );
 }
